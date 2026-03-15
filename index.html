@@ -12,22 +12,15 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Yatin Anchan — Arcane Engineer" />
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Share+Tech+Mono&display=swap"
         rel="stylesheet" />
-
-    <!-- GSAP + Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <style>
-        /* ════════════════════════════════════════════════════
-   ROOT & RESET
-════════════════════════════════════════════════════ */
         *,
         *::before,
         *::after {
@@ -42,15 +35,14 @@
             --ember: #c0392b;
             --arcane: #7b2fbe;
             --parchment: #f5e6c8;
-            --parchment-dim: rgba(245, 230, 200, .65);
+            --pdim: rgba(245, 230, 200, .65);
             --dark: #040302;
             --dark2: #0a0705;
-            --dark3: #1a1208;
-            --glow-gold: rgba(212, 168, 67, .5);
-            --glow-gold-lg: rgba(212, 168, 67, .2);
-            --glass-border: rgba(212, 168, 67, .14);
-            --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
-            --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --gg: rgba(212, 168, 67, .5);
+            --ggl: rgba(212, 168, 67, .2);
+            --gb: rgba(212, 168, 67, .14);
+            --ee: cubic-bezier(0.16, 1, 0.3, 1);
+            --eb: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         html {
@@ -77,11 +69,9 @@
             color: var(--gold2)
         }
 
-        /* ════════════════════════════════════════════════════
-   CUSTOM SCROLLBAR
-════════════════════════════════════════════════════ */
+        /* SCROLLBAR */
         ::-webkit-scrollbar {
-            width: 6px
+            width: 5px
         }
 
         ::-webkit-scrollbar-track {
@@ -93,14 +83,8 @@
             border-radius: 3px
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gold)
-        }
-
-        /* ════════════════════════════════════════════════════
-   CURSOR SYSTEM
-════════════════════════════════════════════════════ */
-        #c-dot {
+        /* CURSOR */
+        #cd {
             position: fixed;
             width: 8px;
             height: 8px;
@@ -109,74 +93,72 @@
             pointer-events: none;
             z-index: 9999;
             transform: translate(-50%, -50%);
-            will-change: left, top;
-            box-shadow: 0 0 16px var(--glow-gold), 0 0 32px rgba(245, 200, 66, .25)
+            box-shadow: 0 0 16px var(--gg), 0 0 32px rgba(245, 200, 66, .25);
+            transition: width .15s, height .15s
         }
 
-        #c-ring {
+        #cr {
             position: fixed;
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            border: 1.5px solid rgba(212, 168, 67, .38);
+            border: 1.5px solid rgba(212, 168, 67, .35);
             pointer-events: none;
             z-index: 9998;
             transform: translate(-50%, -50%);
-            will-change: left, top;
-            transition: width .4s var(--ease-expo), height .4s var(--ease-expo), border-color .3s, opacity .3s
+            transition: width .4s var(--ee), height .4s var(--ee), border-color .3s
         }
 
-        #c-aura {
+        #ca {
             position: fixed;
             width: 110px;
             height: 110px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(212, 168, 67, .06), transparent 70%);
+            background: radial-gradient(circle, rgba(212, 168, 67, .055), transparent 70%);
             pointer-events: none;
             z-index: 9997;
             transform: translate(-50%, -50%);
-            will-change: left, top;
-            transition: width .7s var(--ease-expo), height .7s var(--ease-expo)
+            transition: width .7s var(--ee), height .7s var(--ee)
         }
 
-        body.ch #c-dot {
-            width: 12px;
-            height: 12px;
-            box-shadow: 0 0 24px var(--glow-gold)
+        body.ch #cd {
+            width: 13px;
+            height: 13px;
+            box-shadow: 0 0 24px var(--gg)
         }
 
-        body.ch #c-ring {
-            width: 60px;
-            height: 60px;
+        body.ch #cr {
+            width: 62px;
+            height: 62px;
             border-color: rgba(212, 168, 67, .65)
         }
 
-        body.ch #c-aura {
-            width: 150px;
-            height: 150px
+        body.ch #ca {
+            width: 155px;
+            height: 155px
         }
 
-        body.cc #c-dot {
+        body.cc #cd {
             width: 4px;
             height: 4px
         }
 
-        body.cc #c-ring {
+        body.cc #cr {
             width: 20px;
             height: 20px
         }
 
-        .sparkle {
+        .sp {
             position: fixed;
             pointer-events: none;
             z-index: 9996;
             border-radius: 50%;
             background: var(--gold2);
             transform: translate(-50%, -50%);
-            animation: sparkFade .65s forwards
+            animation: spF .65s forwards
         }
 
-        @keyframes sparkFade {
+        @keyframes spF {
             0% {
                 opacity: .9;
                 transform: translate(-50%, -50%) scale(1)
@@ -188,59 +170,37 @@
             }
         }
 
-        /* ════════════════════════════════════════════════════
-   NOISE + AMBIENT
-════════════════════════════════════════════════════ */
+        /* NOISE */
         #noise {
             position: fixed;
             inset: 0;
             z-index: 1;
             pointer-events: none;
-            opacity: .038;
+            opacity: .036;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
             background-size: 200px;
-            animation: grainShift 8s steps(1) infinite
+            animation: gS 8s steps(1) infinite
         }
 
-        @keyframes grainShift {
+        @keyframes gS {
             0% {
                 background-position: 0 0
-            }
-
-            10% {
-                background-position: -5%, -10%
             }
 
             20% {
                 background-position: -15%, 5%
             }
 
-            30% {
-                background-position: 7%, -25%
-            }
-
             40% {
                 background-position: -5%, 25%
-            }
-
-            50% {
-                background-position: -15%, 10%
             }
 
             60% {
                 background-position: 15%, 0
             }
 
-            70% {
-                background-position: 0, 15%
-            }
-
             80% {
                 background-position: 3%, 35%
-            }
-
-            90% {
-                background-position: -10%, 10%
             }
 
             100% {
@@ -248,6 +208,7 @@
             }
         }
 
+        /* AMBIENT */
         .amb {
             position: fixed;
             border-radius: 50%;
@@ -295,9 +256,20 @@
             }
         }
 
-        /* ════════════════════════════════════════════════════
-   LOADER
-════════════════════════════════════════════════════ */
+        /* PROGRESS */
+        #prog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), var(--gold), var(--gold2));
+            z-index: 2000;
+            width: 0%;
+            box-shadow: 0 0 12px var(--gg);
+            transition: width .12s
+        }
+
+        /* LOADER */
         #loader {
             position: fixed;
             inset: 0;
@@ -307,7 +279,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 1.6s var(--ease-expo), transform 1.6s var(--ease-expo)
+            transition: opacity 1.6s var(--ee), transform 1.6s var(--ee)
         }
 
         #loader.out {
@@ -316,70 +288,70 @@
             pointer-events: none
         }
 
-        .l-outer {
+        .lo {
             position: relative;
             width: 160px;
             height: 160px;
             margin-bottom: 48px
         }
 
-        .l-ring {
+        .lr {
             position: absolute;
             inset: 0;
             border-radius: 50%;
             border: 1px solid
         }
 
-        .l-ring:nth-child(1) {
+        .lr:nth-child(1) {
             border-color: rgba(212, 168, 67, .1);
-            animation: ls 4s linear infinite
+            animation: lrs 4s linear infinite
         }
 
-        .l-ring:nth-child(2) {
+        .lr:nth-child(2) {
             inset: 20px;
             border-color: rgba(212, 168, 67, .18);
-            animation: ls 2.8s linear infinite reverse
+            animation: lrs 2.8s linear infinite reverse
         }
 
-        .l-ring:nth-child(3) {
+        .lr:nth-child(3) {
             inset: 40px;
             border-color: rgba(212, 168, 67, .3);
-            animation: ls 2s linear infinite
+            animation: lrs 2s linear infinite
         }
 
-        .l-ring:nth-child(4) {
+        .lr:nth-child(4) {
             inset: 60px;
             border-color: rgba(212, 168, 67, .5);
-            animation: ls 1.4s linear infinite reverse
+            animation: lrs 1.4s linear infinite reverse
         }
 
-        .l-core {
+        .lcore {
             position: absolute;
             inset: 70px;
             border-radius: 50%;
             background: radial-gradient(circle, var(--gold2), var(--gold));
-            animation: lc 1.2s ease-in-out infinite alternate;
-            box-shadow: 0 0 30px var(--glow-gold)
+            animation: lcg 1.2s ease-in-out infinite alternate;
+            box-shadow: 0 0 30px var(--gg)
         }
 
-        .l-ring-dot {
+        .lrd {
             position: absolute;
             width: 5px;
             height: 5px;
             border-radius: 50%;
             background: var(--gold);
-            box-shadow: 0 0 10px var(--glow-gold);
+            box-shadow: 0 0 10px var(--gg);
             top: -2.5px;
             left: calc(50% - 2.5px)
         }
 
-        @keyframes ls {
+        @keyframes lrs {
             to {
                 transform: rotate(360deg)
             }
         }
 
-        @keyframes lc {
+        @keyframes lcg {
             from {
                 opacity: .5;
                 transform: scale(.8)
@@ -391,7 +363,7 @@
             }
         }
 
-        .l-label {
+        .ll {
             font-family: 'Cinzel', serif;
             font-size: 10.5px;
             letter-spacing: .55em;
@@ -401,34 +373,33 @@
             opacity: .7
         }
 
-        .l-bar {
+        .lb {
             width: 320px;
             height: 1px;
             background: rgba(212, 168, 67, .08);
-            position: relative;
             overflow: hidden
         }
 
-        .l-fill {
+        .lf {
             height: 100%;
             background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
             width: 0%;
-            box-shadow: 0 0 14px var(--glow-gold)
+            box-shadow: 0 0 14px var(--gg)
         }
 
-        .l-log {
+        .llog {
             margin-top: 24px;
             font-family: 'Share Tech Mono', monospace;
             font-size: 10.5px;
             color: rgba(212, 168, 67, .38);
-            letter-spacing: .14em;
+            letter-spacing: .13em;
             min-height: 100px;
             text-align: center;
             line-height: 2.4;
             max-width: 400px
         }
 
-        .l-pct {
+        .lpct {
             margin-top: 12px;
             font-family: 'Cinzel', serif;
             font-size: 9px;
@@ -436,24 +407,7 @@
             letter-spacing: .3em
         }
 
-        /* ════════════════════════════════════════════════════
-   PROGRESS BAR
-════════════════════════════════════════════════════ */
-        #prog {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--ember), var(--gold), var(--gold2));
-            z-index: 2000;
-            width: 0%;
-            box-shadow: 0 0 12px var(--glow-gold);
-            transition: width .12s
-        }
-
-        /* ════════════════════════════════════════════════════
-   NAV
-════════════════════════════════════════════════════ */
+        /* NAV */
         nav {
             position: fixed;
             top: 22px;
@@ -463,10 +417,11 @@
             padding: 13px 44px;
             background: rgba(4, 3, 2, .88);
             backdrop-filter: blur(28px) saturate(1.6);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--gb);
             clip-path: polygon(14px 0%, 100% 0%, calc(100% - 14px) 100%, 0% 100%);
             display: flex;
             gap: 38px;
+            align-items: center;
             transition: all .4s;
             opacity: 0;
             pointer-events: none
@@ -517,8 +472,8 @@
             width: 0;
             height: 1px;
             background: var(--gold);
-            transition: width .35s var(--ease-expo);
-            box-shadow: 0 0 8px var(--glow-gold)
+            transition: width .35s var(--ee);
+            box-shadow: 0 0 8px var(--gg)
         }
 
         nav a:hover,
@@ -531,8 +486,7 @@
             width: 100%
         }
 
-        /* theme toggle in nav */
-        .theme-btn {
+        .tbtn {
             background: none;
             border: 1px solid rgba(212, 168, 67, .2);
             color: rgba(212, 168, 67, .4);
@@ -545,13 +499,12 @@
             text-transform: uppercase
         }
 
-        .theme-btn:hover {
+        .tbtn:hover {
             border-color: var(--gold);
             color: var(--gold)
         }
 
-        /* sound toggle */
-        .sound-btn {
+        .sbtn {
             background: none;
             border: none;
             color: rgba(212, 168, 67, .4);
@@ -561,13 +514,11 @@
             padding: 0 4px
         }
 
-        .sound-btn:hover {
+        .sbtn:hover {
             color: var(--gold)
         }
 
-        /* ════════════════════════════════════════════════════
-   HERO
-════════════════════════════════════════════════════ */
+        /* HERO */
         #hero {
             height: 100vh;
             display: flex;
@@ -578,28 +529,32 @@
             overflow: hidden
         }
 
-        #threejs-canvas {
+        #tc {
             position: absolute;
-            inset: 0;
-            z-index: 1
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: block
         }
 
-        .hero-vignette {
+        .hvig {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 60% 70% at 50% 50%, transparent 30%, rgba(4, 3, 2, .97) 100%);
+            background: radial-gradient(ellipse 72% 82% at 50% 50%, transparent 38%, rgba(4, 3, 2, .93) 100%);
             pointer-events: none;
             z-index: 2
         }
 
-        .hero-inner {
+        .hi {
             position: relative;
             z-index: 3;
             transform-style: preserve-3d;
             perspective: 800px
         }
 
-        .hero-eyebrow {
+        .hey {
             font-family: 'Cinzel', serif;
             font-size: 10px;
             letter-spacing: .6em;
@@ -609,9 +564,9 @@
             opacity: 0
         }
 
-        .hero-title {
+        .htitle {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(46px, 10vw, 120px);
+            font-size: clamp(48px, 10vw, 120px);
             font-weight: 900;
             line-height: .88;
             color: var(--parchment);
@@ -620,17 +575,12 @@
             opacity: 0
         }
 
-        .hero-title .letter {
-            display: inline-block;
-            transform-origin: bottom center
-        }
-
-        .name-gold {
+        .ng {
             color: var(--gold);
-            text-shadow: 0 0 50px var(--glow-gold), 0 0 100px rgba(212, 168, 67, .2)
+            text-shadow: 0 0 50px var(--gg), 0 0 100px rgba(212, 168, 67, .2)
         }
 
-        .hero-div {
+        .hdiv {
             display: flex;
             align-items: center;
             gap: 16px;
@@ -639,22 +589,21 @@
             opacity: 0
         }
 
-        .hero-div::before,
-        .hero-div::after {
+        .hdiv::before {
             content: '';
             flex: 1;
-            height: 1px
-        }
-
-        .hero-div::before {
+            height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold))
         }
 
-        .hero-div::after {
+        .hdiv::after {
+            content: '';
+            flex: 1;
+            height: 1px;
             background: linear-gradient(90deg, var(--gold), transparent)
         }
 
-        .hero-div span {
+        .hdiv span {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             letter-spacing: .42em;
@@ -663,7 +612,7 @@
             white-space: nowrap
         }
 
-        .hero-sub {
+        .hsub {
             font-size: clamp(14px, 2vw, 20px);
             font-style: italic;
             color: rgba(245, 230, 200, .5);
@@ -671,7 +620,7 @@
             opacity: 0
         }
 
-        .hero-cta {
+        .hcta {
             margin-top: 44px;
             display: flex;
             gap: 16px;
@@ -679,7 +628,7 @@
             opacity: 0
         }
 
-        .btn-a {
+        .bta {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 14px 36px;
@@ -695,33 +644,32 @@
             display: inline-block
         }
 
-        .btn-a::before {
+        .bta::before {
             content: '';
             position: absolute;
             inset: 0;
             background: linear-gradient(135deg, rgba(212, 168, 67, .12), transparent);
             transform: translateX(-105%);
-            transition: transform .5s var(--ease-expo)
+            transition: transform .5s var(--ee)
         }
 
-        .btn-a:hover {
+        .bta:hover {
             border-color: var(--gold);
             color: var(--gold);
-            text-shadow: 0 0 14px var(--glow-gold);
+            text-shadow: 0 0 14px var(--gg);
             box-shadow: 0 0 40px rgba(212, 168, 67, .12)
         }
 
-        .btn-a:hover::before {
+        .bta:hover::before {
             transform: translateX(0)
         }
 
-        .btn-a.primary {
+        .bta.pr {
             background: rgba(212, 168, 67, .09);
             border-color: rgba(212, 168, 67, .42)
         }
 
-        /* scroll cue */
-        .hero-scroll-cue {
+        .hsc {
             position: absolute;
             bottom: 38px;
             left: 50%;
@@ -734,15 +682,15 @@
             opacity: 0
         }
 
-        .sc-label {
+        .sclbl {
             font-family: 'Cinzel', serif;
             font-size: 8px;
             letter-spacing: .45em;
-            color: rgba(212, 168, 67, .32);
+            color: rgba(212, 168, 67, .3);
             text-transform: uppercase
         }
 
-        .sc-track {
+        .sct {
             width: 1px;
             height: 48px;
             background: rgba(212, 168, 67, .08);
@@ -750,16 +698,16 @@
             position: relative
         }
 
-        .sc-line {
+        .scl {
             position: absolute;
             top: -100%;
             width: 100%;
             height: 100%;
             background: linear-gradient(180deg, transparent, var(--gold));
-            animation: scLine 2.2s ease-in-out infinite
+            animation: scA 2.2s ease-in-out infinite
         }
 
-        @keyframes scLine {
+        @keyframes scA {
             0% {
                 top: -100%
             }
@@ -769,10 +717,8 @@
             }
         }
 
-        /* ════════════════════════════════════════════════════
-   PAGE TRANSITION WIPE
-════════════════════════════════════════════════════ */
-        #page-wipe {
+        /* PAGE WIPE */
+        #pw {
             position: fixed;
             inset: 0;
             z-index: 9500;
@@ -782,7 +728,7 @@
             justify-content: center
         }
 
-        .wipe-ring {
+        .wr {
             position: absolute;
             border-radius: 50%;
             border: 2px solid rgba(212, 168, 67, .6);
@@ -790,34 +736,32 @@
             opacity: 0
         }
 
-        .wipe-ring:nth-child(1) {
+        .wr:nth-child(1) {
             width: 60px;
             height: 60px
         }
 
-        .wipe-ring:nth-child(2) {
+        .wr:nth-child(2) {
             width: 120px;
             height: 120px
         }
 
-        .wipe-ring:nth-child(3) {
+        .wr:nth-child(3) {
             width: 200px;
             height: 200px
         }
 
-        .wipe-center {
+        .wc {
             width: 20px;
             height: 20px;
             border-radius: 50%;
             background: var(--gold);
             transform: scale(0);
             opacity: 0;
-            box-shadow: 0 0 30px var(--glow-gold)
+            box-shadow: 0 0 30px var(--gg)
         }
 
-        /* ════════════════════════════════════════════════════
-   SECTIONS COMMON
-════════════════════════════════════════════════════ */
+        /* SECTIONS */
         .sw {
             position: relative;
             z-index: 1;
@@ -826,7 +770,7 @@
             margin: 0 auto
         }
 
-        .s-eye {
+        .seye {
             font-family: 'Cinzel', serif;
             font-size: 9.5px;
             letter-spacing: .48em;
@@ -839,12 +783,12 @@
             gap: 12px
         }
 
-        .s-eye::before {
+        .seye::before {
             content: '✦';
             font-size: 7px
         }
 
-        .s-title {
+        .stitle {
             font-family: 'Cinzel Decorative', cursive;
             font-size: clamp(30px, 5.5vw, 64px);
             font-weight: 700;
@@ -853,22 +797,16 @@
             letter-spacing: -.01em
         }
 
-        .s-title .acc {
+        .stitle .acc {
             color: var(--gold);
             text-shadow: 0 0 40px rgba(212, 168, 67, .22)
         }
 
-        /* split chars */
-        .split-char {
+        .sc {
             display: inline-block;
             opacity: 0;
-            transform: translateY(80px) rotateX(-40deg);
-            transform-origin: bottom
-        }
-
-        .split-word {
-            display: inline-block;
-            overflow: hidden
+            transform: translateY(60px) rotateX(-35deg);
+            transform-origin: bottom center
         }
 
         /* DIVIDER */
@@ -891,28 +829,28 @@
             background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .12), rgba(212, 168, 67, .32), rgba(212, 168, 67, .12), transparent)
         }
 
-        .adiv-gem {
+        .agm {
             width: 10px;
             height: 10px;
             background: var(--gold);
             transform: rotate(45deg);
-            box-shadow: 0 0 16px var(--glow-gold);
+            box-shadow: 0 0 16px var(--gg);
             position: relative;
             z-index: 1;
-            transition: transform .5s var(--ease-back), box-shadow .3s;
+            transition: transform .5s var(--eb), box-shadow .3s;
             cursor: none
         }
 
-        .adiv:hover .adiv-gem {
+        .adiv:hover .agm {
             transform: rotate(225deg) scale(1.6);
-            box-shadow: 0 0 30px var(--glow-gold)
+            box-shadow: 0 0 30px var(--gg)
         }
 
         /* PANELS */
         .ap {
             background: rgba(4, 3, 2, .78);
             backdrop-filter: blur(28px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--gb);
             position: relative;
             overflow: hidden;
             transition: border-color .4s, box-shadow .4s
@@ -938,6 +876,16 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .28), transparent);
             opacity: .28
+        }
+
+        .ap:hover {
+            border-color: rgba(212, 168, 67, .28);
+            box-shadow: 0 0 60px rgba(212, 168, 67, .05), 0 20px 60px rgba(0, 0, 0, .5)
+        }
+
+        .ap:hover .pc {
+            width: 24px;
+            height: 24px
         }
 
         .pc {
@@ -975,42 +923,29 @@
             border-right: 1px solid var(--gold)
         }
 
-        .ap:hover {
-            border-color: rgba(212, 168, 67, .28);
-            box-shadow: 0 0 60px rgba(212, 168, 67, .05), 0 20px 60px rgba(0, 0, 0, .5)
-        }
-
-        .ap:hover .pc {
-            width: 24px;
-            height: 24px
-        }
-
-        /* ════════════════════════════════════════════════════
-   ABOUT
-════════════════════════════════════════════════════ */
-        .about-grid {
+        /* ABOUT */
+        .agrid {
             display: grid;
             grid-template-columns: 1.3fr 1fr;
             gap: 72px;
             align-items: start
         }
 
-        .about-lore {
+        .alore {
             font-size: 19px;
             line-height: 2;
-            color: var(--parchment-dim);
+            color: var(--pdim);
             font-style: italic;
             margin-bottom: 28px
         }
 
-        .about-lore em {
+        .alore em {
             color: var(--gold);
             font-style: normal;
             text-shadow: 0 0 20px rgba(212, 168, 67, .28)
         }
 
-        /* typing terminal */
-        .terminal-box {
+        .tbox {
             font-family: 'Share Tech Mono', monospace;
             font-size: 13px;
             color: rgba(212, 168, 67, .4);
@@ -1020,66 +955,65 @@
             padding-left: 20px
         }
 
-        .t-line {
+        .tln {
             opacity: 0;
             transform: translateX(-10px);
             transition: opacity .4s, transform .4s
         }
 
-        .t-line.vis {
+        .tln.vis {
             opacity: 1;
             transform: translateX(0)
         }
 
-        .t-prompt {
+        .tpr {
             color: rgba(212, 168, 67, .6)
         }
 
-        .t-val {
+        .tval {
             color: rgba(245, 230, 200, .55)
         }
 
-        /* stats */
-        .about-facts {
+        .afacts {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--gb);
             position: relative;
             overflow: hidden
         }
 
-        .about-facts::before {
+        .afacts::before {
             content: '';
             position: absolute;
             inset: 0;
             background: linear-gradient(135deg, rgba(212, 168, 67, .025), transparent)
         }
 
-        .fact-cell {
+        .fc {
             padding: 30px 20px;
             text-align: center;
             position: relative;
             transition: background .4s, transform .3s
         }
 
-        .fact-cell:not(:last-child) {
-            border-right: 1px solid var(--glass-border)
+        .fc:not(:last-child) {
+            border-right: 1px solid var(--gb)
         }
 
-        .fact-cell:hover {
+        .fc:hover {
             background: rgba(212, 168, 67, .05);
             transform: translateY(-2px)
         }
 
-        .fact-val {
+        .fv {
             font-family: 'Cinzel Decorative', cursive;
             font-size: 34px;
             color: var(--gold);
             display: block;
-            text-shadow: 0 0 28px var(--glow-gold)
+            text-shadow: 0 0 28px var(--gg)
         }
 
-        .fact-lbl {
+        .fl {
             font-family: 'Cinzel', serif;
             font-size: 8.5px;
             letter-spacing: .3em;
@@ -1089,16 +1023,15 @@
             display: block
         }
 
-        /* skill tome */
-        .skills-tome {
+        .stome {
             padding: 42px
         }
 
-        .tome-sec {
+        .tsec {
             margin-bottom: 34px
         }
 
-        .tome-ttl {
+        .tttl {
             font-family: 'Cinzel', serif;
             font-size: 9.5px;
             letter-spacing: .32em;
@@ -1111,24 +1044,24 @@
             gap: 8px
         }
 
-        .tome-ttl::before {
+        .tttl::before {
             content: '◈';
             font-size: 8px
         }
 
-        .sk-line {
+        .skl {
             display: flex;
             align-items: center;
             gap: 12px;
             margin-bottom: 13px;
-            transition: transform .3s var(--ease-expo)
+            transition: transform .3s var(--ee)
         }
 
-        .sk-line:hover {
+        .skl:hover {
             transform: translateX(5px)
         }
 
-        .sk-name {
+        .skn {
             font-family: 'Crimson Text', serif;
             font-size: 15px;
             color: rgba(245, 230, 200, .52);
@@ -1137,11 +1070,11 @@
             transition: color .3s
         }
 
-        .sk-line:hover .sk-name {
+        .skl:hover .skn {
             color: rgba(245, 230, 200, .88)
         }
 
-        .sk-track {
+        .skt {
             flex: 1;
             height: 1.5px;
             background: rgba(212, 168, 67, .07);
@@ -1149,25 +1082,25 @@
             border-radius: 1px
         }
 
-        .sk-fill {
+        .skf {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
             background: linear-gradient(90deg, rgba(212, 168, 67, .5), var(--gold), var(--gold2));
-            box-shadow: 0 0 10px var(--glow-gold);
+            box-shadow: 0 0 10px var(--gg);
             transition: width 1.8s cubic-bezier(0.23, 1, 0.32, 1);
             border-radius: 1px;
             width: 0%
         }
 
-        .sk-gems {
+        .skgs {
             display: flex;
             gap: 4px;
             width: 64px
         }
 
-        .sk-gem {
+        .skg {
             width: 7px;
             height: 7px;
             transform: rotate(45deg);
@@ -1176,32 +1109,30 @@
             transition: all .4s
         }
 
-        .sk-gem.lit {
+        .skg.lit {
             background: var(--gold);
             border-color: var(--gold);
-            box-shadow: 0 0 8px var(--glow-gold)
+            box-shadow: 0 0 8px var(--gg)
         }
 
-        /* ════════════════════════════════════════════════════
-   PROJECTS
-════════════════════════════════════════════════════ */
-        .scrolls-grid {
+        /* PROJECTS */
+        .sgrid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 28px;
             margin-top: 64px
         }
 
-        .sc-card {
+        .scard {
             position: relative;
             padding: 44px;
             cursor: none;
-            transition: box-shadow .5s var(--ease-expo);
+            transition: box-shadow .5s var(--ee);
             overflow: hidden;
             transform-style: preserve-3d
         }
 
-        .sc-card .cb-shine {
+        .scard .cbs {
             position: absolute;
             inset: 0;
             background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(212, 168, 67, .09), transparent 55%);
@@ -1210,20 +1141,20 @@
             pointer-events: none
         }
 
-        .sc-card:hover .cb-shine {
+        .scard:hover .cbs {
             opacity: 1
         }
 
-        .sc-card:hover {
+        .scard:hover {
             box-shadow: 0 30px 80px rgba(0, 0, 0, .75), 0 0 60px rgba(212, 168, 67, .07), inset 0 1px 0 rgba(212, 168, 67, .18)
         }
 
-        .sc-card.legendary {
+        .scard.leg {
             grid-column: span 2;
             background: linear-gradient(135deg, rgba(212, 168, 67, .055), rgba(192, 57, 43, .03), rgba(123, 47, 190, .035))
         }
 
-        .sc-relic {
+        .srelic {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             letter-spacing: .3em;
@@ -1233,7 +1164,7 @@
             text-transform: uppercase
         }
 
-        .sc-badge {
+        .sbadge {
             display: inline-flex;
             align-items: center;
             gap: 7px;
@@ -1248,12 +1179,12 @@
             margin-bottom: 14px
         }
 
-        .sc-badge::before {
+        .sbadge::before {
             content: '✦';
             font-size: 7px
         }
 
-        .sc-title {
+        .sctitle {
             font-family: 'Cinzel Decorative', cursive;
             font-size: clamp(22px, 3vw, 36px);
             font-weight: 700;
@@ -1263,11 +1194,11 @@
             transition: color .35s
         }
 
-        .sc-card:hover .sc-title {
+        .scard:hover .sctitle {
             color: var(--gold)
         }
 
-        .sc-lore {
+        .slore {
             font-size: 16.5px;
             line-height: 1.88;
             color: rgba(245, 230, 200, .48);
@@ -1275,14 +1206,14 @@
             font-style: italic
         }
 
-        .sc-runes {
+        .srunes {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 22px
         }
 
-        .sc-rune {
+        .srune {
             font-family: 'Cinzel', serif;
             font-size: 8px;
             padding: 5px 14px;
@@ -1293,18 +1224,19 @@
             transition: all .3s
         }
 
-        .sc-rune:hover {
+        .srune:hover {
             border-color: rgba(212, 168, 67, .4);
             color: rgba(212, 168, 67, .8);
             background: rgba(212, 168, 67, .05)
         }
 
-        .sc-links {
+        .slinks {
             display: flex;
-            gap: 12px
+            gap: 12px;
+            flex-wrap: wrap
         }
 
-        .sc-link {
+        .slink {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 10px 22px;
@@ -1318,27 +1250,27 @@
             overflow: hidden
         }
 
-        .sc-link::before {
+        .slink::before {
             content: '';
             position: absolute;
             inset: 0;
             background: rgba(212, 168, 67, .08);
             transform: scaleX(0);
             transform-origin: left;
-            transition: transform .38s var(--ease-expo)
+            transition: transform .38s var(--ee)
         }
 
-        .sc-link:hover {
+        .slink:hover {
             border-color: rgba(212, 168, 67, .58);
             color: var(--gold);
-            text-shadow: 0 0 12px var(--glow-gold)
+            text-shadow: 0 0 12px var(--gg)
         }
 
-        .sc-link:hover::before {
+        .slink:hover::before {
             transform: scaleX(1)
         }
 
-        .card-glow {
+        .cglow {
             position: absolute;
             top: -80px;
             right: -80px;
@@ -1349,7 +1281,7 @@
             pointer-events: none
         }
 
-        .card-rune-bg {
+        .crune {
             position: absolute;
             bottom: 14px;
             right: 20px;
@@ -1360,13 +1292,28 @@
             transition: color .4s, transform .4s
         }
 
-        .sc-card:hover .card-rune-bg {
+        .scard:hover .crune {
             color: rgba(212, 168, 67, .09);
             transform: rotate(12deg) scale(1.1)
         }
 
-        /* Modal */
-        #modal-overlay {
+        .exhint {
+            font-family: 'Cinzel', serif;
+            font-size: 8px;
+            color: rgba(212, 168, 67, .3);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            margin-top: 16px;
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .scard:hover .exhint {
+            opacity: 1
+        }
+
+        /* MODAL */
+        #mo {
             position: fixed;
             inset: 0;
             z-index: 8000;
@@ -1380,12 +1327,12 @@
             transition: opacity .5s
         }
 
-        #modal-overlay.open {
+        #mo.open {
             opacity: 1;
             pointer-events: all
         }
 
-        .modal-box {
+        .mbox {
             position: relative;
             max-width: 800px;
             width: 90%;
@@ -1395,14 +1342,14 @@
             background: rgba(10, 7, 5, .95);
             border: 1px solid rgba(212, 168, 67, .2);
             transform: scale(.9) translateY(30px);
-            transition: transform .5s var(--ease-expo)
+            transition: transform .5s var(--ee)
         }
 
-        #modal-overlay.open .modal-box {
+        #mo.open .mbox {
             transform: scale(1) translateY(0)
         }
 
-        .modal-close {
+        .mcls {
             position: absolute;
             top: 18px;
             right: 20px;
@@ -1417,47 +1364,30 @@
             transition: all .3s
         }
 
-        .modal-close:hover {
+        .mcls:hover {
             border-color: var(--gold);
             color: var(--gold)
         }
 
-        .expand-hint {
-            font-family: 'Cinzel', serif;
-            font-size: 8px;
-            color: rgba(212, 168, 67, .3);
-            letter-spacing: .2em;
-            text-transform: uppercase;
-            margin-top: 16px;
-            opacity: 0;
-            transition: opacity .3s
-        }
-
-        .sc-card:hover .expand-hint {
-            opacity: 1
-        }
-
-        /* ════════════════════════════════════════════════════
-   SKILLS
-════════════════════════════════════════════════════ */
-        .arcane-arts {
+        /* SKILLS */
+        .aarts {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(134px, 1fr));
             gap: 16px;
             margin-top: 20px
         }
 
-        .art-orb {
+        .aorb {
             padding: 30px 16px;
             text-align: center;
-            transition: all .45s var(--ease-expo);
+            transition: all .45s var(--ee);
             cursor: none;
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(212, 168, 67, .07)
         }
 
-        .art-orb::before {
+        .aorb::before {
             content: '';
             position: absolute;
             top: -50px;
@@ -1468,10 +1398,10 @@
             border-radius: 50%;
             background: radial-gradient(circle, rgba(212, 168, 67, .32), transparent);
             opacity: 0;
-            transition: opacity .4s, top .4s var(--ease-expo)
+            transition: opacity .4s, top .4s var(--ee)
         }
 
-        .art-orb::after {
+        .aorb::after {
             content: '';
             position: absolute;
             bottom: 0;
@@ -1480,37 +1410,37 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             transform: scaleX(0);
-            transition: transform .4s var(--ease-expo)
+            transition: transform .4s var(--ee)
         }
 
-        .art-orb:hover {
+        .aorb:hover {
             transform: translateY(-9px) scale(1.04);
             border-color: rgba(212, 168, 67, .3);
             background: rgba(212, 168, 67, .035);
             box-shadow: 0 24px 48px rgba(0, 0, 0, .55), 0 0 36px rgba(212, 168, 67, .07)
         }
 
-        .art-orb:hover::before {
+        .aorb:hover::before {
             opacity: 1;
             top: -18px
         }
 
-        .art-orb:hover::after {
+        .aorb:hover::after {
             transform: scaleX(1)
         }
 
-        .art-icon {
+        .ai {
             font-size: 28px;
             margin-bottom: 12px;
             display: block;
-            transition: transform .4s var(--ease-back)
+            transition: transform .4s var(--eb)
         }
 
-        .art-orb:hover .art-icon {
+        .aorb:hover .ai {
             transform: scale(1.25) translateY(-5px)
         }
 
-        .art-name {
+        .an {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             letter-spacing: .14em;
@@ -1520,7 +1450,7 @@
             transition: color .3s
         }
 
-        .art-rank {
+        .ar {
             font-family: 'Crimson Text', serif;
             font-size: 12px;
             color: rgba(212, 168, 67, .28);
@@ -1530,15 +1460,15 @@
             transition: color .3s
         }
 
-        .art-orb:hover .art-name {
+        .aorb:hover .an {
             color: var(--gold)
         }
 
-        .art-orb:hover .art-rank {
+        .aorb:hover .ar {
             color: rgba(212, 168, 67, .58)
         }
 
-        .arts-cat {
+        .acat {
             font-family: 'Cinzel', serif;
             font-size: 9.5px;
             letter-spacing: .3em;
@@ -1550,35 +1480,32 @@
             gap: 14px
         }
 
-        .arts-cat::before,
-        .arts-cat::after {
+        .acat::before,
+        .acat::after {
             content: '';
             flex: 1;
             height: 1px;
             background: rgba(212, 168, 67, .07)
         }
 
-        /* radar chart */
-        .radar-wrap {
+        .rwrap {
             display: flex;
             justify-content: center;
             margin: 40px 0 20px
         }
 
-        #radar-canvas {
+        #rcanvas {
             filter: drop-shadow(0 0 20px rgba(212, 168, 67, .2))
         }
 
-        /* ════════════════════════════════════════════════════
-   CONTACT
-════════════════════════════════════════════════════ */
-        #contact-wrap {
+        /* CONTACT */
+        #cwrap {
             text-align: center;
             max-width: 920px;
             margin: 0 auto
         }
 
-        .contact-lore {
+        .clore {
             font-size: 18.5px;
             line-height: 1.95;
             color: rgba(245, 230, 200, .48);
@@ -1586,7 +1513,7 @@
             margin-bottom: 52px
         }
 
-        .summon-email {
+        .semail {
             font-family: 'Cinzel Decorative', cursive;
             font-size: clamp(15px, 2.8vw, 28px);
             color: var(--parchment);
@@ -1597,7 +1524,7 @@
             transition: all .4s
         }
 
-        .summon-email::after {
+        .semail::after {
             content: '';
             position: absolute;
             bottom: 0;
@@ -1606,19 +1533,19 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             transform: scaleX(0);
-            transition: transform .6s var(--ease-expo)
+            transition: transform .6s var(--ee)
         }
 
-        .summon-email:hover {
+        .semail:hover {
             color: var(--gold);
-            text-shadow: 0 0 36px var(--glow-gold)
+            text-shadow: 0 0 36px var(--gg)
         }
 
-        .summon-email:hover::after {
+        .semail:hover::after {
             transform: scaleX(1)
         }
 
-        .portal-links {
+        .plinks {
             display: flex;
             gap: 14px;
             justify-content: center;
@@ -1626,7 +1553,7 @@
             margin-top: 52px
         }
 
-        .portal-link {
+        .plink {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 13px 30px;
@@ -1641,22 +1568,14 @@
             overflow: hidden
         }
 
-        .portal-link::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(212, 168, 67, 0);
-            transition: background .3s
-        }
-
-        .portal-link:hover {
+        .plink:hover {
             border-color: rgba(212, 168, 67, .52);
             color: var(--gold);
-            text-shadow: 0 0 10px var(--glow-gold);
+            text-shadow: 0 0 10px var(--gg);
             box-shadow: 0 0 32px rgba(212, 168, 67, .08)
         }
 
-        .grimoire {
+        .grim {
             font-family: 'Share Tech Mono', monospace;
             font-size: 11.5px;
             line-height: 2.5;
@@ -1670,7 +1589,7 @@
             position: relative
         }
 
-        .grimoire::before {
+        .grim::before {
             content: 'GRIMOIRE — RECORDS OF THE ARCANE ORDER';
             position: absolute;
             top: -10px;
@@ -1682,22 +1601,20 @@
             color: rgba(212, 168, 67, .36)
         }
 
-        .g-green {
+        .gg {
             color: #5aad7a
         }
 
-        .g-gold {
+        .ggold {
             color: var(--gold);
             opacity: .78
         }
 
-        .g-bright {
+        .gbr {
             color: rgba(245, 230, 200, .62)
         }
 
-        /* ════════════════════════════════════════════════════
-   FOOTER
-════════════════════════════════════════════════════ */
+        /* FOOTER */
         footer {
             border-top: 1px solid rgba(212, 168, 67, .07);
             padding: 36px 6vw;
@@ -1713,15 +1630,12 @@
             z-index: 1
         }
 
-        /* ════════════════════════════════════════════════════
-   LIGHT THEME
-════════════════════════════════════════════════════ */
+        /* LIGHT THEME */
         body.light {
             --dark: #f0e8d5;
-            --dark2: #e8dcc8;
             --parchment: #2a1a08;
-            --parchment-dim: rgba(42, 26, 8, .65);
-            --glass-border: rgba(140, 80, 20, .18);
+            --pdim: rgba(42, 26, 8, .65);
+            --gb: rgba(140, 80, 20, .18);
             background: var(--dark)
         }
 
@@ -1733,19 +1647,16 @@
             background: rgba(240, 232, 213, .92)
         }
 
-        body.light .grimoire {
-            background: rgba(240, 232, 213, .6);
-            border-color: rgba(140, 80, 20, .1)
+        body.light .grim {
+            background: rgba(240, 232, 213, .6)
         }
 
         body.light #noise {
-            opacity: .025
+            opacity: .022
         }
 
-        /* ════════════════════════════════════════════════════
-   KONAMI / EASTER EGG
-════════════════════════════════════════════════════ */
-        #easter-egg {
+        /* EASTER EGG */
+        #egg {
             position: fixed;
             inset: 0;
             z-index: 20000;
@@ -1760,21 +1671,21 @@
             gap: 20px
         }
 
-        #easter-egg.show {
+        #egg.show {
             opacity: 1;
             pointer-events: all
         }
 
-        .egg-text {
+        .etxt {
             font-family: 'Cinzel Decorative', cursive;
             font-size: clamp(20px, 4vw, 48px);
             color: var(--gold);
             text-align: center;
-            text-shadow: 0 0 60px var(--glow-gold);
-            animation: eggPulse 1.5s ease-in-out infinite alternate
+            text-shadow: 0 0 60px var(--gg);
+            animation: ep 1.5s ease-in-out infinite alternate
         }
 
-        .egg-sub {
+        .esub {
             font-family: 'Cinzel', serif;
             font-size: 11px;
             letter-spacing: .4em;
@@ -1782,17 +1693,17 @@
             text-transform: uppercase
         }
 
-        @keyframes eggPulse {
+        @keyframes ep {
             from {
-                text-shadow: 0 0 20px var(--glow-gold)
+                text-shadow: 0 0 20px var(--gg)
             }
 
             to {
-                text-shadow: 0 0 80px var(--glow-gold), 0 0 120px rgba(212, 168, 67, .3)
+                text-shadow: 0 0 80px var(--gg), 0 0 120px rgba(212, 168, 67, .3)
             }
         }
 
-        .egg-close {
+        .ecls {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 10px 24px;
@@ -1806,30 +1717,28 @@
             margin-top: 20px
         }
 
-        .egg-close:hover {
+        .ecls:hover {
             border-color: var(--gold);
             color: var(--gold)
         }
 
-        #egg-canvas {
+        #eggc {
             position: absolute;
             inset: 0;
             pointer-events: none
         }
 
-        /* ════════════════════════════════════════════════════
-   FLOATING RUNES
-════════════════════════════════════════════════════ */
+        /* FLOATING RUNES */
         .fr {
             position: fixed;
             font-family: 'Cinzel Decorative', cursive;
             color: rgba(212, 168, 67, .048);
             pointer-events: none;
             z-index: 0;
-            animation: frFloat linear infinite
+            animation: frF linear infinite
         }
 
-        @keyframes frFloat {
+        @keyframes frF {
             0% {
                 transform: translateY(110vh) rotate(0deg);
                 opacity: 0
@@ -1849,13 +1758,11 @@
             }
         }
 
-        /* ════════════════════════════════════════════════════
-   REVEAL
-════════════════════════════════════════════════════ */
+        /* REVEAL */
         .rv {
             opacity: 0;
             transform: translateY(55px);
-            transition: opacity 1s var(--ease-expo), transform 1s var(--ease-expo)
+            transition: opacity 1s var(--ee), transform 1s var(--ee)
         }
 
         .rv.vis {
@@ -1863,36 +1770,34 @@
             transform: translateY(0)
         }
 
-        .rv-d1 {
+        .rv1 {
             transition-delay: .12s
         }
 
-        .rv-d2 {
+        .rv2 {
             transition-delay: .24s
         }
 
-        .rv-d3 {
+        .rv3 {
             transition-delay: .36s
         }
 
-        /* ════════════════════════════════════════════════════
-   MOBILE
-════════════════════════════════════════════════════ */
+        /* MOBILE */
         @media(max-width:768px) {
             nav {
-                gap: 12px;
-                padding: 11px 18px
+                gap: 10px;
+                padding: 11px 16px
             }
 
-            .about-grid {
+            .agrid {
                 grid-template-columns: 1fr
             }
 
-            .scrolls-grid {
+            .sgrid {
                 grid-template-columns: 1fr
             }
 
-            .sc-card.legendary {
+            .scard.leg {
                 grid-column: span 1
             }
 
@@ -1902,7 +1807,7 @@
                 text-align: center
             }
 
-            .hero-title {
+            .htitle {
                 font-size: clamp(38px, 12vw, 80px)
             }
         }
@@ -1911,19 +1816,14 @@
 
 <body>
 
-    <!-- CURSOR -->
-    <div id="c-dot"></div>
-    <div id="c-ring"></div>
-    <div id="c-aura"></div>
+    <div id="cd"></div>
+    <div id="cr"></div>
+    <div id="ca"></div>
     <div id="prog"></div>
-
-    <!-- NOISE + AMBIENT -->
     <div id="noise"></div>
     <div class="amb a1"></div>
     <div class="amb a2"></div>
     <div class="amb a3"></div>
-
-    <!-- FLOATING RUNES -->
     <div class="fr" style="font-size:24px;left:4%;animation-duration:22s;animation-delay:0s">ᚱ</div>
     <div class="fr" style="font-size:16px;left:19%;animation-duration:27s;animation-delay:5s">ᚷ</div>
     <div class="fr" style="font-size:30px;left:77%;animation-duration:19s;animation-delay:9s">ᚹ</div>
@@ -1933,179 +1833,179 @@
 
     <!-- LOADER -->
     <div id="loader">
-        <div class="l-outer">
-            <div class="l-ring">
-                <div class="l-ring-dot"></div>
+        <div class="lo">
+            <div class="lr">
+                <div class="lrd"></div>
             </div>
-            <div class="l-ring">
-                <div class="l-ring-dot"></div>
+            <div class="lr">
+                <div class="lrd"></div>
             </div>
-            <div class="l-ring">
-                <div class="l-ring-dot"></div>
+            <div class="lr">
+                <div class="lrd"></div>
             </div>
-            <div class="l-ring">
-                <div class="l-ring-dot"></div>
+            <div class="lr">
+                <div class="lrd"></div>
             </div>
-            <div class="l-core"></div>
+            <div class="lcore"></div>
         </div>
-        <div class="l-label">Awakening the Arcane</div>
-        <div class="l-bar">
-            <div class="l-fill" id="lf"></div>
+        <div class="ll">Awakening the Arcane</div>
+        <div class="lb">
+            <div class="lf" id="lf"></div>
         </div>
-        <div class="l-log" id="ll"></div>
-        <div class="l-pct" id="lpct">0%</div>
+        <div class="llog" id="llog"></div>
+        <div class="lpct" id="lpct">0%</div>
     </div>
 
     <!-- PAGE WIPE -->
-    <div id="page-wipe">
-        <div class="wipe-ring"></div>
-        <div class="wipe-ring"></div>
-        <div class="wipe-ring"></div>
-        <div class="wipe-center"></div>
+    <div id="pw">
+        <div class="wr"></div>
+        <div class="wr"></div>
+        <div class="wr"></div>
+        <div class="wc"></div>
     </div>
 
     <!-- NAV -->
     <nav id="nav">
-        <a href="#hero" class="nav-link">Origin</a>
-        <a href="#about" class="nav-link">Chronicle</a>
-        <a href="#projects" class="nav-link">Quests</a>
-        <a href="#skills" class="nav-link">Grimoire</a>
-        <a href="#contact" class="nav-link">Summon</a>
-        <button class="theme-btn" id="themeBtn" title="Toggle theme">☀ Parchment</button>
-        <button class="sound-btn" id="soundBtn" title="Toggle sound">🔇</button>
+        <a href="#hero" class="nl">Origin</a>
+        <a href="#about" class="nl">Chronicle</a>
+        <a href="#projects" class="nl">Quests</a>
+        <a href="#skills" class="nl">Grimoire</a>
+        <a href="#contact" class="nl">Summon</a>
+        <button class="tbtn" id="themeBtn">☀ Parchment</button>
+        <button class="sbtn" id="soundBtn">🔇</button>
     </nav>
 
-    <!-- ══════════════════════════ HERO -->
+    <!-- HERO -->
     <section id="hero">
-        <canvas id="threejs-canvas"></canvas>
-        <div class="hero-vignette"></div>
-        <div class="hero-inner" id="heroInner">
-            <div class="hero-eyebrow" id="heroEye">◈ The Arcane Engineer Awakens ◈</div>
-            <h1 class="hero-title" id="heroTitle">
-                <span id="titleLine1">YATIN</span><br />
-                <span class="name-gold" id="titleLine2">ANCHAN</span>
+        <canvas id="tc"></canvas>
+        <div class="hvig"></div>
+        <div class="hi" id="hi">
+            <div class="hey" id="hey">◈ The Arcane Engineer Awakens ◈</div>
+            <h1 class="htitle" id="ht">
+                <span id="tl1">YATIN</span><br />
+                <span class="ng" id="tl2">ANCHAN</span>
             </h1>
-            <div class="hero-div" id="heroDivider"><span>AI Engineer · Deep Learning · Builder</span></div>
-            <p class="hero-sub" id="heroSub">"Build things that matter." — Maharashtra, India 🇮🇳</p>
-            <div class="hero-cta" id="heroCta">
-                <a href="#projects" class="btn-a primary">View Quests</a>
-                <a href="#contact" class="btn-a">Summon Me</a>
+            <div class="hdiv" id="hdiv"><span>AI Engineer · Deep Learning · Builder</span></div>
+            <p class="hsub" id="hsub">"Build things that matter." — Maharashtra, India 🇮🇳</p>
+            <div class="hcta" id="hcta">
+                <a href="#projects" class="bta pr">View Quests</a>
+                <a href="#contact" class="bta">Summon Me</a>
             </div>
         </div>
-        <div class="hero-scroll-cue" id="scrollCue">
-            <div class="sc-label">Descend</div>
-            <div class="sc-track">
-                <div class="sc-line"></div>
+        <div class="hsc" id="hsc">
+            <div class="sclbl">Descend</div>
+            <div class="sct">
+                <div class="scl"></div>
             </div>
         </div>
     </section>
 
     <div class="adiv">
-        <div class="adiv-gem"></div>
+        <div class="agm"></div>
     </div>
 
-    <!-- ══════════════════════════ ABOUT -->
+    <!-- ABOUT -->
     <section id="about">
         <div class="sw">
-            <div class="about-grid">
+            <div class="agrid">
                 <div class="rv">
-                    <div class="s-eye">Chapter I · The Scholar's Chronicle</div>
-                    <h2 class="s-title split-title">Forged in<br /><span class="acc">Fire &amp; Code</span></h2>
-                    <p class="about-lore">An <em>AI/ML Engineer</em> born of Maharashtra, pursuing B.Sc. Computer
-                        Science at Royal College. I conjure systems bridging the ancient and the futuristic — from
-                        <em>real-time driver safety AI</em> published in international research journals, to
+                    <div class="seye">Chapter I · The Scholar's Chronicle</div>
+                    <h2 class="stitle split-title">Forged in<br /><span class="acc">Fire &amp; Code</span></h2>
+                    <p class="alore">An <em>AI/ML Engineer</em> born of Maharashtra, pursuing B.Sc. Computer Science at
+                        Royal College. I conjure systems bridging the ancient and the futuristic — from <em>real-time
+                            driver safety AI</em> published in international research journals, to
                         <em>blockchain-powered donation protocols</em> built for transparent aid.</p>
-                    <p class="about-lore">Trained by open-source orders, certified by <em>ISRO</em> in the mystic arts
-                        of Geospatial AI. I debug at 2AM and call it ritual.</p>
-                    <div class="terminal-box" id="terminalBox">
-                        <div class="t-line" id="tl0"><span class="t-prompt">❯</span> class ............. <span
-                                class="t-val" id="tv0"></span></div>
-                        <div class="t-line" id="tl1"><span class="t-prompt">❯</span> origin ............ <span
-                                class="t-val" id="tv1"></span></div>
-                        <div class="t-line" id="tl2"><span class="t-prompt">❯</span> faction ........... <span
-                                class="t-val" id="tv2"></span></div>
-                        <div class="t-line" id="tl3"><span class="t-prompt">❯</span> wildcard .......... <span
-                                class="t-val" id="tv3"></span></div>
-                        <div class="t-line" id="tl4"><span class="t-prompt">❯</span> motto ............. <span
-                                class="t-val" id="tv4"></span></div>
+                    <p class="alore">Trained by open-source orders, certified by <em>ISRO</em> in the mystic arts of
+                        Geospatial AI. I debug at 2AM and call it ritual.</p>
+                    <div class="tbox" id="tbox">
+                        <div class="tln" id="tln0"><span class="tpr">❯</span> class ............. <span class="tval"
+                                id="tv0"></span></div>
+                        <div class="tln" id="tln1"><span class="tpr">❯</span> origin ............ <span class="tval"
+                                id="tv1"></span></div>
+                        <div class="tln" id="tln2"><span class="tpr">❯</span> faction ........... <span class="tval"
+                                id="tv2"></span></div>
+                        <div class="tln" id="tln3"><span class="tpr">❯</span> wildcard .......... <span class="tval"
+                                id="tv3"></span></div>
+                        <div class="tln" id="tln4"><span class="tpr">❯</span> motto ............. <span class="tval"
+                                id="tv4"></span></div>
                     </div>
-                    <div class="about-facts ap rv-d1" style="margin-top:40px">
+                    <div class="afacts ap rv1" style="margin-top:40px">
                         <div class="pc tl"></div>
                         <div class="pc tr"></div>
                         <div class="pc bl"></div>
                         <div class="pc br"></div>
-                        <div class="fact-cell"><span class="fact-val" data-count="4" data-suffix="+">0</span><span
-                                class="fact-lbl">Quests Complete</span></div>
-                        <div class="fact-cell"><span class="fact-val" data-count="1">0</span><span
-                                class="fact-lbl">Published Tome</span></div>
-                        <div class="fact-cell"><span class="fact-val" data-count-dec="9.4">0</span><span
-                                class="fact-lbl">Arcane CGPI</span></div>
+                        <div class="fc"><span class="fv" data-count="4" data-suf="+">0</span><span class="fl">Quests
+                                Complete</span></div>
+                        <div class="fc"><span class="fv" data-count="1">0</span><span class="fl">Published Tome</span>
+                        </div>
+                        <div class="fc"><span class="fv" data-dec="9.4">0</span><span class="fl">Arcane CGPI</span>
+                        </div>
                     </div>
                 </div>
-                <div class="rv rv-d2">
-                    <div class="skills-tome ap">
+                <div class="rv rv2">
+                    <div class="stome ap">
                         <div class="pc tl"></div>
                         <div class="pc tr"></div>
                         <div class="pc bl"></div>
                         <div class="pc br"></div>
-                        <div class="tome-sec">
-                            <div class="tome-ttl">Core Languages</div>
-                            <div class="sk-line"><span class="sk-name">Python</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="95%"></div>
+                        <div class="tsec">
+                            <div class="tttl">Core Languages</div>
+                            <div class="skl"><span class="skn">Python</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="95%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="5"></div>
+                                <div class="skgs" data-gems="5"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">Kotlin</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="80%"></div>
+                            <div class="skl"><span class="skn">Kotlin</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="80%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="4"></div>
+                                <div class="skgs" data-gems="4"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">JavaScript</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="75%"></div>
+                            <div class="skl"><span class="skn">JavaScript</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="75%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="4"></div>
+                                <div class="skgs" data-gems="4"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">TypeScript</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="70%"></div>
+                            <div class="skl"><span class="skn">TypeScript</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="70%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="4"></div>
+                                <div class="skgs" data-gems="4"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">C++</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="60%"></div>
+                            <div class="skl"><span class="skn">C++</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="60%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="3"></div>
+                                <div class="skgs" data-gems="3"></div>
                             </div>
                         </div>
-                        <div class="tome-sec">
-                            <div class="tome-ttl">AI · ML Arts</div>
-                            <div class="sk-line"><span class="sk-name">MediaPipe</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="92%"></div>
+                        <div class="tsec">
+                            <div class="tttl">AI · ML Arts</div>
+                            <div class="skl"><span class="skn">MediaPipe</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="92%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="5"></div>
+                                <div class="skgs" data-gems="5"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">PyTorch</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="82%"></div>
+                            <div class="skl"><span class="skn">PyTorch</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="82%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="4"></div>
+                                <div class="skgs" data-gems="4"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">TensorFlow</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="76%"></div>
+                            <div class="skl"><span class="skn">TensorFlow</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="76%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="4"></div>
+                                <div class="skgs" data-gems="4"></div>
                             </div>
-                            <div class="sk-line"><span class="sk-name">OpenCV</span>
-                                <div class="sk-track">
-                                    <div class="sk-fill" data-w="80%"></div>
+                            <div class="skl"><span class="skn">OpenCV</span>
+                                <div class="skt">
+                                    <div class="skf" data-w="80%"></div>
                                 </div>
-                                <div class="sk-gems" data-gems="4"></div>
+                                <div class="skgs" data-gems="4"></div>
                             </div>
                         </div>
                     </div>
@@ -2115,229 +2015,222 @@
     </section>
 
     <div class="adiv">
-        <div class="adiv-gem"></div>
+        <div class="agm"></div>
     </div>
 
-    <!-- ══════════════════════════ PROJECTS -->
+    <!-- PROJECTS -->
     <section id="projects">
         <div class="sw">
             <div class="rv">
-                <div class="s-eye">Chapter II · The Legendary Quests</div>
-                <h2 class="s-title split-title">Tomes of<br /><span class="acc">Great Works</span></h2>
+                <div class="seye">Chapter II · The Legendary Quests</div>
+                <h2 class="stitle split-title">Tomes of<br /><span class="acc">Great Works</span></h2>
             </div>
-            <div class="scrolls-grid">
-
-                <div class="sc-card legendary ap rv" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+            <div class="sgrid">
+                <div class="scard leg ap rv" onmousemove="cTilt(this,event)" onmouseleave="cReset(this)"
                     onclick="openModal('autonix')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
-                    <div class="card-glow"></div>
-                    <div class="cb-shine"></div>
-                    <div class="card-rune-bg">ᚱ</div>
-                    <div class="sc-badge">Legendary · Published in International Journal</div>
-                    <div class="sc-relic">Quest I · Main Chronicle · Active</div>
-                    <div class="sc-title">AUTONIX</div>
-                    <p class="sc-lore">An Android safety application using real-time AI to guard against driver
+                    <div class="cglow"></div>
+                    <div class="cbs"></div>
+                    <div class="crune">ᚱ</div>
+                    <div class="sbadge">Legendary · Published in International Journal</div>
+                    <div class="srelic">Quest I · Main Chronicle · Active</div>
+                    <div class="sctitle">AUTONIX</div>
+                    <p class="slore">An Android safety application using real-time AI to guard against driver
                         drowsiness. 468-point facial landmark tracking via MediaPipe detects eye closure through EAR
-                        mathematics.</p>
-                    <div class="sc-runes"><span class="sc-rune">Kotlin</span><span class="sc-rune">MediaPipe</span><span
-                            class="sc-rune">Firebase</span><span class="sc-rune">ML Kit</span><span
-                            class="sc-rune">Android</span></div>
-                    <div class="sc-links">
-                        <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="sc-link"
-                            onclick="e=>e.stopPropagation()">The Vault →</a>
-                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">The
-                            Realm →</a>
-                        <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank" class="sc-link">The
-                            Tome →</a>
+                        mathematics. Accelerometer & Gyroscope fusion triggers crash detection.</p>
+                    <div class="srunes"><span class="srune">Kotlin</span><span class="srune">MediaPipe</span><span
+                            class="srune">Firebase</span><span class="srune">ML Kit</span><span
+                            class="srune">Android</span></div>
+                    <div class="slinks">
+                        <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Vault →</a>
+                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Realm →</a>
+                        <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Tome →</a>
                     </div>
-                    <div class="expand-hint">✦ Click to expand</div>
+                    <div class="exhint">✦ Click to expand</div>
                 </div>
-
-                <div class="sc-card ap rv rv-d1" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                <div class="scard ap rv rv1" onmousemove="cTilt(this,event)" onmouseleave="cReset(this)"
                     onclick="openModal('daansetu')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
-                    <div class="card-glow"></div>
-                    <div class="cb-shine"></div>
-                    <div class="card-rune-bg">ᚷ</div>
-                    <div class="sc-relic">Quest II · Guild Mission · In Progress</div>
-                    <div class="sc-title">DaanSetu</div>
-                    <p class="sc-lore">A blockchain-powered donation platform on Polygon — every coin of aid is publicly
-                        verifiable, immutable, and incorruptible. Geolocation targets relief to the afflicted.</p>
-                    <div class="sc-runes"><span class="sc-rune">React</span><span class="sc-rune">Ethers.js</span><span
-                            class="sc-rune">Polygon</span><span class="sc-rune">IPFS</span></div>
-                    <div class="sc-links"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank"
-                            class="sc-link">The Vault →</a></div>
-                    <div class="expand-hint">✦ Click to expand</div>
+                    <div class="cglow"></div>
+                    <div class="cbs"></div>
+                    <div class="crune">ᚷ</div>
+                    <div class="srelic">Quest II · Guild Mission · In Progress</div>
+                    <div class="sctitle">DaanSetu</div>
+                    <p class="slore">A blockchain-powered donation platform on Polygon — every coin of aid is publicly
+                        verifiable, immutable, and incorruptible. Geolocation targets relief to the afflicted. IPFS for
+                        decentralized campaign scrolls.</p>
+                    <div class="srunes"><span class="srune">React</span><span class="srune">Ethers.js</span><span
+                            class="srune">Polygon</span><span class="srune">IPFS</span></div>
+                    <div class="slinks"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Vault →</a></div>
+                    <div class="exhint">✦ Click to expand</div>
                 </div>
-
-                <div class="sc-card ap rv rv-d2" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                <div class="scard ap rv rv2" onmousemove="cTilt(this,event)" onmouseleave="cReset(this)"
                     onclick="openModal('pyos')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
-                    <div class="card-glow"></div>
-                    <div class="cb-shine"></div>
-                    <div class="card-rune-bg">ᚹ</div>
-                    <div class="sc-relic">Quest III · Solo Endeavour · Complete</div>
-                    <div class="sc-title">Py_OS</div>
-                    <p class="sc-lore">A simulated kingdom of computing — a fully functional operating system conjured
-                        in pure Python. File realms, software markets, drag-and-drop sorcery.</p>
-                    <div class="sc-runes"><span class="sc-rune">Python</span><span class="sc-rune">Tkinter</span><span
-                            class="sc-rune">Custom GUI</span></div>
-                    <div class="sc-links"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank"
-                            class="sc-link">The Vault →</a></div>
-                    <div class="expand-hint">✦ Click to expand</div>
+                    <div class="cglow"></div>
+                    <div class="cbs"></div>
+                    <div class="crune">ᚹ</div>
+                    <div class="srelic">Quest III · Solo Endeavour · Complete</div>
+                    <div class="sctitle">Py_OS</div>
+                    <p class="slore">A simulated kingdom of computing — a fully functional operating system conjured in
+                        pure Python. File realms, software markets, drag-and-drop sorcery, and living notifications.</p>
+                    <div class="srunes"><span class="srune">Python</span><span class="srune">Tkinter</span><span
+                            class="srune">Custom GUI</span></div>
+                    <div class="slinks"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Vault →</a></div>
+                    <div class="exhint">✦ Click to expand</div>
                 </div>
-
-                <div class="sc-card ap rv rv-d3" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                <div class="scard ap rv rv3" onmousemove="cTilt(this,event)" onmouseleave="cReset(this)"
                     onclick="openModal('autonixweb')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
-                    <div class="card-glow"></div>
-                    <div class="cb-shine"></div>
-                    <div class="card-rune-bg">ᛟ</div>
-                    <div class="sc-relic">Quest IV · Artisan Craft · Deployed</div>
-                    <div class="sc-title">AUTONIX Website</div>
-                    <p class="sc-lore">A cinematic digital exhibition — no frameworks, pure incantations of HTML, CSS,
-                        and Vanilla JS. Particles form a motorcycle. 3D mouse-tilt.</p>
-                    <div class="sc-runes"><span class="sc-rune">HTML5</span><span class="sc-rune">CSS3</span><span
-                            class="sc-rune">Vanilla JS</span><span class="sc-rune">Canvas</span></div>
-                    <div class="sc-links">
-                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">The
-                            Realm →</a>
-                        <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank" class="sc-link">The
-                            Vault →</a>
+                    <div class="cglow"></div>
+                    <div class="cbs"></div>
+                    <div class="crune">ᛟ</div>
+                    <div class="srelic">Quest IV · Artisan Craft · Deployed</div>
+                    <div class="sctitle">AUTONIX Website</div>
+                    <p class="slore">A cinematic digital exhibition — no frameworks, pure incantations of HTML, CSS, and
+                        Vanilla JS. Particles form a motorcycle. 3D mouse-tilt. Live webcam EAR oracle.</p>
+                    <div class="srunes"><span class="srune">HTML5</span><span class="srune">CSS3</span><span
+                            class="srune">Vanilla JS</span><span class="srune">Canvas</span></div>
+                    <div class="slinks">
+                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Realm →</a>
+                        <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank" class="slink"
+                            onclick="event.stopPropagation()">The Vault →</a>
                     </div>
-                    <div class="expand-hint">✦ Click to expand</div>
+                    <div class="exhint">✦ Click to expand</div>
                 </div>
-
             </div>
         </div>
     </section>
 
-    <!-- PROJECT MODAL -->
-    <div id="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-box ap" onclick="e=>e.stopPropagation()">
+    <!-- MODAL -->
+    <div id="mo" onclick="closeModal(event)">
+        <div class="mbox ap" onclick="event.stopPropagation()">
             <div class="pc tl"></div>
             <div class="pc tr"></div>
             <div class="pc bl"></div>
             <div class="pc br"></div>
-            <button class="modal-close" onclick="closeModal()">✕ Close</button>
-            <div id="modal-content"></div>
+            <button class="mcls" onclick="closeModal()">✕ Close</button>
+            <div id="mc"></div>
         </div>
     </div>
 
     <div class="adiv">
-        <div class="adiv-gem"></div>
+        <div class="agm"></div>
     </div>
 
-    <!-- ══════════════════════════ SKILLS -->
+    <!-- SKILLS -->
     <section id="skills">
         <div class="sw">
             <div class="rv">
-                <div class="s-eye">Chapter III · The Arcane Arsenal</div>
-                <h2 class="s-title split-title">Mastered<br /><span class="acc">Disciplines</span></h2>
+                <div class="seye">Chapter III · The Arcane Arsenal</div>
+                <h2 class="stitle split-title">Mastered<br /><span class="acc">Disciplines</span></h2>
             </div>
-            <!-- Radar Chart -->
-            <div class="rv radar-wrap">
-                <canvas id="radar-canvas" width="420" height="420"></canvas>
-            </div>
+            <div class="rv rwrap"><canvas id="rcanvas" width="420" height="420"></canvas></div>
             <div class="rv">
-                <div class="arts-cat">AI · Machine Learning · Vision</div>
-                <div class="arcane-arts">
-                    <div class="art-orb"><span class="art-icon">🔥</span><span class="art-name">PyTorch</span><span
-                            class="art-rank">Advanced</span></div>
-                    <div class="art-orb"><span class="art-icon">🧠</span><span class="art-name">TensorFlow</span><span
-                            class="art-rank">Advanced</span></div>
-                    <div class="art-orb"><span class="art-icon">👁</span><span class="art-name">MediaPipe</span><span
-                            class="art-rank">Expert</span></div>
-                    <div class="art-orb"><span class="art-icon">📷</span><span class="art-name">OpenCV</span><span
-                            class="art-rank">Advanced</span></div>
-                    <div class="art-orb"><span class="art-icon">🤗</span><span class="art-name">HuggingFace</span><span
-                            class="art-rank">Apprentice</span></div>
-                    <div class="art-orb"><span class="art-icon">📊</span><span class="art-name">Numpy·Pandas</span><span
-                            class="art-rank">Expert</span></div>
+                <div class="acat">AI · Machine Learning · Vision</div>
+                <div class="aarts">
+                    <div class="aorb"><span class="ai">🔥</span><span class="an">PyTorch</span><span
+                            class="ar">Advanced</span></div>
+                    <div class="aorb"><span class="ai">🧠</span><span class="an">TensorFlow</span><span
+                            class="ar">Advanced</span></div>
+                    <div class="aorb"><span class="ai">👁</span><span class="an">MediaPipe</span><span
+                            class="ar">Expert</span></div>
+                    <div class="aorb"><span class="ai">📷</span><span class="an">OpenCV</span><span
+                            class="ar">Advanced</span></div>
+                    <div class="aorb"><span class="ai">🤗</span><span class="an">HuggingFace</span><span
+                            class="ar">Apprentice</span></div>
+                    <div class="aorb"><span class="ai">📊</span><span class="an">Numpy·Pandas</span><span
+                            class="ar">Expert</span></div>
                 </div>
             </div>
-            <div class="rv rv-d1">
-                <div class="arts-cat">Frameworks · Platforms</div>
-                <div class="arcane-arts">
-                    <div class="art-orb"><span class="art-icon">⚛️</span><span class="art-name">React</span><span
-                            class="art-rank">Journeyman</span></div>
-                    <div class="art-orb"><span class="art-icon">🟢</span><span class="art-name">Node.js</span><span
-                            class="art-rank">Journeyman</span></div>
-                    <div class="art-orb"><span class="art-icon">🐍</span><span class="art-name">Django</span><span
-                            class="art-rank">Journeyman</span></div>
-                    <div class="art-orb"><span class="art-icon">📱</span><span class="art-name">Android</span><span
-                            class="art-rank">Advanced</span></div>
+            <div class="rv rv1">
+                <div class="acat">Frameworks · Platforms</div>
+                <div class="aarts">
+                    <div class="aorb"><span class="ai">⚛️</span><span class="an">React</span><span
+                            class="ar">Journeyman</span></div>
+                    <div class="aorb"><span class="ai">🟢</span><span class="an">Node.js</span><span
+                            class="ar">Journeyman</span></div>
+                    <div class="aorb"><span class="ai">🐍</span><span class="an">Django</span><span
+                            class="ar">Journeyman</span></div>
+                    <div class="aorb"><span class="ai">📱</span><span class="an">Android</span><span
+                            class="ar">Advanced</span></div>
                 </div>
             </div>
-            <div class="rv rv-d2">
-                <div class="arts-cat">Databases · Cloud · Web3</div>
-                <div class="arcane-arts">
-                    <div class="art-orb"><span class="art-icon">🔥</span><span class="art-name">Firebase</span><span
-                            class="art-rank">Advanced</span></div>
-                    <div class="art-orb"><span class="art-icon">🍃</span><span class="art-name">MongoDB</span><span
-                            class="art-rank">Journeyman</span></div>
-                    <div class="art-orb"><span class="art-icon">🐬</span><span class="art-name">MySQL</span><span
-                            class="art-rank">Journeyman</span></div>
-                    <div class="art-orb"><span class="art-icon">⛓</span><span class="art-name">Blockchain</span><span
-                            class="art-rank">Apprentice</span></div>
-                    <div class="art-orb"><span class="art-icon">🔷</span><span class="art-name">Polygon</span><span
-                            class="art-rank">Apprentice</span></div>
-                    <div class="art-orb"><span class="art-icon">📦</span><span class="art-name">IPFS</span><span
-                            class="art-rank">Apprentice</span></div>
+            <div class="rv rv2">
+                <div class="acat">Databases · Cloud · Web3</div>
+                <div class="aarts">
+                    <div class="aorb"><span class="ai">🔥</span><span class="an">Firebase</span><span
+                            class="ar">Advanced</span></div>
+                    <div class="aorb"><span class="ai">🍃</span><span class="an">MongoDB</span><span
+                            class="ar">Journeyman</span></div>
+                    <div class="aorb"><span class="ai">🐬</span><span class="an">MySQL</span><span
+                            class="ar">Journeyman</span></div>
+                    <div class="aorb"><span class="ai">⛓</span><span class="an">Blockchain</span><span
+                            class="ar">Apprentice</span></div>
+                    <div class="aorb"><span class="ai">🔷</span><span class="an">Polygon</span><span
+                            class="ar">Apprentice</span></div>
+                    <div class="aorb"><span class="ai">📦</span><span class="an">IPFS</span><span
+                            class="ar">Apprentice</span></div>
                 </div>
             </div>
         </div>
     </section>
 
     <div class="adiv">
-        <div class="adiv-gem"></div>
+        <div class="agm"></div>
     </div>
 
-    <!-- ══════════════════════════ CONTACT -->
+    <!-- CONTACT -->
     <section id="contact">
         <div class="sw">
-            <div id="contact-wrap">
+            <div id="cwrap">
                 <div class="rv">
-                    <div class="s-eye" style="justify-content:center">Chapter IV · Open the Portal</div>
-                    <h2 class="s-title split-title" style="text-align:center">Summon the<br /><span class="acc">Arcane
+                    <div class="seye" style="justify-content:center">Chapter IV · Open the Portal</div>
+                    <h2 class="stitle split-title" style="text-align:center">Summon the<br /><span class="acc">Arcane
                             Engineer</span></h2>
-                    <p class="contact-lore">Open to quests, collaborations, and undertakings that matter.<br />If your
-                        mission is worthy, the connection shall be made.</p>
+                    <p class="clore">Open to quests, collaborations, and undertakings that matter.<br />If your mission
+                        is worthy, the connection shall be made.</p>
                 </div>
-                <div class="rv rv-d1">
-                    <a href="mailto:yatin.a.anchan@gmail.com" class="summon-email">yatin.a.anchan@gmail.com</a>
+                <div class="rv rv1">
+                    <a href="mailto:yatin.a.anchan@gmail.com" class="semail">yatin.a.anchan@gmail.com</a>
                 </div>
-                <div class="portal-links rv rv-d2">
-                    <a href="https://github.com/yatin-anchan" target="_blank" class="portal-link">GitHub</a>
+                <div class="plinks rv rv2">
+                    <a href="https://github.com/yatin-anchan" target="_blank" class="plink">GitHub</a>
                     <a href="https://www.linkedin.com/in/yatin-anchan-976823200" target="_blank"
-                        class="portal-link">LinkedIn</a>
-                    <a href="https://www.instagram.com/yatin_anchan/" target="_blank" class="portal-link">Instagram</a>
-                    <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank"
-                        class="portal-link">Autonix Realm</a>
+                        class="plink">LinkedIn</a>
+                    <a href="https://www.instagram.com/yatin_anchan/" target="_blank" class="plink">Instagram</a>
+                    <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="plink">Autonix
+                        Realm</a>
                 </div>
-                <div class="grimoire rv rv-d3">
-                    <div>&gt; <span class="g-green">[ CHRONICLE ]</span> &nbsp;<span class="g-bright">Research published
-                            — AIJFR International Journal (2025)</span></div>
-                    <div>&gt; <span class="g-gold">[ SIGIL ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
-                            class="g-bright">ISRO Certified · AI/ML for Geo-data Analysis</span></div>
-                    <div>&gt; <span class="g-gold">[ RANK ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
-                            class="g-bright">Semester IV CGPI: 9.4 · B.Sc. Computer Science</span></div>
-                    <div>&gt; <span class="g-gold">[ ORDER ]</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="g-bright">Open
-                            Source Alliance · Maharashtra, India</span></div>
-                    <div>&gt; <span class="g-green">[ STATUS ]</span> &nbsp;<span class="g-bright">Awaiting your
-                            transmission. Standing by. <span id="blink">▌</span></span></div>
+                <div class="grim rv rv3">
+                    <div>&gt; <span class="gg">[ CHRONICLE ]</span> &nbsp;<span class="gbr">Research published — AIJFR
+                            International Journal (2025)</span></div>
+                    <div>&gt; <span class="ggold">[ SIGIL ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="gbr">ISRO
+                            Certified · AI/ML for Geo-data Analysis</span></div>
+                    <div>&gt; <span class="ggold">[ RANK ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+                            class="gbr">Semester IV CGPI: 9.4 · B.Sc. Computer Science</span></div>
+                    <div>&gt; <span class="ggold">[ ORDER ]</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="gbr">Open Source
+                            Alliance · Maharashtra, India</span></div>
+                    <div>&gt; <span class="gg">[ STATUS ]</span> &nbsp;<span class="gbr">Awaiting your transmission.
+                            Standing by. <span id="blink">▌</span></span></div>
                 </div>
             </div>
         </div>
@@ -2350,47 +2243,31 @@
     </footer>
 
     <!-- EASTER EGG -->
-    <div id="easter-egg">
-        <canvas id="egg-canvas"></canvas>
-        <div class="egg-text">✦ ARCANE CODE UNLOCKED ✦</div>
-        <div class="egg-sub">The ritual is complete. You found the secret.</div>
-        <div class="egg-sub" style="font-size:9px;margin-top:8px;opacity:.5">↑ ↑ ↓ ↓ ← → ← → B A</div>
-        <button class="egg-close" onclick="document.getElementById('easter-egg').classList.remove('show')">Dispel the
+    <div id="egg">
+        <canvas id="eggc"></canvas>
+        <div class="etxt">✦ ARCANE CODE UNLOCKED ✦</div>
+        <div class="esub">The ritual is complete. You found the secret.</div>
+        <div class="esub" style="font-size:9px;margin-top:8px;opacity:.5">↑ ↑ ↓ ↓ ← → ← → B A</div>
+        <button class="ecls" onclick="document.getElementById('egg').classList.remove('show')">Dispel the
             Vision</button>
     </div>
 
     <script>
-        // ══════════════════════════════════════════════════════════════
-        // GSAP REGISTER
-        // ══════════════════════════════════════════════════════════════
         gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
-        // ══════════════════════════════════════════════════════════════
-        // LOADER
-        // ══════════════════════════════════════════════════════════════
-        const spells = [
-            '✦ Binding the arcane circuits...',
-            '✦ Weaving Three.js cosmology...',
-            '✦ Summoning particle entities...',
-            '✦ Inscribing the rune matrix...',
-            '✦ Calibrating 3D motion fields...',
-            '✦ Charging the radar sigil...',
-            '✦ Opening the portal...',
-            '✦ The Engineer awakens. ▌'
-        ];
-        const lf = document.getElementById('lf');
-        const ll = document.getElementById('ll');
-        const lpct = document.getElementById('lpct');
-        let loadP = 0, si = 0;
+        // ── LOADER ────────────────────────────────────────────────────
+        const SPELLS = ['✦ Binding the arcane circuits...', '✦ Weaving Three.js cosmology...', '✦ Summoning particle entities...', '✦ Inscribing the rune matrix...', '✦ Calibrating 3D motion fields...', '✦ Charging the radar sigil...', '✦ Opening the portal...', '✦ The Engineer awakens. ▌'];
+        const lfEl = document.getElementById('lf'), llogEl = document.getElementById('llog'), lpctEl = document.getElementById('lpct');
+        let lp = 0, lsi = 0;
         const lint = setInterval(() => {
-            loadP = Math.min(loadP + Math.random() * 2.8 + 0.5, 100);
-            lf.style.width = loadP + '%';
-            lpct.textContent = Math.floor(loadP) + '%';
-            if (si < spells.length && loadP > (si + 1) * 12) {
-                ll.innerHTML += (si > 0 ? '<br/>' : '') + spells[si++];
-                ll.scrollTop = ll.scrollHeight;
+            lp = Math.min(lp + Math.random() * 2.8 + 0.5, 100);
+            lfEl.style.width = lp + '%';
+            lpctEl.textContent = Math.floor(lp) + '%';
+            if (lsi < SPELLS.length && lp > (lsi + 1) * 12) {
+                llogEl.innerHTML += (lsi > 0 ? '<br/>' : '') + SPELLS[lsi++];
+                llogEl.scrollTop = llogEl.scrollHeight;
             }
-            if (loadP >= 100) {
+            if (lp >= 100) {
                 clearInterval(lint);
                 setTimeout(() => {
                     const l = document.getElementById('loader');
@@ -2404,737 +2281,580 @@
             }
         }, 60);
 
-        // ══════════════════════════════════════════════════════════════
-        // CURSOR
-        // ══════════════════════════════════════════════════════════════
-        const dot = document.getElementById('c-dot');
-        const ring = document.getElementById('c-ring');
-        const aura = document.getElementById('c-aura');
-        let mx = 0, my = 0, rx = 0, ry = 0, ax = 0, ay = 0, lastSp = 0;
-
+        // ── CURSOR ────────────────────────────────────────────────────
+        const cDot = document.getElementById('cd'), cRing = document.getElementById('cr'), cAura = document.getElementById('ca');
+        let mx = 0, my = 0, rx = 0, ry = 0, ax = 0, ay = 0, lsp = 0;
         document.addEventListener('mousemove', e => {
             mx = e.clientX; my = e.clientY;
             const now = Date.now();
-            if (now - lastSp > 55) {
-                lastSp = now;
-                const sp = document.createElement('div');
-                sp.className = 'sparkle';
+            if (now - lsp > 55) {
+                lsp = now;
+                const s = document.createElement('div');
+                s.className = 'sp';
                 const sz = Math.random() * 3.5 + 1.5;
-                sp.style.cssText = `left:${mx}px;top:${my}px;width:${sz}px;height:${sz}px`;
-                document.body.appendChild(sp);
-                setTimeout(() => sp.remove(), 700);
+                s.style.cssText = `left:${mx}px;top:${my}px;width:${sz}px;height:${sz}px`;
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 700);
             }
         });
         document.addEventListener('mousedown', () => document.body.classList.add('cc'));
         document.addEventListener('mouseup', () => document.body.classList.remove('cc'));
-
-        (function animCur() {
+        (function animC() {
             rx += (mx - rx) * .12; ry += (my - ry) * .12;
             ax += (mx - ax) * .06; ay += (my - ay) * .06;
-            dot.style.left = mx + 'px'; dot.style.top = my + 'px';
-            ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
-            aura.style.left = ax + 'px'; aura.style.top = ay + 'px';
-            requestAnimationFrame(animCur);
+            cDot.style.left = mx + 'px'; cDot.style.top = my + 'px';
+            cRing.style.left = rx + 'px'; cRing.style.top = ry + 'px';
+            cAura.style.left = ax + 'px'; cAura.style.top = ay + 'px';
+            requestAnimationFrame(animC);
         })();
-
-        document.querySelectorAll('a,button,.sc-card,.art-orb,.adiv-gem').forEach(el => {
+        document.querySelectorAll('a,button,.scard,.aorb,.agm').forEach(el => {
             el.addEventListener('mouseenter', () => document.body.classList.add('ch'));
             el.addEventListener('mouseleave', () => document.body.classList.remove('ch'));
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // THREE.JS HERO — Rotating arcane geometry + particle field
-        // ══════════════════════════════════════════════════════════════
-        (function initThreeJS() {
-            const canvas = document.getElementById('threejs-canvas');
+        // ── THREE.JS HERO ─────────────────────────────────────────────
+        (function initThree() {
+            const canvas = document.getElementById('tc');
             const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.setClearColor(0x000000, 0);
-
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
             camera.position.z = 5;
 
             function resize3() {
-                const w = canvas.offsetWidth, h = canvas.offsetHeight;
+                const w = window.innerWidth, h = window.innerHeight;
                 renderer.setSize(w, h, false);
+                canvas.style.width = w + 'px';
+                canvas.style.height = h + 'px';
                 camera.aspect = w / h;
                 camera.updateProjectionMatrix();
             }
-            resize3();
+            setTimeout(resize3, 50);
             window.addEventListener('resize', resize3);
 
-            // Central icosahedron wireframe
-            const icoGeo = new THREE.IcosahedronGeometry(1.4, 1);
-            const icoMat = new THREE.MeshBasicMaterial({ color: 0xd4a843, wireframe: true, opacity: 0.18, transparent: true });
-            const ico = new THREE.Mesh(icoGeo, icoMat);
+            // Icosahedron
+            const ico = new THREE.Mesh(
+                new THREE.IcosahedronGeometry(1.6, 1),
+                new THREE.MeshBasicMaterial({ color: 0xd4a843, wireframe: true, opacity: .42, transparent: true })
+            );
             scene.add(ico);
 
-            // Outer ring torus
-            const torGeo = new THREE.TorusGeometry(2.2, 0.008, 8, 120);
-            const torMat = new THREE.MeshBasicMaterial({ color: 0xd4a843, opacity: 0.25, transparent: true });
-            const tor = new THREE.Mesh(torGeo, torMat);
+            // Inner octahedron
+            const oct = new THREE.Mesh(
+                new THREE.OctahedronGeometry(.8, 0),
+                new THREE.MeshBasicMaterial({ color: 0xf5c842, wireframe: true, opacity: .6, transparent: true })
+            );
+            scene.add(oct);
+
+            // Outer torus
+            const tor = new THREE.Mesh(
+                new THREE.TorusGeometry(2.4, .015, 8, 120),
+                new THREE.MeshBasicMaterial({ color: 0xd4a843, opacity: .48, transparent: true })
+            );
             scene.add(tor);
 
             // Second torus rotated
             const tor2 = new THREE.Mesh(
-                new THREE.TorusGeometry(2.8, 0.005, 8, 140),
-                new THREE.MeshBasicMaterial({ color: 0xf5c842, opacity: 0.12, transparent: true })
+                new THREE.TorusGeometry(3.0, .01, 8, 140),
+                new THREE.MeshBasicMaterial({ color: 0xf5c842, opacity: .26, transparent: true })
             );
             tor2.rotation.x = Math.PI / 3;
             scene.add(tor2);
 
-            // Star particle field
-            const starCount = 1400;
-            const starGeo = new THREE.BufferGeometry();
-            const positions = new Float32Array(starCount * 3);
-            const sizes = new Float32Array(starCount);
-            for (let i = 0; i < starCount; i++) {
-                const r = 3.5 + Math.random() * 8;
+            // Third torus at different angle
+            const tor3 = new THREE.Mesh(
+                new THREE.TorusGeometry(2.0, .008, 8, 100),
+                new THREE.MeshBasicMaterial({ color: 0xd4a843, opacity: .22, transparent: true })
+            );
+            tor3.rotation.y = Math.PI / 4;
+            scene.add(tor3);
+
+            // Star field
+            const sCount = 1400;
+            const sGeo = new THREE.BufferGeometry();
+            const sPos = new Float32Array(sCount * 3);
+            for (let i = 0; i < sCount; i++) {
+                const r = 4 + Math.random() * 8;
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos(2 * Math.random() - 1);
-                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = r * Math.cos(phi);
-                sizes[i] = Math.random() * 2.5 + 0.5;
+                sPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                sPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                sPos[i * 3 + 2] = r * Math.cos(phi);
             }
-            starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            starGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-            const starMat = new THREE.PointsMaterial({ color: 0xd4a843, size: 0.03, sizeAttenuation: true, transparent: true, opacity: 0.5 });
-            const stars = new THREE.Points(starGeo, starMat);
+            sGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
+            const stars = new THREE.Points(sGeo, new THREE.PointsMaterial({ color: 0xd4a843, size: .03, transparent: true, opacity: .45 }));
             scene.add(stars);
 
-            // Octahedron inner
-            const octGeo = new THREE.OctahedronGeometry(0.7, 0);
-            const octMat = new THREE.MeshBasicMaterial({ color: 0xf5c842, wireframe: true, opacity: 0.35, transparent: true });
-            const oct = new THREE.Mesh(octGeo, octMat);
-            scene.add(oct);
-
-            let mouseX = 0, mouseY = 0;
+            let tmx = 0, tmy = 0, t = 0;
             document.addEventListener('mousemove', e => {
-                mouseX = (e.clientX / window.innerWidth - .5) * 2;
-                mouseY = (e.clientY / window.innerHeight - .5) * 2;
+                tmx = (e.clientX / window.innerWidth - .5) * 2;
+                tmy = (e.clientY / window.innerHeight - .5) * 2;
             });
-
-            let t = 0;
-            (function animate3() {
-                requestAnimationFrame(animate3);
-                t += 0.006;
-                ico.rotation.x = t * 0.3 + mouseY * 0.3;
-                ico.rotation.y = t * 0.5 + mouseX * 0.3;
-                oct.rotation.x = -t * 0.6;
-                oct.rotation.y = t * 0.8;
-                tor.rotation.y = t * 0.25;
-                tor.rotation.x = mouseY * 0.4;
-                tor2.rotation.z = t * 0.18;
-                stars.rotation.y = t * 0.04;
-                stars.rotation.x = mouseY * 0.06;
-                camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.04;
-                camera.position.y += (-mouseY * 0.4 - camera.position.y) * 0.04;
+            (function a3() {
+                requestAnimationFrame(a3);
+                t += .006;
+                ico.rotation.x = t * .3 + tmy * .3;
+                ico.rotation.y = t * .5 + tmx * .3;
+                oct.rotation.x = -t * .6;
+                oct.rotation.y = t * .8;
+                tor.rotation.y = t * .25;
+                tor.rotation.x = tmy * .4;
+                tor2.rotation.z = t * .18;
+                tor3.rotation.x = t * .22;
+                stars.rotation.y = t * .04;
+                camera.position.x += (tmx * .5 - camera.position.x) * .04;
+                camera.position.y += (-tmy * .4 - camera.position.y) * .04;
                 camera.lookAt(scene.position);
                 renderer.render(scene, camera);
             })();
         })();
 
-        // ══════════════════════════════════════════════════════════════
-        // GSAP HERO ENTRANCE
-        // ══════════════════════════════════════════════════════════════
+        // ── HERO GSAP ENTRANCE ────────────────────────────────────────
         function splitChars(el) {
-            const text = el.textContent;
-            el.innerHTML = '';
-            [...text].forEach(ch => {
-                const s = document.createElement('span');
-                s.className = 'split-char';
-                s.textContent = ch === ' ' ? '\u00a0' : ch;
-                el.appendChild(s);
+            const saved = [];
+            el.childNodes.forEach(n => {
+                if (n.nodeType === 1) saved.push({ type: 'el', node: n, html: n.outerHTML });
+                else if (n.nodeType === 3) saved.push({ type: 'txt', text: n.textContent });
             });
-            return el.querySelectorAll('.split-char');
+            el.innerHTML = '';
+            saved.forEach(item => {
+                if (item.type === 'el') {
+                    const wrapper = document.createElement(item.node.tagName);
+                    wrapper.className = item.node.className;
+                    wrapper.id = item.node.id || '';
+                    [...item.node.textContent].forEach(ch => {
+                        const s = document.createElement('span');
+                        s.className = 'sc';
+                        s.textContent = ch === ' ' ? '\u00a0' : ch;
+                        wrapper.appendChild(s);
+                    });
+                    el.appendChild(wrapper);
+                } else {
+                    [...item.text].forEach(ch => {
+                        const s = document.createElement('span');
+                        s.className = 'sc';
+                        s.textContent = ch === ' ' ? '\u00a0' : ch;
+                        el.appendChild(s);
+                    });
+                }
+            });
         }
 
         function initHeroGSAP() {
-            const tl = gsap.timeline();
-            tl.to('#heroEye', { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }, 0.1)
-                .to('#heroTitle', { opacity: 1, duration: 0.01 }, 0.3)
-                .from('#titleLine1 .split-char, #titleLine2 .split-char', {
-                    opacity: 0, y: 100, rotateX: -60, stagger: 0.045, duration: 1,
-                    ease: 'back.out(1.6)', transformOrigin: 'bottom center'
-                }, 0.35)
-                .to('#heroDivider', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 1.2)
-                .to('#heroSub', { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, 1.5)
-                .to('#heroCta', { opacity: 1, duration: 0.8 }, 1.8)
-                .to('#scrollCue', { opacity: 1, duration: 0.8 }, 2.2);
-            // Pre-split
-            splitChars(document.getElementById('titleLine1'));
-            splitChars(document.getElementById('titleLine2'));
+            // Split ONCE right before animating
+            splitChars(document.getElementById('tl1'));
+            splitChars(document.getElementById('tl2'));
+
+            const tl = gsap.timeline({ delay: .1 });
+            tl.to('#hey', { opacity: 1, duration: 1, ease: 'power3.out' }, 0)
+                .to('#ht', { opacity: 1, duration: .01 }, 0.2)
+                .from('#tl1 .sc, #tl2 .sc', {
+                    opacity: 0, y: 100, rotateX: -60, stagger: .042, duration: 1.1,
+                    ease: 'back.out(1.6)', transformOrigin: 'bottom center', transformPerspective: 600
+                }, 0.25)
+                .to('#hdiv', { opacity: 1, duration: .8, ease: 'power2.out' }, 1.15)
+                .to('#hsub', { opacity: 1, duration: .9, ease: 'power2.out' }, 1.45)
+                .to('#hcta', { opacity: 1, duration: .8 }, 1.75)
+                .to('#hsc', { opacity: 1, duration: .8 }, 2.15);
         }
-        // Pre-split before GSAP runs
-        setTimeout(() => {
-            splitChars(document.getElementById('titleLine1'));
-            splitChars(document.getElementById('titleLine2'));
-        }, 100);
 
-        // ══════════════════════════════════════════════════════════════
-        // GSAP SCROLL-TRIGGERED SECTION TITLES
-        // ══════════════════════════════════════════════════════════════
-        function initScrollAnimations() {
-            // Section title char reveals
+        // ── SCROLL ANIMATIONS ─────────────────────────────────────────
+        function initScrollAnims() {
+            // Section title char reveals — word-safe walker
             document.querySelectorAll('.split-title').forEach(el => {
-                const chars = [];
-                el.childNodes.forEach(node => {
-                    if (node.nodeType === 3) {
-                        const wrap = document.createElement('span');
-                        wrap.style.display = 'inline';
-                        node.parentNode.insertBefore(wrap, node);
-                        [...node.textContent].forEach(ch => {
-                            const s = document.createElement('span');
-                            s.className = 'split-char';
-                            s.textContent = ch === ' ' ? '\u00a0' : ch;
-                            s.style.opacity = '0';
-                            s.style.transform = 'translateY(60px) rotateX(-35deg)';
-                            s.style.display = 'inline-block';
-                            s.style.transformOrigin = 'bottom';
-                            wrap.appendChild(s);
-                            chars.push(s);
-                        });
-                        node.remove();
-                    } else if (node.nodeType === 1) {
-                        const text = node.textContent;
-                        node.innerHTML = '';
-                        [...text].forEach(ch => {
-                            const s = document.createElement('span');
-                            s.className = 'split-char';
-                            s.textContent = ch === ' ' ? '\u00a0' : ch;
-                            s.style.opacity = '0';
-                            s.style.transform = 'translateY(60px) rotateX(-35deg)';
-                            s.style.display = 'inline-block';
-                            s.style.transformOrigin = 'bottom';
-                            node.appendChild(s);
-                            chars.push(s);
-                        });
-                    }
-                });
+                const allChars = [];
+                function walkNode(node) {
+                    const kids = [...node.childNodes];
+                    kids.forEach(child => {
+                        if (child.nodeType === 3 && child.textContent.trim()) {
+                            const parent = child.parentNode;
+                            const wrap = document.createElement('span');
+                            wrap.style.cssText = 'display:inline;white-space:nowrap';
+                            [...child.textContent].forEach(ch => {
+                                const s = document.createElement('span');
+                                s.className = 'sc';
+                                s.textContent = ch === ' ' ? '\u00a0' : ch;
+                                s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(60px) rotateX(-35deg);transform-origin:bottom center';
+                                wrap.appendChild(s);
+                                allChars.push(s);
+                            });
+                            parent.replaceChild(wrap, child);
+                        } else if (child.nodeType === 1 && child.tagName !== 'BR') {
+                            walkNode(child);
+                        }
+                    });
+                }
+                walkNode(el);
                 ScrollTrigger.create({
-                    trigger: el,
-                    start: 'top 82%',
-                    onEnter: () => {
-                        gsap.to(chars, { opacity: 1, y: 0, rotateX: 0, stagger: 0.028, duration: 0.85, ease: 'back.out(1.4)' });
-                    }
+                    trigger: el, start: 'top 82%', once: true,
+                    onEnter: () => gsap.to(allChars, { opacity: 1, y: 0, rotateX: 0, stagger: .025, duration: .88, ease: 'back.out(1.4)' })
                 });
             });
 
-            // About lore lines
-            gsap.utils.toArray('.about-lore').forEach((el, i) => {
+            // About lore
+            gsap.utils.toArray('.alore').forEach((el, i) => {
                 gsap.fromTo(el, { opacity: 0, x: -40 }, {
-                    opacity: 1, x: 0, duration: 1.1, ease: 'power3.out',
-                    scrollTrigger: { trigger: el, start: 'top 85%' },
-                    delay: i * 0.15
+                    opacity: 1, x: 0, duration: 1.1, ease: 'power3.out', delay: i * .15,
+                    scrollTrigger: { trigger: el, start: 'top 85%' }
                 });
             });
 
-            // Section eyebrows
-            gsap.utils.toArray('.s-eye').forEach(el => {
+            // Eyebrows
+            gsap.utils.toArray('.seye').forEach(el => {
                 gsap.fromTo(el, { opacity: 0, x: -20 }, {
-                    opacity: 0.62, x: 0, duration: 0.8,
+                    opacity: .62, x: 0, duration: .8,
                     scrollTrigger: { trigger: el, start: 'top 88%' }
                 });
             });
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // TYPING TERMINAL
-        // ══════════════════════════════════════════════════════════════
-        const termLines = [
+        // ── TYPING TERMINAL ───────────────────────────────────────────
+        const termData = [
             { id: 'tv0', text: 'AI / ML Engineer' },
             { id: 'tv1', text: 'Maharashtra, India' },
             { id: 'tv2', text: 'Open Source Alliance' },
             { id: 'tv3', text: 'Space Science 🚀' },
             { id: 'tv4', text: '"Build things that matter."' }
         ];
-
-        function typeText(el, text, delay = 0) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    let i = 0;
-                    const iv = setInterval(() => {
-                        el.textContent = text.slice(0, ++i);
-                        if (i >= text.length) { clearInterval(iv); resolve(); }
-                    }, 38);
-                }, delay);
+        function typeIt(el, text) {
+            return new Promise(res => {
+                let i = 0;
+                const iv = setInterval(() => {
+                    el.textContent = text.slice(0, ++i);
+                    if (i >= text.length) { clearInterval(iv); res(); }
+                }, 36);
             });
         }
-
         ScrollTrigger.create({
-            trigger: '#terminalBox',
-            start: 'top 80%',
-            once: true,
+            trigger: '#tbox', start: 'top 80%', once: true,
             onEnter: async () => {
-                for (let i = 0; i < termLines.length; i++) {
-                    const lineEl = document.getElementById(`tl${i}`);
-                    lineEl.classList.add('vis');
-                    await typeText(document.getElementById(termLines[i].id), termLines[i].text, 80);
-                    await new Promise(r => setTimeout(r, 120));
+                for (let i = 0; i < termData.length; i++) {
+                    document.getElementById(`tln${i}`).classList.add('vis');
+                    await typeIt(document.getElementById(termData[i].id), termData[i].text);
+                    await new Promise(r => setTimeout(r, 100));
                 }
             }
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // PROGRESS BAR
-        // ══════════════════════════════════════════════════════════════
+        // ── PROGRESS ─────────────────────────────────────────────────
         window.addEventListener('scroll', () => {
             const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
             document.getElementById('prog').style.width = p + '%';
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // HERO 3D PARALLAX
-        // ══════════════════════════════════════════════════════════════
-        const heroInner = document.getElementById('heroInner');
+        // ── HERO PARALLAX MOUSE ───────────────────────────────────────
+        const hiEl = document.getElementById('hi');
         document.addEventListener('mousemove', e => {
-            if (window.scrollY > window.innerHeight * 0.4) return;
+            if (window.scrollY > window.innerHeight * .4) return;
             const xp = (e.clientX / window.innerWidth - .5);
             const yp = (e.clientY / window.innerHeight - .5);
-            gsap.to(heroInner, { rotateX: -yp * 7, rotateY: xp * 7, duration: 0.8, ease: 'power2.out', transformPerspective: 800 });
+            gsap.to(hiEl, { rotateX: -yp * 7, rotateY: xp * 7, duration: .8, ease: 'power2.out', transformPerspective: 800 });
             gsap.to('.a1', { x: xp * 40, y: yp * 30, duration: 1.2 });
             gsap.to('.a2', { x: -xp * 25, y: -yp * 20, duration: 1.4 });
             gsap.to('.a3', { x: xp * 18, y: yp * 15, duration: 1.6 });
         });
         window.addEventListener('scroll', () => {
-            if (window.scrollY > window.innerHeight * 0.3) gsap.to(heroInner, { rotateX: 0, rotateY: 0, duration: 1 });
+            if (window.scrollY > window.innerHeight * .3) gsap.to(hiEl, { rotateX: 0, rotateY: 0, duration: 1 });
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // REVEAL OBSERVER
-        // ══════════════════════════════════════════════════════════════
-        const revObs = new IntersectionObserver(ents => {
-            ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); revObs.unobserve(e.target); } });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.rv').forEach(el => revObs.observe(el));
+        // ── REVEAL ───────────────────────────────────────────────────
+        const rvObs = new IntersectionObserver(ents => {
+            ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); rvObs.unobserve(e.target); } });
+        }, { threshold: .1 });
+        document.querySelectorAll('.rv').forEach(el => rvObs.observe(el));
 
-        // ══════════════════════════════════════════════════════════════
-        // SKILL BARS
-        // ══════════════════════════════════════════════════════════════
-        const skillObs = new IntersectionObserver(ents => {
+        // ── SKILL BARS ────────────────────────────────────────────────
+        const skObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
                 if (!e.isIntersecting) return;
-                e.target.querySelectorAll('.sk-fill').forEach((b, i) => {
-                    setTimeout(() => { b.style.width = b.getAttribute('data-w'); }, 300 + i * 80);
-                });
-                e.target.querySelectorAll('.sk-gems').forEach(g => {
+                e.target.querySelectorAll('.skf').forEach((b, i) => setTimeout(() => { b.style.width = b.getAttribute('data-w'); }, 300 + i * 80));
+                e.target.querySelectorAll('.skgs').forEach(g => {
                     const n = parseInt(g.getAttribute('data-gems'));
                     g.innerHTML = '';
-                    for (let i = 0; i < 5; i++) {
-                        const d = document.createElement('div');
-                        d.className = 'sk-gem' + (i < n ? ' lit' : '');
-                        g.appendChild(d);
-                    }
+                    for (let i = 0; i < 5; i++) { const d = document.createElement('div'); d.className = 'skg' + (i < n ? ' lit' : ''); g.appendChild(d); }
                 });
             });
-        }, { threshold: 0.2 });
-        document.querySelectorAll('.skills-tome').forEach(el => skillObs.observe(el));
+        }, { threshold: .2 });
+        document.querySelectorAll('.stome').forEach(el => skObs.observe(el));
 
-        // ══════════════════════════════════════════════════════════════
-        // COUNTER ANIMATION
-        // ══════════════════════════════════════════════════════════════
+        // ── COUNTERS ─────────────────────────────────────────────────
         const cntObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
                 if (!e.isIntersecting) return;
                 e.target.querySelectorAll('[data-count]').forEach(el => {
                     const t = parseInt(el.getAttribute('data-count'));
-                    const suf = el.getAttribute('data-suffix') || '';
+                    const suf = el.getAttribute('data-suf') || '';
                     let c = 0;
                     const iv = setInterval(() => { el.textContent = (++c) + suf; if (c >= t) clearInterval(iv); }, 55);
                 });
-                e.target.querySelectorAll('[data-count-dec]').forEach(el => {
-                    const t = parseFloat(el.getAttribute('data-count-dec'));
+                e.target.querySelectorAll('[data-dec]').forEach(el => {
+                    const t = parseFloat(el.getAttribute('data-dec'));
                     let c = 0;
-                    const iv = setInterval(() => {
-                        c = Math.min(+(c + .1).toFixed(1), t);
-                        el.textContent = c.toFixed(1);
-                        if (c >= t) clearInterval(iv);
-                    }, 40);
+                    const iv = setInterval(() => { c = Math.min(+(c + .1).toFixed(1), t); el.textContent = c.toFixed(1); if (c >= t) clearInterval(iv); }, 40);
                 });
                 cntObs.unobserve(e.target);
             });
-        }, { threshold: 0.3 });
-        document.querySelectorAll('.about-facts').forEach(el => cntObs.observe(el));
+        }, { threshold: .3 });
+        document.querySelectorAll('.afacts').forEach(el => cntObs.observe(el));
 
-        // ══════════════════════════════════════════════════════════════
-        // 3D CARD TILT
-        // ══════════════════════════════════════════════════════════════
-        function cardTilt(el, e) {
+        // ── 3D CARD TILT ─────────────────────────────────────────────
+        function cTilt(el, e) {
             const r = el.getBoundingClientRect();
             const x = (e.clientX - r.left) / r.width - .5;
             const y = (e.clientY - r.top) / r.height - .5;
-            gsap.to(el, { rotateX: -y * 10, rotateY: x * 10, translateY: -8, scale: 1.01, duration: 0.5, ease: 'power2.out', transformPerspective: 800 });
+            gsap.to(el, { rotateX: -y * 10, rotateY: x * 10, translateY: -8, scale: 1.01, duration: .5, ease: 'power2.out', transformPerspective: 800 });
             el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
             el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
         }
-        function cardReset(el) {
-            gsap.to(el, { rotateX: 0, rotateY: 0, translateY: 0, scale: 1, duration: 0.7, ease: 'elastic.out(1,0.5)' });
+        function cReset(el) {
+            gsap.to(el, { rotateX: 0, rotateY: 0, translateY: 0, scale: 1, duration: .7, ease: 'elastic.out(1,.5)' });
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // PAGE WIPE NAV
-        // ══════════════════════════════════════════════════════════════
-        document.querySelectorAll('.nav-link').forEach(link => {
+        // ── PAGE WIPE NAV ─────────────────────────────────────────────
+        document.querySelectorAll('.nl').forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
                 const target = document.querySelector(link.getAttribute('href'));
-                const rings = document.querySelectorAll('.wipe-ring');
-                const center = document.querySelector('.wipe-center');
+                const rings = document.querySelectorAll('.wr');
+                const center = document.querySelector('.wc');
                 const tl = gsap.timeline({
                     onComplete: () => {
                         target.scrollIntoView({ behavior: 'smooth' });
-                        gsap.to([...rings, center], { scale: 0, opacity: 0, duration: 0.5, stagger: 0.06 });
+                        gsap.to([...rings, center], { scale: 0, opacity: 0, duration: .5, stagger: .06 });
                     }
                 });
-                tl.to(center, { scale: 1, opacity: 1, duration: 0.25, ease: 'back.out(2)' })
-                    .to(rings, { scale: 1, opacity: 1, stagger: 0.08, duration: 0.3, ease: 'power2.out' }, 0.1);
+                tl.to(center, { scale: 1, opacity: 1, duration: .25, ease: 'back.out(2)' })
+                    .to(rings, { scale: 1, opacity: 1, stagger: .08, duration: .3, ease: 'power2.out' }, .1);
             });
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // NAV ACTIVE
-        // ══════════════════════════════════════════════════════════════
-        const sections = document.querySelectorAll('section[id]');
-        const navLinks = document.querySelectorAll('nav a.nav-link');
+        // ── NAV ACTIVE ────────────────────────────────────────────────
         const navObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
                 if (e.isIntersecting) {
-                    navLinks.forEach(a => a.classList.remove('active'));
+                    document.querySelectorAll('nav a.nl').forEach(a => a.classList.remove('active'));
                     const act = document.querySelector(`nav a[href="#${e.target.id}"]`);
                     if (act) act.classList.add('active');
                 }
             });
         }, { rootMargin: '-40% 0px -40% 0px' });
-        sections.forEach(s => navObs.observe(s));
+        document.querySelectorAll('section[id]').forEach(s => navObs.observe(s));
 
-        // ══════════════════════════════════════════════════════════════
-        // ART ORB RIPPLE
-        // ══════════════════════════════════════════════════════════════
-        const rippleStyle = document.createElement('style');
-        rippleStyle.textContent = '@keyframes ripple{to{width:180px;height:180px;opacity:0;border-color:transparent}}';
-        document.head.appendChild(rippleStyle);
-        document.querySelectorAll('.art-orb').forEach(orb => {
+        // ── ORB RIPPLE ────────────────────────────────────────────────
+        const rs = document.createElement('style');
+        rs.textContent = '@keyframes rp{to{width:180px;height:180px;opacity:0;border-color:transparent}}';
+        document.head.appendChild(rs);
+        document.querySelectorAll('.aorb').forEach(orb => {
             orb.addEventListener('click', function () {
                 const r = document.createElement('div');
-                r.style.cssText = `position:absolute;border-radius:50%;border:1.5px solid rgba(212,168,67,.5);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;animation:ripple .65s forwards`;
+                r.style.cssText = 'position:absolute;border-radius:50%;border:1.5px solid rgba(212,168,67,.5);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;animation:rp .65s forwards';
                 this.appendChild(r);
                 setTimeout(() => r.remove(), 700);
             });
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // MAGNETIC BUTTONS
-        // ══════════════════════════════════════════════════════════════
-        document.querySelectorAll('.btn-a,.portal-link').forEach(btn => {
+        // ── MAGNETIC BUTTONS ──────────────────────────────────────────
+        document.querySelectorAll('.bta,.plink').forEach(btn => {
             btn.addEventListener('mousemove', function (e) {
                 const r = this.getBoundingClientRect();
-                const x = (e.clientX - r.left - r.width / 2) * 0.22;
-                const y = (e.clientY - r.top - r.height / 2) * 0.22;
-                gsap.to(this, { x, y, duration: 0.4, ease: 'power2.out' });
+                gsap.to(this, { x: (e.clientX - r.left - r.width / 2) * .22, y: (e.clientY - r.top - r.height / 2) * .22, duration: .4, ease: 'power2.out' });
             });
             btn.addEventListener('mouseleave', function () {
-                gsap.to(this, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1,0.4)' });
+                gsap.to(this, { x: 0, y: 0, duration: .6, ease: 'elastic.out(1,.4)' });
             });
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // RADAR CHART CANVAS
-        // ══════════════════════════════════════════════════════════════
-        const radarCanvas = document.getElementById('radar-canvas');
-        const rctx = radarCanvas.getContext('2d');
-        const radarData = [
-            { label: 'Python', val: 0.95 },
-            { label: 'AI/ML', val: 0.90 },
-            { label: 'Android', val: 0.82 },
-            { label: 'CV/Vision', val: 0.88 },
-            { label: 'Web3', val: 0.60 },
-            { label: 'Frontend', val: 0.72 },
-            { label: 'Backend', val: 0.70 },
-            { label: 'C++', val: 0.62 }
+        // ── RADAR CHART ───────────────────────────────────────────────
+        const rc = document.getElementById('rcanvas');
+        const rctx = rc.getContext('2d');
+        const rdata = [
+            { label: 'Python', val: .95 }, { label: 'AI/ML', val: .90 }, { label: 'Android', val: .82 }, { label: 'CV/Vision', val: .88 },
+            { label: 'Web3', val: .60 }, { label: 'Frontend', val: .72 }, { label: 'Backend', val: .70 }, { label: 'C++', val: .62 }
         ];
-        let radarAnim = 0;
-        let radarAnimId;
-
-        function drawRadar(progress) {
-            const cx = radarCanvas.width / 2, cy = radarCanvas.height / 2;
-            const R = 160, n = radarData.length;
-            rctx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
-            // Grid rings
+        function drawRadar(prog) {
+            const cx = rc.width / 2, cy = rc.height / 2, R = 155, n = rdata.length;
+            rctx.clearRect(0, 0, rc.width, rc.height);
             for (let r = 1; r <= 5; r++) {
                 rctx.beginPath();
                 for (let i = 0; i < n; i++) {
                     const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-                    const x = cx + (R * r / 5) * Math.cos(a);
-                    const y = cy + (R * r / 5) * Math.sin(a);
+                    const x = cx + (R * r / 5) * Math.cos(a), y = cy + (R * r / 5) * Math.sin(a);
                     i === 0 ? rctx.moveTo(x, y) : rctx.lineTo(x, y);
                 }
                 rctx.closePath();
-                rctx.strokeStyle = `rgba(212,168,67,${0.05 + r * 0.02})`;
-                rctx.lineWidth = 1;
-                rctx.stroke();
+                rctx.strokeStyle = `rgba(212,168,67,${.05 + r * .02})`;
+                rctx.lineWidth = 1; rctx.stroke();
             }
-            // Spokes
             for (let i = 0; i < n; i++) {
                 const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-                rctx.beginPath();
-                rctx.moveTo(cx, cy);
+                rctx.beginPath(); rctx.moveTo(cx, cy);
                 rctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
-                rctx.strokeStyle = 'rgba(212,168,67,.1)';
-                rctx.lineWidth = 1;
-                rctx.stroke();
+                rctx.strokeStyle = 'rgba(212,168,67,.1)'; rctx.lineWidth = 1; rctx.stroke();
             }
-            // Data polygon
             rctx.beginPath();
             for (let i = 0; i < n; i++) {
-                const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-                const v = radarData[i].val * progress;
-                const x = cx + R * v * Math.cos(a);
-                const y = cy + R * v * Math.sin(a);
+                const a = (i / n) * Math.PI * 2 - Math.PI / 2, v = rdata[i].val * prog;
+                const x = cx + R * v * Math.cos(a), y = cy + R * v * Math.sin(a);
                 i === 0 ? rctx.moveTo(x, y) : rctx.lineTo(x, y);
             }
             rctx.closePath();
-            const grad = rctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-            grad.addColorStop(0, 'rgba(212,168,67,.25)');
-            grad.addColorStop(1, 'rgba(212,168,67,.06)');
-            rctx.fillStyle = grad;
-            rctx.fill();
-            rctx.strokeStyle = `rgba(212,168,67,${0.6 * progress})`;
-            rctx.lineWidth = 2;
-            rctx.shadowColor = 'rgba(212,168,67,.5)';
-            rctx.shadowBlur = 10;
-            rctx.stroke();
-            rctx.shadowBlur = 0;
-            // Dots + labels
+            const g = rctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+            g.addColorStop(0, 'rgba(212,168,67,.25)'); g.addColorStop(1, 'rgba(212,168,67,.06)');
+            rctx.fillStyle = g; rctx.fill();
+            rctx.strokeStyle = `rgba(212,168,67,${.6 * prog})`;
+            rctx.lineWidth = 2; rctx.shadowColor = 'rgba(212,168,67,.5)'; rctx.shadowBlur = 10; rctx.stroke(); rctx.shadowBlur = 0;
             for (let i = 0; i < n; i++) {
-                const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-                const v = radarData[i].val * progress;
-                const x = cx + R * v * Math.cos(a);
-                const y = cy + R * v * Math.sin(a);
-                rctx.beginPath();
-                rctx.arc(x, y, 4, 0, Math.PI * 2);
-                rctx.fillStyle = '#d4a843';
-                rctx.shadowColor = 'rgba(212,168,67,.8)';
-                rctx.shadowBlur = 12;
-                rctx.fill();
-                rctx.shadowBlur = 0;
-                // Label
-                const lx = cx + (R + 22) * Math.cos(a);
-                const ly = cy + (R + 22) * Math.sin(a);
+                const a = (i / n) * Math.PI * 2 - Math.PI / 2, v = rdata[i].val * prog;
+                const x = cx + R * v * Math.cos(a), y = cy + R * v * Math.sin(a);
+                rctx.beginPath(); rctx.arc(x, y, 4, 0, Math.PI * 2);
+                rctx.fillStyle = '#d4a843'; rctx.shadowColor = 'rgba(212,168,67,.8)'; rctx.shadowBlur = 12; rctx.fill(); rctx.shadowBlur = 0;
+                const lx = cx + (R + 24) * Math.cos(a), ly = cy + (R + 24) * Math.sin(a);
                 rctx.font = '10px Cinzel,serif';
-                rctx.fillStyle = `rgba(212,168,67,${0.5 * progress})`;
-                rctx.textAlign = 'center';
-                rctx.textBaseline = 'middle';
-                rctx.fillText(radarData[i].label.toUpperCase(), lx, ly);
+                rctx.fillStyle = `rgba(212,168,67,${.5 * prog})`;
+                rctx.textAlign = 'center'; rctx.textBaseline = 'middle';
+                rctx.fillText(rdata[i].label.toUpperCase(), lx, ly);
             }
         }
-
         drawRadar(0);
         ScrollTrigger.create({
-            trigger: '#radar-canvas',
-            start: 'top 80%',
-            once: true,
-            onEnter: () => {
-                gsap.to({ v: 0 }, {
-                    v: 1, duration: 2, ease: 'power2.out',
-                    onUpdate: function () { drawRadar(this.targets()[0].v); }
-                });
-            }
+            trigger: '#rcanvas', start: 'top 80%', once: true,
+            onEnter: () => gsap.to({ v: 0 }, { v: 1, duration: 2, ease: 'power2.out', onUpdate: function () { drawRadar(this.targets()[0].v); } })
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // PROJECT MODALS
-        // ══════════════════════════════════════════════════════════════
-        const modalData = {
+        // ── MODALS ────────────────────────────────────────────────────
+        const mdata = {
             autonix: {
-                title: 'AUTONIX',
-                badge: '✦ Legendary · Published in International Journal',
-                relic: 'Quest I · Main Chronicle · Active',
+                title: 'AUTONIX', badge: '✦ Legendary · Published in International Journal', relic: 'Quest I · Main Chronicle · Active',
                 body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">An Android safety application using real-time AI to guard against driver drowsiness and fatigue. Published in AIJFR International Journal (2025).</p>
-    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">468-point facial landmark tracking via MediaPipe detects eye closure through EAR (Eye Aspect Ratio) mathematics. Accelerometer & Gyroscope sensor fusion triggers crash detection and auto-dispatches GPS coordinates to emergency contacts via Firebase Cloud Messaging.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
-      <span class="sc-rune">Kotlin</span><span class="sc-rune">MediaPipe</span><span class="sc-rune">Firebase</span><span class="sc-rune">ML Kit</span><span class="sc-rune">Android</span><span class="sc-rune">Computer Vision</span><span class="sc-rune">EAR Algorithm</span>
-    </div>
+    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">468-point facial landmark tracking via MediaPipe detects eye closure through EAR (Eye Aspect Ratio) mathematics. Accelerometer &amp; Gyroscope sensor fusion triggers crash detection and auto-dispatches GPS coordinates to emergency contacts via Firebase Cloud Messaging.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0"><span class="srune">Kotlin</span><span class="srune">MediaPipe</span><span class="srune">Firebase</span><span class="srune">ML Kit</span><span class="srune">Android</span><span class="srune">EAR Algorithm</span></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
-      <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="sc-link">GitHub →</a>
-      <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">Live Website →</a>
-      <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank" class="sc-link">Research Paper →</a>
+      <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="slink">GitHub →</a>
+      <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="slink">Live Website →</a>
+      <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank" class="slink">Research Paper →</a>
     </div>`
             },
             daansetu: {
-                title: 'DaanSetu',
-                relic: 'Quest II · Guild Mission · In Progress',
+                title: 'DaanSetu', relic: 'Quest II · Guild Mission · In Progress',
                 body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A blockchain-powered donation platform on Polygon — every coin of aid is publicly verifiable, immutable, and incorruptible. Built with the mission of radical transparency in charitable giving.</p>
     <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Smart contracts on Polygon ensure funds go exactly where intended. Geolocation targets relief to the most afflicted regions. IPFS stores campaign data in a decentralized, censorship-resistant way.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
-      <span class="sc-rune">React</span><span class="sc-rune">Ethers.js</span><span class="sc-rune">Polygon</span><span class="sc-rune">IPFS</span><span class="sc-rune">Solidity</span><span class="sc-rune">Web3</span>
-    </div>
-    <div style="margin-top:24px"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank" class="sc-link">GitHub →</a></div>`
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0"><span class="srune">React</span><span class="srune">Ethers.js</span><span class="srune">Polygon</span><span class="srune">IPFS</span><span class="srune">Solidity</span></div>
+    <div style="margin-top:24px"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank" class="slink">GitHub →</a></div>`
             },
             pyos: {
-                title: 'Py_OS',
-                relic: 'Quest III · Solo Endeavour · Complete',
-                body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A fully simulated operating system built entirely in pure Python — a solo engineering feat that demonstrates deep understanding of OS architecture and GUI development.</p>
+                title: 'Py_OS', relic: 'Quest III · Solo Endeavour · Complete',
+                body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A fully simulated operating system built entirely in pure Python — a solo engineering feat demonstrating deep understanding of OS architecture and GUI development.</p>
     <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Features a complete file system, software marketplace, drag-and-drop window management, live notifications, and a custom GUI shell — all rendered through Tkinter with zero external frameworks.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
-      <span class="sc-rune">Python</span><span class="sc-rune">Tkinter</span><span class="sc-rune">Custom GUI</span><span class="sc-rune">File System</span><span class="sc-rune">OS Architecture</span>
-    </div>
-    <div style="margin-top:24px"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank" class="sc-link">GitHub →</a></div>`
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0"><span class="srune">Python</span><span class="srune">Tkinter</span><span class="srune">Custom GUI</span><span class="srune">OS Architecture</span></div>
+    <div style="margin-top:24px"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank" class="slink">GitHub →</a></div>`
             },
             autonixweb: {
-                title: 'AUTONIX Website',
-                relic: 'Quest IV · Artisan Craft · Deployed',
+                title: 'AUTONIX Website', relic: 'Quest IV · Artisan Craft · Deployed',
                 body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A cinematic digital exhibition for the AUTONIX project — built with zero frameworks, purely hand-crafted HTML, CSS, and Vanilla JS.</p>
-    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Canvas particles form a motorcycle animation on load. 3D mouse-tilt effects on every card. A live webcam EAR oracle that demonstrates the drowsiness detection algorithm in real-time. Exhibition mode for conference halls.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
-      <span class="sc-rune">HTML5</span><span class="sc-rune">CSS3</span><span class="sc-rune">Vanilla JS</span><span class="sc-rune">Canvas API</span><span class="sc-rune">WebRTC</span>
-    </div>
+    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Canvas particles form a motorcycle animation on load. 3D mouse-tilt on every card. A live webcam EAR oracle demonstrating the drowsiness detection algorithm in real-time. Exhibition mode for conference halls.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0"><span class="srune">HTML5</span><span class="srune">CSS3</span><span class="srune">Vanilla JS</span><span class="srune">Canvas API</span><span class="srune">WebRTC</span></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
-      <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">Live Site →</a>
-      <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank" class="sc-link">GitHub →</a>
+      <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="slink">Live Site →</a>
+      <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank" class="slink">GitHub →</a>
     </div>`
             }
         };
-
         function openModal(id) {
-            const data = modalData[id];
-            if (!data) return;
-            const mc = document.getElementById('modal-content');
-            mc.innerHTML = `
-    ${data.badge ? `<div class="sc-badge" style="margin-bottom:12px">${data.badge}</div>` : ''}
-    <div class="sc-relic">${data.relic}</div>
-    <div class="sc-title" style="font-size:clamp(26px,4vw,44px);margin:12px 0 20px">${data.title}</div>
-    ${data.body}
-  `;
-            document.getElementById('modal-overlay').classList.add('open');
+            const d = mdata[id]; if (!d) return;
+            document.getElementById('mc').innerHTML = `
+    ${d.badge ? `<div class="sbadge" style="margin-bottom:12px">${d.badge}</div>` : ''}
+    <div class="srelic">${d.relic}</div>
+    <div class="sctitle" style="font-size:clamp(26px,4vw,44px);margin:12px 0 20px">${d.title}</div>
+    ${d.body}`;
+            document.getElementById('mo').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
         function closeModal(e) {
-            if (e && e.target !== document.getElementById('modal-overlay') && e.type !== 'click') return;
-            document.getElementById('modal-overlay').classList.remove('open');
+            if (e && e.target !== document.getElementById('mo')) return;
+            document.getElementById('mo').classList.remove('open');
             document.body.style.overflow = '';
         }
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal({ target: document.getElementById('modal-overlay') }); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal({ target: document.getElementById('mo') }); });
 
-        // ══════════════════════════════════════════════════════════════
-        // SOUND DESIGN (Web Audio API — subtle tones)
-        // ══════════════════════════════════════════════════════════════
-        let audioCtx = null, soundOn = false;
-        const soundBtn = document.getElementById('soundBtn');
-
-        function getAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            return audioCtx;
-        }
-        function playTone(freq, dur = 0.12, vol = 0.04, type = 'sine') {
-            if (!soundOn) return;
+        // ── SOUND ─────────────────────────────────────────────────────
+        let actx = null, sOn = false;
+        const sbEl = document.getElementById('soundBtn');
+        function getAC() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+        function playTone(freq, dur = .12, vol = .04, type = 'sine') {
+            if (!sOn) return;
             try {
-                const ac = getAudio();
-                const osc = ac.createOscillator();
-                const gain = ac.createGain();
+                const ac = getAC(), osc = ac.createOscillator(), gain = ac.createGain();
                 osc.connect(gain); gain.connect(ac.destination);
-                osc.type = type;
-                osc.frequency.value = freq;
+                osc.type = type; osc.frequency.value = freq;
                 gain.gain.setValueAtTime(0, ac.currentTime);
-                gain.gain.linearRampToValueAtTime(vol, ac.currentTime + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-                osc.start(ac.currentTime);
-                osc.stop(ac.currentTime + dur);
+                gain.gain.linearRampToValueAtTime(vol, ac.currentTime + .02);
+                gain.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+                osc.start(ac.currentTime); osc.stop(ac.currentTime + dur);
             } catch (e) { }
         }
-        soundBtn.addEventListener('click', () => {
-            soundOn = !soundOn;
-            soundBtn.textContent = soundOn ? '🔊' : '🔇';
-            if (soundOn) playTone(440, 0.3, 0.05);
+        sbEl.addEventListener('click', () => {
+            sOn = !sOn; sbEl.textContent = sOn ? '🔊' : '🔇';
+            if (sOn) playTone(440, .3, .05);
         });
         document.querySelectorAll('a,button').forEach(el => {
-            el.addEventListener('mouseenter', () => playTone(660, 0.08, 0.025));
-            el.addEventListener('click', () => playTone(880, 0.15, 0.04));
+            el.addEventListener('mouseenter', () => playTone(660, .08, .025));
+            el.addEventListener('click', () => playTone(880, .15, .04));
         });
-        // Scroll milestone chimes
-        let lastMilestone = 0;
+        let lmile = 0;
         window.addEventListener('scroll', () => {
             const p = window.scrollY / (document.body.scrollHeight - window.innerHeight);
-            const milestone = Math.floor(p * 4);
-            if (milestone !== lastMilestone) {
-                lastMilestone = milestone;
-                playTone(528 + milestone * 110, 0.4, 0.035, 'sine');
-            }
+            const m = Math.floor(p * 4);
+            if (m !== lmile) { lmile = m; playTone(528 + m * 110, .4, .035); }
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // THEME TOGGLE
-        // ══════════════════════════════════════════════════════════════
-        const themeBtn = document.getElementById('themeBtn');
+        // ── THEME ─────────────────────────────────────────────────────
+        const tbEl = document.getElementById('themeBtn');
         let isLight = false;
-        themeBtn.addEventListener('click', () => {
+        tbEl.addEventListener('click', () => {
             isLight = !isLight;
             document.body.classList.toggle('light', isLight);
-            themeBtn.textContent = isLight ? '🌙 Arcane' : '☀ Parchment';
-            playTone(isLight ? 396 : 528, 0.3, 0.04);
+            tbEl.textContent = isLight ? '🌙 Arcane' : '☀ Parchment';
+            playTone(isLight ? 396 : 528, .3, .04);
         });
 
-        // ══════════════════════════════════════════════════════════════
-        // KONAMI CODE EASTER EGG
-        // ══════════════════════════════════════════════════════════════
-        const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
-        let konamiIdx = 0;
+        // ── KONAMI EASTER EGG ─────────────────────────────────────────
+        const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+        let ki = 0;
         document.addEventListener('keydown', e => {
-            if (e.code === konami[konamiIdx]) {
-                konamiIdx++;
-                if (konamiIdx === konami.length) {
-                    konamiIdx = 0;
-                    showEasterEgg();
-                }
-            } else {
-                konamiIdx = 0;
-            }
+            e.code === KONAMI[ki] ? ki++ : ki = 0;
+            if (ki === KONAMI.length) { ki = 0; showEgg(); }
         });
-
-        function showEasterEgg() {
-            const egg = document.getElementById('easter-egg');
-            const ec = document.getElementById('egg-canvas');
+        function showEgg() {
+            const egg = document.getElementById('egg'), ec = document.getElementById('eggc');
             egg.classList.add('show');
             ec.width = window.innerWidth; ec.height = window.innerHeight;
             const ectx = ec.getContext('2d');
-            const particles = Array.from({ length: 200 }, () => ({
-                x: Math.random() * ec.width, y: Math.random() * ec.height,
-                vx: (Math.random() - .5) * 3, vy: (Math.random() - .5) * 3,
-                r: Math.random() * 3 + 1, a: Math.random()
-            }));
-            let eggAnim = true;
-            egg.querySelector('.egg-close').addEventListener('click', () => { eggAnim = false; }, { once: true });
-            (function eggLoop() {
-                if (!eggAnim) return;
-                ectx.fillStyle = 'rgba(4,3,2,.15)';
-                ectx.fillRect(0, 0, ec.width, ec.height);
-                particles.forEach(p => {
+            const parts = Array.from({ length: 200 }, () => ({ x: Math.random() * ec.width, y: Math.random() * ec.height, vx: (Math.random() - .5) * 3, vy: (Math.random() - .5) * 3, r: Math.random() * 3 + 1, a: Math.random() }));
+            let alive = true;
+            egg.querySelector('.ecls').addEventListener('click', () => { alive = false; }, { once: true });
+            (function eloop() {
+                if (!alive) return;
+                ectx.fillStyle = 'rgba(4,3,2,.15)'; ectx.fillRect(0, 0, ec.width, ec.height);
+                parts.forEach(p => {
                     p.x += p.vx; p.y += p.vy;
                     if (p.x < 0 || p.x > ec.width) p.vx *= -1;
                     if (p.y < 0 || p.y > ec.height) p.vy *= -1;
-                    ectx.beginPath();
-                    ectx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ectx.fillStyle = `rgba(212,168,67,${p.a})`;
-                    ectx.fill();
+                    ectx.beginPath(); ectx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ectx.fillStyle = `rgba(212,168,67,${p.a})`; ectx.fill();
                 });
-                requestAnimationFrame(eggLoop);
+                requestAnimationFrame(eloop);
             })();
-            // Play arcane chord
-            [220, 277, 330, 440].forEach((f, i) => setTimeout(() => playTone(f, 1.5, 0.06), i * 120));
+            [220, 277, 330, 440].forEach((f, i) => setTimeout(() => playTone(f, 1.5, .06), i * 120));
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // BLINK
-        // ══════════════════════════════════════════════════════════════
-        const bl = document.getElementById('blink');
-        if (bl) setInterval(() => bl.style.opacity = bl.style.opacity === '0' ? '1' : '0', 560);
+        // ── BLINK ─────────────────────────────────────────────────────
+        const blEl = document.getElementById('blink');
+        if (blEl) setInterval(() => blEl.style.opacity = blEl.style.opacity === '0' ? '1' : '0', 560);
 
-        // ══════════════════════════════════════════════════════════════
-        // INIT SCROLL ANIMATIONS ON DOM READY
-        // ══════════════════════════════════════════════════════════════
+        // ── INIT ──────────────────────────────────────────────────────
         window.addEventListener('load', () => {
-            initScrollAnimations();
+            initScrollAnims();
             ScrollTrigger.refresh();
         });
     </script>
