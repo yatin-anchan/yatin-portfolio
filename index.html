@@ -25,14 +25,15 @@
             --arcane: #7b2fbe;
             --mist: #8ecae6;
             --parchment: #f5e6c8;
-            --dark: #0a0705;
-            --dark2: #110d08;
+            --dark: #060402;
+            --dark2: #0d0a06;
             --dark3: #1a1208;
             --rune: #b8860b;
-            --glow-gold: rgba(212, 168, 67, 0.4);
+            --glow-gold: rgba(212, 168, 67, 0.5);
             --glow-arcane: rgba(123, 47, 190, 0.4);
             --glass: rgba(212, 168, 67, 0.04);
             --glass-border: rgba(212, 168, 67, 0.15);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         html {
@@ -47,39 +48,93 @@
             cursor: none
         }
 
-        /* CURSOR - magical orb */
-        #cursor {
+        /* ─── CUSTOM CURSOR ─────────────────────────── */
+        #c-dot {
             position: fixed;
-            width: 16px;
-            height: 16px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: radial-gradient(circle, #f5c842, #d4a843);
+            background: var(--gold2);
             pointer-events: none;
             z-index: 9999;
             transform: translate(-50%, -50%);
-            transition: transform 0.15s;
-            box-shadow: 0 0 12px var(--glow-gold), 0 0 24px var(--glow-gold)
+            transition: width .15s, height .15s, opacity .15s;
+            box-shadow: 0 0 16px var(--glow-gold), 0 0 32px rgba(245, 200, 66, .3)
         }
 
-        #cursor-ring {
+        #c-ring {
             position: fixed;
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            border: 1px solid rgba(212, 168, 67, 0.5);
+            border: 1.5px solid rgba(212, 168, 67, .4);
             pointer-events: none;
             z-index: 9998;
             transform: translate(-50%, -50%);
-            transition: all 0.18s ease
+            transition: width .4s var(--ease-out-expo), height .4s var(--ease-out-expo), border-color .3s, opacity .3s
         }
 
-        #cursor-trail {
+        #c-aura {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 168, 67, .07), transparent 70%);
+            pointer-events: none;
+            z-index: 9997;
+            transform: translate(-50%, -50%);
+            transition: all .6s var(--ease-out-expo)
+        }
+
+        body.cursor-hover #c-dot {
+            width: 14px;
+            height: 14px
+        }
+
+        body.cursor-hover #c-ring {
+            width: 64px;
+            height: 64px;
+            border-color: rgba(212, 168, 67, .7)
+        }
+
+        body.cursor-hover #c-aura {
+            width: 160px;
+            height: 160px
+        }
+
+        body.cursor-click #c-dot {
+            width: 4px;
+            height: 4px
+        }
+
+        body.cursor-click #c-ring {
+            width: 24px;
+            height: 24px
+        }
+
+        /* ─── SPARKLE TRAILS ─────────────────────────── */
+        .sparkle {
             position: fixed;
             pointer-events: none;
-            z-index: 9997
+            z-index: 9996;
+            border-radius: 50%;
+            background: var(--gold2);
+            animation: sparkFade .7s forwards
         }
 
-        /* LOADER */
+        @keyframes sparkFade {
+            0% {
+                opacity: .8;
+                transform: scale(1) translate(-50%, -50%)
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0) translate(-50%, -50%) translateY(-20px)
+            }
+        }
+
+        /* ─── LOADER ─────────────────────────────────── */
         #loader {
             position: fixed;
             inset: 0;
@@ -89,7 +144,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 1.2s ease
+            transition: opacity 1.4s var(--ease-out-expo)
         }
 
         #loader.hidden {
@@ -97,140 +152,265 @@
             pointer-events: none
         }
 
-        .loader-rune {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 60px;
-            color: var(--gold);
-            opacity: 0.2;
-            animation: runeGlow 2s ease-in-out infinite;
-            margin-bottom: 32px;
-            text-shadow: 0 0 40px var(--glow-gold)
+        .l-sigil {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 40px
         }
 
-        @keyframes runeGlow {
+        .l-sigil-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 168, 67, .15);
+            animation: lRingSpin 3s linear infinite
+        }
+
+        .l-sigil-ring:nth-child(2) {
+            inset: 16px;
+            border-color: rgba(212, 168, 67, .25);
+            animation-duration: 2s;
+            animation-direction: reverse
+        }
+
+        .l-sigil-ring:nth-child(3) {
+            inset: 32px;
+            border-color: rgba(212, 168, 67, .4);
+            animation-duration: 1.5s
+        }
+
+        .l-sigil-core {
+            position: absolute;
+            inset: 44px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--gold), transparent);
+            animation: lCoreGlow 1.5s ease-in-out infinite alternate
+        }
+
+        @keyframes lRingSpin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes lCoreGlow {
+            from {
+                opacity: .4;
+                transform: scale(.8)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.2)
+            }
+        }
+
+        .l-text {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: .5em;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 28px;
+            opacity: .7
+        }
+
+        .l-bar {
+            width: 300px;
+            height: 1px;
+            background: rgba(212, 168, 67, .1);
+            position: relative;
+            overflow: hidden
+        }
+
+        .l-fill {
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
+            width: 0%;
+            transition: width .05s linear;
+            box-shadow: 0 0 12px var(--glow-gold)
+        }
+
+        .l-bar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 60%, rgba(212, 168, 67, .2));
+            animation: lShimmer 1.5s ease-in-out infinite
+        }
+
+        @keyframes lShimmer {
 
             0%,
             100% {
-                opacity: 0.2;
-                transform: scale(1)
+                opacity: 0
             }
 
             50% {
-                opacity: 0.8;
-                transform: scale(1.05)
+                opacity: 1
             }
         }
 
-        .loader-text {
-            font-family: 'Cinzel', serif;
-            font-size: 12px;
-            letter-spacing: 0.4em;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-bottom: 24px;
-            opacity: 0.7
-        }
-
-        .loader-bar {
-            width: 280px;
-            height: 1px;
-            background: rgba(212, 168, 67, 0.15);
-            position: relative;
-            overflow: visible
-        }
-
-        .loader-fill {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-            width: 0%;
-            transition: width 0.06s linear;
-            box-shadow: 0 0 8px var(--glow-gold)
-        }
-
-        .loader-spell {
-            margin-top: 24px;
+        .l-status {
+            margin-top: 20px;
             font-family: 'Share Tech Mono', monospace;
             font-size: 11px;
-            color: rgba(212, 168, 67, 0.4);
-            letter-spacing: 0.15em;
+            color: rgba(212, 168, 67, .4);
+            letter-spacing: .15em;
+            min-height: 60px;
             text-align: center;
-            line-height: 2
+            line-height: 2.2
         }
 
-        /* CANVAS */
-        #bg-canvas {
+        /* ─── BACKGROUND ─────────────────────────────── */
+        #bg {
             position: fixed;
             inset: 0;
             z-index: 0
         }
 
-        /* PROGRESS */
+        #noise-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            opacity: .04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 256px;
+            pointer-events: none
+        }
+
+        .amb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+            transition: transform 1s ease
+        }
+
+        .amb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(212, 168, 67, .07), transparent);
+            top: -200px;
+            right: -200px;
+            animation: ambDrift 12s ease-in-out infinite
+        }
+
+        .amb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(192, 57, 43, .05), transparent);
+            bottom: 0;
+            left: -150px;
+            animation: ambDrift 15s ease-in-out infinite reverse
+        }
+
+        .amb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(123, 47, 190, .06), transparent);
+            top: 40%;
+            right: 8%;
+            animation: ambDrift 9s ease-in-out infinite 4s
+        }
+
+        @keyframes ambDrift {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -50px) scale(1.1)
+            }
+        }
+
+        /* ─── PROGRESS ───────────────────────────────── */
         #prog {
             position: fixed;
             top: 0;
             left: 0;
-            height: 1px;
+            height: 2px;
             background: linear-gradient(90deg, var(--ember), var(--gold), var(--gold2));
             z-index: 2000;
             width: 0%;
-            box-shadow: 0 0 6px var(--glow-gold)
+            box-shadow: 0 0 10px var(--glow-gold);
+            transition: width .1s
         }
 
-        /* NAV */
+        /* ─── NAV ─────────────────────────────────────── */
         nav {
             position: fixed;
             top: 24px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            padding: 14px 40px;
-            background: rgba(10, 7, 5, 0.85);
-            backdrop-filter: blur(16px);
+            padding: 14px 44px;
+            background: rgba(6, 4, 2, .88);
+            backdrop-filter: blur(24px) saturate(1.5);
             border: 1px solid var(--glass-border);
-            border-radius: 0;
-            clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+            clip-path: polygon(14px 0%, 100% 0%, calc(100% - 14px) 100%, 0% 100%);
             display: flex;
-            gap: 36px;
-            transition: all 0.3s
+            gap: 40px;
+            transition: all .4s
         }
 
-        nav::before {
-            content: '◆';
-            position: absolute;
-            left: -1px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gold);
-            font-size: 8px
-        }
-
+        nav::before,
         nav::after {
             content: '◆';
             position: absolute;
-            right: -1px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--gold);
-            font-size: 8px
+            font-size: 7px;
+            opacity: .8
+        }
+
+        nav::before {
+            left: 8px
+        }
+
+        nav::after {
+            right: 8px
         }
 
         nav a {
             font-family: 'Cinzel', serif;
-            font-size: 10px;
-            letter-spacing: 0.25em;
+            font-size: 9.5px;
+            letter-spacing: .28em;
             text-transform: uppercase;
-            color: rgba(212, 168, 67, 0.5);
+            color: rgba(212, 168, 67, .4);
             text-decoration: none;
-            transition: all 0.3s;
-            position: relative
+            transition: all .3s;
+            position: relative;
+            padding-bottom: 2px
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--gold);
+            transition: width .3s var(--ease-out-expo);
+            box-shadow: 0 0 8px var(--glow-gold)
         }
 
         nav a:hover {
             color: var(--gold);
-            text-shadow: 0 0 12px var(--glow-gold)
+            text-shadow: 0 0 20px var(--glow-gold)
         }
 
-        /* HERO */
+        nav a:hover::after {
+            width: 100%
+        }
+
+        /* ─── HERO ─────────────────────────────────────── */
         #hero {
             height: 100vh;
             display: flex;
@@ -239,167 +419,204 @@
             justify-content: center;
             text-align: center;
             position: relative;
-            overflow: hidden
+            overflow: hidden;
+            perspective: 1000px
         }
 
         .hero-vignette {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 70% 80% at 50% 50%, transparent 40%, rgba(10, 7, 5, 0.9) 100%);
+            background: radial-gradient(ellipse 65% 75% at 50% 50%, transparent 35%, rgba(6, 4, 2, .95) 100%);
             pointer-events: none;
             z-index: 2
         }
 
-        .hero-rune-circle {
+        #hero-canvas {
             position: absolute;
-            width: 600px;
-            height: 600px;
+            inset: 0;
+            z-index: 1
+        }
+
+        /* Orbital rings */
+        .orbit-ring {
+            position: absolute;
             border-radius: 50%;
-            border: 1px solid rgba(212, 168, 67, 0.08);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            animation: spin 60s linear infinite
+            border: 1px solid;
+            pointer-events: none
         }
 
-        .hero-rune-circle-2 {
+        .or-1 {
+            width: 500px;
+            height: 500px;
+            border-color: rgba(212, 168, 67, .07);
+            animation: orbitSpin 50s linear infinite
+        }
+
+        .or-2 {
+            width: 700px;
+            height: 700px;
+            border-color: rgba(212, 168, 67, .04);
+            animation: orbitSpin 80s linear infinite reverse
+        }
+
+        .or-3 {
+            width: 340px;
+            height: 340px;
+            border-color: rgba(212, 168, 67, .1);
+            animation: orbitSpin 35s linear infinite
+        }
+
+        .or-4 {
+            width: 900px;
+            height: 900px;
+            border-color: rgba(123, 47, 190, .03);
+            animation: orbitSpin 120s linear infinite
+        }
+
+        /* dot on orbit */
+        .orbit-dot {
             position: absolute;
-            width: 800px;
-            height: 800px;
             border-radius: 50%;
-            border: 1px solid rgba(212, 168, 67, 0.04);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: spinR 90s linear infinite
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--glow-gold)
         }
 
-        .hero-rune-circle-3 {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            border: 1px solid rgba(212, 168, 67, 0.1);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: spin 40s linear infinite
-        }
-
-        @keyframes spin {
-            from {
-                transform: translate(-50%, -50%) rotate(0deg)
-            }
-
+        @keyframes orbitSpin {
             to {
                 transform: translate(-50%, -50%) rotate(360deg)
             }
         }
 
-        @keyframes spinR {
-            from {
-                transform: translate(-50%, -50%) rotate(0deg)
-            }
-
-            to {
-                transform: translate(-50%, -50%) rotate(-360deg)
-            }
-        }
-
-        .rune-marks {
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: spin 60s linear infinite
-        }
-
-        .rune-mark {
-            position: absolute;
-            font-size: 14px;
-            color: rgba(212, 168, 67, 0.25);
-            font-family: 'Cinzel', serif
+        /* Hero content */
+        .hero-inner {
+            position: relative;
+            z-index: 3
         }
 
         .hero-eyebrow {
             font-family: 'Cinzel', serif;
-            font-size: 11px;
-            letter-spacing: 0.5em;
+            font-size: 10px;
+            letter-spacing: .55em;
             color: var(--gold);
             text-transform: uppercase;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             opacity: 0;
-            animation: fadeUp 1.2s 0.8s forwards;
-            z-index: 3;
-            position: relative
+            animation: revealUp 1.2s .8s var(--ease-out-expo) forwards
         }
 
         .hero-title {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(36px, 8vw, 96px);
+            font-size: clamp(42px, 9vw, 110px);
             font-weight: 900;
-            line-height: 0.95;
+            line-height: .9;
             color: var(--parchment);
-            text-shadow: 0 0 60px rgba(212, 168, 67, 0.3), 0 2px 4px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 0 80px rgba(212, 168, 67, .25), 0 4px 8px rgba(0, 0, 0, .9);
             opacity: 0;
-            animation: fadeUp 1.2s 1s forwards;
-            z-index: 3;
-            position: relative;
-            letter-spacing: -0.02em
+            animation: revealUp 1.4s 1s var(--ease-out-expo) forwards;
+            letter-spacing: -.02em;
+            transform-style: preserve-3d
         }
 
-        .hero-title span {
+        .hero-title .name-gold {
             color: var(--gold);
-            text-shadow: 0 0 30px var(--glow-gold), 0 0 60px var(--glow-gold)
+            text-shadow: 0 0 40px var(--glow-gold), 0 0 80px rgba(212, 168, 67, .3), 0 0 120px rgba(212, 168, 67, .15)
         }
 
-        .hero-divider {
+        .hero-div {
             display: flex;
             align-items: center;
             gap: 16px;
-            margin: 24px 0;
+            margin: 28px 0;
             opacity: 0;
-            animation: fadeUp 1.2s 1.2s forwards;
-            z-index: 3;
-            position: relative
+            animation: revealUp 1.2s 1.2s var(--ease-out-expo) forwards
         }
 
-        .hero-divider::before,
-        .hero-divider::after {
+        .hero-div::before,
+        .hero-div::after {
             content: '';
-            flex: 80px 0 0;
-            height: 1px;
+            flex: 100px 0 0;
+            height: 1px
+        }
+
+        .hero-div::before {
             background: linear-gradient(90deg, transparent, var(--gold))
         }
 
-        .hero-divider::after {
+        .hero-div::after {
             background: linear-gradient(90deg, var(--gold), transparent)
         }
 
-        .hero-divider span {
+        .hero-div span {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            letter-spacing: 0.4em;
-            color: var(--gold);
-            opacity: 0.6;
+            letter-spacing: .4em;
+            color: rgba(212, 168, 67, .6);
             text-transform: uppercase;
             white-space: nowrap
         }
 
-        .hero-subtitle {
-            font-family: 'Crimson Text', serif;
-            font-size: clamp(14px, 2vw, 20px);
+        .hero-sub {
+            font-size: clamp(15px, 2vw, 21px);
             font-style: italic;
-            color: rgba(245, 230, 200, 0.6);
-            letter-spacing: 0.1em;
+            color: rgba(245, 230, 200, .55);
+            letter-spacing: .08em;
             opacity: 0;
-            animation: fadeUp 1.2s 1.4s forwards;
-            z-index: 3;
-            position: relative
+            animation: revealUp 1.2s 1.4s var(--ease-out-expo) forwards
         }
 
+        .hero-cta {
+            margin-top: 44px;
+            opacity: 0;
+            animation: revealUp 1.2s 1.7s var(--ease-out-expo) forwards;
+            display: flex;
+            gap: 16px;
+            justify-content: center
+        }
+
+        .btn-arcane {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            padding: 14px 36px;
+            border: 1px solid rgba(212, 168, 67, .3);
+            color: rgba(212, 168, 67, .7);
+            text-decoration: none;
+            transition: all .4s;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+            position: relative;
+            overflow: hidden
+        }
+
+        .btn-arcane::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(212, 168, 67, .12), transparent);
+            transform: translateX(-100%);
+            transition: transform .5s var(--ease-out-expo)
+        }
+
+        .btn-arcane:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            text-shadow: 0 0 12px var(--glow-gold);
+            box-shadow: 0 0 30px rgba(212, 168, 67, .15)
+        }
+
+        .btn-arcane:hover::before {
+            transform: translateX(0)
+        }
+
+        .btn-arcane.primary {
+            background: rgba(212, 168, 67, .1);
+            border-color: rgba(212, 168, 67, .5)
+        }
+
+        /* Scroll cue */
         .hero-scroll {
             position: absolute;
             bottom: 40px;
@@ -409,55 +626,51 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            animation: float 3s ease-in-out infinite
+            gap: 10px;
+            opacity: 0;
+            animation: revealFade 1.5s 2.2s forwards
         }
 
-        .scroll-rune {
+        .s-label {
             font-family: 'Cinzel', serif;
-            font-size: 9px;
-            letter-spacing: 0.3em;
-            color: rgba(212, 168, 67, 0.4);
+            font-size: 8px;
+            letter-spacing: .4em;
+            color: rgba(212, 168, 67, .35);
             text-transform: uppercase
         }
 
-        .scroll-gem {
-            width: 6px;
-            height: 6px;
-            background: var(--gold);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--glow-gold);
-            animation: gemPulse 2s ease-in-out infinite
+        .s-track {
+            width: 1px;
+            height: 50px;
+            background: rgba(212, 168, 67, .1);
+            position: relative;
+            overflow: hidden
         }
 
-        @keyframes float {
+        .s-line {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, var(--gold));
+            animation: scrollLine 2s ease-in-out infinite
+        }
 
-            0%,
+        @keyframes scrollLine {
+            0% {
+                top: -100%
+            }
+
             100% {
-                transform: translate(-50%, 0)
-            }
-
-            50% {
-                transform: translate(-50%, -8px)
+                top: 200%
             }
         }
 
-        @keyframes gemPulse {
-
-            0%,
-            100% {
-                opacity: 0.4
-            }
-
-            50% {
-                opacity: 1
-            }
-        }
-
-        @keyframes fadeUp {
+        @keyframes revealUp {
             from {
                 opacity: 0;
-                transform: translateY(40px)
+                transform: translateY(50px)
             }
 
             to {
@@ -466,23 +679,33 @@
             }
         }
 
-        /* SECTION COMMON */
+        @keyframes revealFade {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        /* ─── SECTION COMMON ─────────────────────────── */
         .section-wrap {
             position: relative;
             z-index: 1;
-            padding: 120px 6vw;
+            padding: 130px 6vw;
             max-width: 1400px;
             margin: 0 auto
         }
 
         .section-eyebrow {
             font-family: 'Cinzel', serif;
-            font-size: 10px;
-            letter-spacing: 0.45em;
+            font-size: 9.5px;
+            letter-spacing: .45em;
             color: var(--gold);
             text-transform: uppercase;
-            margin-bottom: 12px;
-            opacity: 0.7;
+            margin-bottom: 14px;
+            opacity: .65;
             display: flex;
             align-items: center;
             gap: 12px
@@ -490,32 +713,31 @@
 
         .section-eyebrow::before {
             content: '✦';
-            font-size: 8px
+            font-size: 7px
         }
 
         .section-title {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(28px, 5vw, 56px);
+            font-size: clamp(30px, 5.5vw, 62px);
             font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 48px;
+            line-height: 1.05;
+            margin-bottom: 56px;
             color: var(--parchment);
-            letter-spacing: -0.01em
+            letter-spacing: -.01em
         }
 
         .section-title .accent {
-            color: var(--gold)
+            color: var(--gold);
+            text-shadow: 0 0 40px rgba(212, 168, 67, .25)
         }
 
-        /* ARCANE DIVIDER */
         .arc-divider {
             position: relative;
             z-index: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px 0;
-            overflow: hidden
+            padding: 16px 0
         }
 
         .arc-divider::before {
@@ -525,26 +747,37 @@
             right: 0;
             top: 50%;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.2), rgba(212, 168, 67, 0.4), rgba(212, 168, 67, 0.2), transparent)
+            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .15), rgba(212, 168, 67, .35), rgba(212, 168, 67, .15), transparent)
         }
 
         .arc-divider-gem {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background: var(--gold);
             transform: rotate(45deg);
-            box-shadow: 0 0 12px var(--glow-gold);
+            box-shadow: 0 0 16px var(--glow-gold);
             position: relative;
-            z-index: 1
+            z-index: 1;
+            transition: transform .3s
         }
 
-        /* GLASS PANEL */
+        .arc-divider:hover .arc-divider-gem {
+            transform: rotate(225deg) scale(1.5)
+        }
+
+        /* ─── PANELS ─────────────────────────────────── */
         .arcane-panel {
-            background: rgba(10, 7, 5, 0.7);
-            backdrop-filter: blur(20px);
+            background: rgba(6, 4, 2, .75);
+            backdrop-filter: blur(24px);
             border: 1px solid var(--glass-border);
             position: relative;
-            overflow: hidden
+            overflow: hidden;
+            transition: border-color .4s, box-shadow .4s
+        }
+
+        .arcane-panel:hover {
+            border-color: rgba(212, 168, 67, .25);
+            box-shadow: 0 0 60px rgba(212, 168, 67, .05)
         }
 
         .arcane-panel::before {
@@ -554,8 +787,8 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-            opacity: 0.5
+            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .6), transparent);
+            opacity: .4
         }
 
         .arcane-panel::after {
@@ -565,77 +798,104 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-            opacity: 0.3
+            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .3), transparent);
+            opacity: .3
         }
 
-        .panel-corner {
+        .pc {
             position: absolute;
-            width: 16px;
-            height: 16px
+            width: 18px;
+            height: 18px
         }
 
-        .panel-corner.tl {
-            top: 4px;
-            left: 4px;
+        .pc.tl {
+            top: 5px;
+            left: 5px;
             border-top: 1px solid var(--gold);
             border-left: 1px solid var(--gold)
         }
 
-        .panel-corner.tr {
-            top: 4px;
-            right: 4px;
+        .pc.tr {
+            top: 5px;
+            right: 5px;
             border-top: 1px solid var(--gold);
             border-right: 1px solid var(--gold)
         }
 
-        .panel-corner.bl {
-            bottom: 4px;
-            left: 4px;
+        .pc.bl {
+            bottom: 5px;
+            left: 5px;
             border-bottom: 1px solid var(--gold);
             border-left: 1px solid var(--gold)
         }
 
-        .panel-corner.br {
-            bottom: 4px;
-            right: 4px;
+        .pc.br {
+            bottom: 5px;
+            right: 5px;
             border-bottom: 1px solid var(--gold);
             border-right: 1px solid var(--gold)
         }
 
-        /* ABOUT */
+        /* ─── ABOUT ──────────────────────────────────── */
         .about-grid {
             display: grid;
             grid-template-columns: 1.3fr 1fr;
-            gap: 60px;
+            gap: 70px;
             align-items: start
         }
 
         .about-lore {
-            font-size: 19px;
-            line-height: 1.9;
-            color: rgba(245, 230, 200, 0.7);
+            font-size: 19.5px;
+            line-height: 1.95;
+            color: rgba(245, 230, 200, .68);
             font-style: italic;
             margin-bottom: 32px
         }
 
         .about-lore em {
             color: var(--gold);
-            font-style: normal
+            font-style: normal;
+            text-shadow: 0 0 20px rgba(212, 168, 67, .3)
+        }
+
+        .about-terminal {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: rgba(212, 168, 67, .4);
+            line-height: 2.4;
+            margin-bottom: 32px
+        }
+
+        .about-terminal .t-prompt {
+            color: rgba(212, 168, 67, .6)
         }
 
         .about-facts {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 0;
             border: 1px solid var(--glass-border);
-            margin-top: 40px
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .about-facts::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(212, 168, 67, .03), transparent);
+            pointer-events: none
         }
 
         .fact-cell {
-            padding: 24px 20px;
+            padding: 28px 20px;
             text-align: center;
-            position: relative
+            position: relative;
+            transition: background .3s
+        }
+
+        .fact-cell:hover {
+            background: rgba(212, 168, 67, .04)
         }
 
         .fact-cell:not(:last-child) {
@@ -644,38 +904,38 @@
 
         .fact-val {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: 28px;
+            font-size: 32px;
             color: var(--gold);
             display: block;
-            text-shadow: 0 0 20px var(--glow-gold)
+            text-shadow: 0 0 24px var(--glow-gold)
         }
 
         .fact-lbl {
             font-family: 'Cinzel', serif;
-            font-size: 9px;
-            letter-spacing: 0.3em;
-            color: rgba(212, 168, 67, 0.5);
+            font-size: 8.5px;
+            letter-spacing: .3em;
+            color: rgba(212, 168, 67, .45);
             text-transform: uppercase;
-            margin-top: 6px;
+            margin-top: 8px;
             display: block
         }
 
         .skills-tome {
-            padding: 36px
+            padding: 40px
         }
 
         .tome-section {
-            margin-bottom: 28px
+            margin-bottom: 32px
         }
 
         .tome-title {
             font-family: 'Cinzel', serif;
-            font-size: 10px;
-            letter-spacing: 0.3em;
+            font-size: 9.5px;
+            letter-spacing: .3em;
             color: var(--gold);
             text-transform: uppercase;
-            margin-bottom: 14px;
-            opacity: 0.7;
+            margin-bottom: 18px;
+            opacity: .65;
             display: flex;
             align-items: center;
             gap: 8px
@@ -689,135 +949,156 @@
         .skill-line {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px
+            gap: 12px;
+            margin-bottom: 12px;
+            transition: transform .3s
+        }
+
+        .skill-line:hover {
+            transform: translateX(4px)
         }
 
         .sk-name {
             font-family: 'Crimson Text', serif;
-            font-size: 14px;
-            color: rgba(245, 230, 200, 0.6);
-            width: 90px;
-            flex-shrink: 0
+            font-size: 15px;
+            color: rgba(245, 230, 200, .55);
+            width: 95px;
+            flex-shrink: 0;
+            transition: color .3s
+        }
+
+        .skill-line:hover .sk-name {
+            color: rgba(245, 230, 200, .85)
         }
 
         .sk-track {
             flex: 1;
-            height: 1px;
-            background: rgba(212, 168, 67, 0.1);
-            position: relative
+            height: 1.5px;
+            background: rgba(212, 168, 67, .08);
+            position: relative;
+            border-radius: 2px
         }
 
         .sk-fill {
             position: absolute;
             top: 0;
             left: 0;
-            height: 1px;
-            background: linear-gradient(90deg, var(--gold), var(--gold2));
-            box-shadow: 0 0 6px var(--glow-gold);
-            transition: width 1.4s cubic-bezier(0.23, 1, 0.32, 1)
+            height: 100%;
+            background: linear-gradient(90deg, rgba(212, 168, 67, .6), var(--gold), var(--gold2));
+            box-shadow: 0 0 8px var(--glow-gold);
+            transition: width 1.6s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 2px
         }
 
         .sk-gems {
             display: flex;
-            gap: 3px;
-            width: 60px
+            gap: 4px;
+            width: 64px
         }
 
         .sk-gem {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             transform: rotate(45deg);
-            border: 1px solid rgba(212, 168, 67, 0.3);
+            border: 1px solid rgba(212, 168, 67, .2);
             flex-shrink: 0;
-            transition: all 0.3s
+            transition: all .4s
         }
 
         .sk-gem.lit {
             background: var(--gold);
             border-color: var(--gold);
-            box-shadow: 0 0 6px var(--glow-gold)
+            box-shadow: 0 0 8px var(--glow-gold)
         }
 
-        /* PROJECTS */
+        /* ─── PROJECTS ───────────────────────────────── */
         .scrolls-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 28px;
-            margin-top: 60px
+            margin-top: 64px
         }
 
         .scroll-card {
             position: relative;
-            padding: 40px;
+            padding: 44px;
             cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            overflow: hidden
+            transition: transform .6s var(--ease-out-expo), border-color .4s, box-shadow .4s;
+            overflow: hidden;
+            transform-style: preserve-3d
         }
 
-        .scroll-card::before {
-            content: '';
+        .scroll-card .card-bg-shine {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(212, 168, 67, 0.06), transparent 60%);
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(212, 168, 67, .08), transparent 55%);
             opacity: 0;
-            transition: opacity 0.4s;
+            transition: opacity .4s;
             pointer-events: none
         }
 
-        .scroll-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(212, 168, 67, 0.35) !important;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(212, 168, 67, 0.06)
+        .scroll-card:hover .card-bg-shine {
+            opacity: 1
         }
 
-        .scroll-card:hover::before {
-            opacity: 1
+        .scroll-card:hover {
+            box-shadow: 0 30px 70px rgba(0, 0, 0, .7), 0 0 50px rgba(212, 168, 67, .07), inset 0 1px 0 rgba(212, 168, 67, .2)
         }
 
         .scroll-card.legendary {
             grid-column: span 2;
-            background: linear-gradient(135deg, rgba(212, 168, 67, 0.06), rgba(192, 57, 43, 0.04), rgba(123, 47, 190, 0.04))
+            background: linear-gradient(135deg, rgba(212, 168, 67, .06), rgba(192, 57, 43, .03), rgba(123, 47, 190, .04))
         }
 
         .scroll-relic {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            letter-spacing: 0.3em;
+            letter-spacing: .3em;
             color: var(--gold);
-            opacity: 0.5;
-            margin-bottom: 8px;
+            opacity: .45;
+            margin-bottom: 10px;
             text-transform: uppercase
         }
 
         .scroll-badge {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-family: 'Cinzel', serif;
             font-size: 8px;
-            padding: 4px 14px;
-            background: rgba(212, 168, 67, 0.12);
-            border: 1px solid rgba(212, 168, 67, 0.3);
+            padding: 5px 16px;
+            background: rgba(212, 168, 67, .1);
+            border: 1px solid rgba(212, 168, 67, .25);
             color: var(--gold);
-            letter-spacing: 0.2em;
+            letter-spacing: .2em;
             text-transform: uppercase;
-            margin-bottom: 12px
+            margin-bottom: 14px
+        }
+
+        .scroll-badge::before {
+            content: '✦';
+            font-size: 7px
         }
 
         .scroll-title {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(20px, 3vw, 32px);
+            font-size: clamp(22px, 3vw, 36px);
             font-weight: 700;
             color: var(--parchment);
-            margin-bottom: 12px;
-            line-height: 1.1
+            margin-bottom: 14px;
+            line-height: 1.1;
+            transition: color .3s
+        }
+
+        .scroll-card:hover .scroll-title {
+            color: var(--gold)
         }
 
         .scroll-lore {
-            font-family: 'Crimson Text', serif;
-            font-size: 16px;
-            line-height: 1.8;
-            color: rgba(245, 230, 200, 0.5);
-            margin-bottom: 24px;
+            font-size: 16.5px;
+            line-height: 1.85;
+            color: rgba(245, 230, 200, .5);
+            margin-bottom: 26px;
             font-style: italic
         }
 
@@ -825,17 +1106,24 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 20px
+            margin-bottom: 22px
         }
 
         .scroll-rune {
             font-family: 'Cinzel', serif;
             font-size: 8px;
-            padding: 4px 12px;
-            border: 1px solid rgba(212, 168, 67, 0.15);
-            color: rgba(212, 168, 67, 0.5);
-            letter-spacing: 0.1em;
-            text-transform: uppercase
+            padding: 5px 14px;
+            border: 1px solid rgba(212, 168, 67, .12);
+            color: rgba(212, 168, 67, .45);
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            transition: all .3s
+        }
+
+        .scroll-rune:hover {
+            border-color: rgba(212, 168, 67, .4);
+            color: rgba(212, 168, 67, .8);
+            background: rgba(212, 168, 67, .06)
         }
 
         .scroll-links {
@@ -846,120 +1134,174 @@
         .scroll-link {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            padding: 8px 20px;
-            border: 1px solid rgba(212, 168, 67, 0.25);
-            color: rgba(212, 168, 67, 0.6);
+            padding: 10px 22px;
+            border: 1px solid rgba(212, 168, 67, .2);
+            color: rgba(212, 168, 67, .55);
             text-decoration: none;
-            transition: all 0.3s;
-            letter-spacing: 0.15em;
+            transition: all .35s;
+            letter-spacing: .15em;
             text-transform: uppercase;
             position: relative;
             overflow: hidden
         }
 
+        .scroll-link::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(212, 168, 67, .08);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .35s var(--ease-out-expo)
+        }
+
         .scroll-link:hover {
-            border-color: var(--gold);
+            border-color: rgba(212, 168, 67, .6);
             color: var(--gold);
-            text-shadow: 0 0 8px var(--glow-gold)
+            text-shadow: 0 0 10px var(--glow-gold)
+        }
+
+        .scroll-link:hover::before {
+            transform: scaleX(1)
         }
 
         .card-glow {
             position: absolute;
-            top: -60px;
-            right: -60px;
-            width: 180px;
-            height: 180px;
+            top: -80px;
+            right: -80px;
+            width: 220px;
+            height: 220px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(212, 168, 67, 0.08), transparent 70%);
-            pointer-events: none
+            background: radial-gradient(circle, rgba(212, 168, 67, .1), transparent 70%);
+            pointer-events: none;
+            transition: opacity .4s
         }
 
         .card-rune-deco {
             position: absolute;
             bottom: 16px;
-            right: 20px;
+            right: 22px;
             font-family: 'Cinzel Decorative', cursive;
-            font-size: 48px;
-            color: rgba(212, 168, 67, 0.04);
+            font-size: 52px;
+            color: rgba(212, 168, 67, .04);
             pointer-events: none;
-            line-height: 1
+            line-height: 1;
+            transition: color .4s
         }
 
-        /* SKILLS */
+        .scroll-card:hover .card-rune-deco {
+            color: rgba(212, 168, 67, .08)
+        }
+
+        /* ─── SKILLS ARCANE ARTS ─────────────────────── */
         .arcane-arts {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
             gap: 16px;
             margin-top: 20px
         }
 
         .art-orb {
-            padding: 28px 16px;
+            padding: 30px 16px;
             text-align: center;
-            transition: all 0.4s;
+            transition: all .45s var(--ease-out-expo);
             cursor: default;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(212, 168, 67, 0.1)
+            border: 1px solid rgba(212, 168, 67, .08)
         }
 
         .art-orb::before {
             content: '';
             position: absolute;
-            top: 0;
+            top: -40px;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
-            height: 1px;
-            background: var(--gold);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 168, 67, .3), transparent);
             opacity: 0;
-            transition: opacity 0.3s
+            transition: opacity .4s, top .4s var(--ease-out-expo)
+        }
+
+        .art-orb::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            transform: scaleX(0);
+            transition: transform .4s var(--ease-out-expo)
         }
 
         .art-orb:hover {
-            transform: translateY(-4px);
-            border-color: rgba(212, 168, 67, 0.3);
-            background: rgba(212, 168, 67, 0.04)
+            transform: translateY(-8px) scale(1.03);
+            border-color: rgba(212, 168, 67, .3);
+            background: rgba(212, 168, 67, .04);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .5), 0 0 30px rgba(212, 168, 67, .08)
         }
 
         .art-orb:hover::before {
-            opacity: 0.6
+            opacity: 1;
+            top: -20px
+        }
+
+        .art-orb:hover::after {
+            transform: scaleX(1)
         }
 
         .art-icon {
-            font-size: 26px;
-            margin-bottom: 10px;
-            display: block
+            font-size: 28px;
+            margin-bottom: 12px;
+            display: block;
+            transition: transform .4s var(--ease-out-expo)
+        }
+
+        .art-orb:hover .art-icon {
+            transform: scale(1.2) translateY(-4px)
         }
 
         .art-name {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            letter-spacing: 0.15em;
-            color: rgba(212, 168, 67, 0.6);
+            letter-spacing: .15em;
+            color: rgba(212, 168, 67, .55);
             text-transform: uppercase;
-            display: block
+            display: block;
+            transition: color .3s
         }
 
         .art-rank {
             font-family: 'Crimson Text', serif;
-            font-size: 12px;
-            color: rgba(212, 168, 67, 0.35);
-            margin-top: 4px;
+            font-size: 12.5px;
+            color: rgba(212, 168, 67, .3);
+            margin-top: 5px;
             font-style: italic;
-            display: block
+            display: block;
+            transition: color .3s
+        }
+
+        .art-orb:hover .art-name {
+            color: var(--gold)
+        }
+
+        .art-orb:hover .art-rank {
+            color: rgba(212, 168, 67, .6)
         }
 
         .arts-category-title {
             font-family: 'Cinzel', serif;
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            color: rgba(212, 168, 67, 0.4);
+            font-size: 9.5px;
+            letter-spacing: .3em;
+            color: rgba(212, 168, 67, .35);
             text-transform: uppercase;
-            margin: 40px 0 16px;
+            margin: 50px 0 18px;
             display: flex;
             align-items: center;
-            gap: 12px
+            gap: 14px
         }
 
         .arts-category-title::before,
@@ -967,35 +1309,34 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: rgba(212, 168, 67, 0.1)
+            background: rgba(212, 168, 67, .08)
         }
 
-        /* CONTACT */
+        /* ─── CONTACT ────────────────────────────────── */
         #contact-wrap {
             text-align: center;
-            max-width: 900px;
+            max-width: 920px;
             margin: 0 auto
         }
 
         .contact-scroll {
-            font-family: 'Crimson Text', serif;
-            font-size: 18px;
-            line-height: 1.8;
-            color: rgba(245, 230, 200, 0.5);
+            font-size: 18.5px;
+            line-height: 1.9;
+            color: rgba(245, 230, 200, .5);
             font-style: italic;
-            margin-bottom: 48px
+            margin-bottom: 52px
         }
 
         .summon-email {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(14px, 2.5vw, 26px);
+            font-size: clamp(15px, 2.8vw, 28px);
             color: var(--parchment);
             text-decoration: none;
             display: inline-block;
             position: relative;
-            padding: 0 0 8px;
-            transition: all 0.4s;
-            letter-spacing: -0.01em
+            padding: 0 0 10px;
+            transition: all .4s;
+            letter-spacing: -.01em
         }
 
         .summon-email::after {
@@ -1007,12 +1348,12 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             transform: scaleX(0);
-            transition: transform 0.5s
+            transition: transform .6s var(--ease-out-expo)
         }
 
         .summon-email:hover {
             color: var(--gold);
-            text-shadow: 0 0 20px var(--glow-gold)
+            text-shadow: 0 0 30px var(--glow-gold)
         }
 
         .summon-email:hover::after {
@@ -1024,21 +1365,22 @@
             gap: 16px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 48px
+            margin-top: 52px
         }
 
         .portal-link {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            padding: 12px 28px;
-            border: 1px solid rgba(212, 168, 67, 0.2);
-            color: rgba(212, 168, 67, 0.5);
+            padding: 13px 30px;
+            border: 1px solid rgba(212, 168, 67, .18);
+            color: rgba(212, 168, 67, .45);
             text-decoration: none;
-            transition: all 0.3s;
-            letter-spacing: 0.2em;
+            transition: all .35s;
+            letter-spacing: .2em;
             text-transform: uppercase;
+            clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
             position: relative;
-            clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)
+            overflow: hidden
         }
 
         .portal-link::before {
@@ -1046,27 +1388,27 @@
             position: absolute;
             inset: 0;
             background: rgba(212, 168, 67, 0);
-            transition: background 0.3s;
-            clip-path: inherit
+            transition: background .3s
         }
 
         .portal-link:hover {
-            border-color: rgba(212, 168, 67, 0.6);
+            border-color: rgba(212, 168, 67, .55);
             color: var(--gold);
-            text-shadow: 0 0 8px var(--glow-gold)
+            text-shadow: 0 0 10px var(--glow-gold);
+            box-shadow: 0 0 30px rgba(212, 168, 67, .1)
         }
 
         .grimoire {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 11px;
-            line-height: 2.2;
-            color: rgba(212, 168, 67, 0.3);
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(212, 168, 67, 0.1);
-            padding: 28px 36px;
+            font-size: 11.5px;
+            line-height: 2.4;
+            color: rgba(212, 168, 67, .28);
+            background: rgba(0, 0, 0, .6);
+            border: 1px solid rgba(212, 168, 67, .09);
+            padding: 32px 40px;
             text-align: left;
-            margin-top: 48px;
-            letter-spacing: 0.08em;
+            margin-top: 52px;
+            letter-spacing: .08em;
             position: relative
         }
 
@@ -1077,45 +1419,45 @@
             left: 24px;
             font-size: 9px;
             background: var(--dark);
-            padding: 0 8px;
-            letter-spacing: 0.2em;
-            color: rgba(212, 168, 67, 0.4)
+            padding: 0 10px;
+            letter-spacing: .22em;
+            color: rgba(212, 168, 67, .38)
         }
 
-        .grimoire .g-green {
+        .g-green {
             color: #5aad7a
         }
 
-        .grimoire .g-gold {
+        .g-gold {
             color: var(--gold);
-            opacity: 0.8
+            opacity: .8
         }
 
-        .grimoire .g-bright {
-            color: rgba(245, 230, 200, 0.7)
+        .g-bright {
+            color: rgba(245, 230, 200, .65)
         }
 
-        /* FOOTER */
+        /* ─── FOOTER ─────────────────────────────────── */
         footer {
-            border-top: 1px solid rgba(212, 168, 67, 0.1);
-            padding: 32px 6vw;
+            border-top: 1px solid rgba(212, 168, 67, .08);
+            padding: 36px 6vw;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            color: rgba(212, 168, 67, 0.25);
-            letter-spacing: 0.2em;
+            color: rgba(212, 168, 67, .22);
+            letter-spacing: .22em;
             text-transform: uppercase;
             position: relative;
             z-index: 1
         }
 
-        /* SCROLL REVEAL */
+        /* ─── SCROLL REVEAL ──────────────────────────── */
         .reveal {
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.9s ease, transform 0.9s ease
+            transform: translateY(60px);
+            transition: opacity 1s var(--ease-out-expo), transform 1s var(--ease-out-expo)
         }
 
         .reveal.visible {
@@ -1124,70 +1466,22 @@
         }
 
         .reveal-delay-1 {
-            transition-delay: 0.12s
+            transition-delay: .15s
         }
 
         .reveal-delay-2 {
-            transition-delay: 0.24s
+            transition-delay: .3s
         }
 
         .reveal-delay-3 {
-            transition-delay: 0.36s
+            transition-delay: .45s
         }
 
-        /* AMBIENT ORBS */
-        .amb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
-            pointer-events: none;
-            z-index: 0
-        }
-
-        .amb-1 {
-            width: 500px;
-            height: 500px;
-            background: rgba(212, 168, 67, 0.05);
-            top: -150px;
-            right: -150px;
-            animation: ambFloat 10s ease-in-out infinite
-        }
-
-        .amb-2 {
-            width: 350px;
-            height: 350px;
-            background: rgba(192, 57, 43, 0.04);
-            bottom: 100px;
-            left: -120px;
-            animation: ambFloat 13s ease-in-out infinite reverse
-        }
-
-        .amb-3 {
-            width: 300px;
-            height: 300px;
-            background: rgba(123, 47, 190, 0.04);
-            top: 40%;
-            right: 5%;
-            animation: ambFloat 8s ease-in-out infinite 3s
-        }
-
-        @keyframes ambFloat {
-
-            0%,
-            100% {
-                transform: translateY(0) scale(1)
-            }
-
-            50% {
-                transform: translateY(-40px) scale(1.06)
-            }
-        }
-
-        /* FLOATING RUNES */
+        /* ─── FLOATING RUNES ─────────────────────────── */
         .float-rune {
             position: fixed;
             font-family: 'Cinzel Decorative', cursive;
-            color: rgba(212, 168, 67, 0.06);
+            color: rgba(212, 168, 67, .05);
             pointer-events: none;
             z-index: 0;
             animation: runeFloat linear infinite
@@ -1213,7 +1507,20 @@
             }
         }
 
-        /* MOBILE */
+        /* ─── STAT COUNTER ───────────────────────────── */
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* ─── MOBILE ─────────────────────────────────── */
         @media(max-width:768px) {
             nav {
                 gap: 14px;
@@ -1232,56 +1539,61 @@
                 grid-column: span 1
             }
 
-            .arcane-arts {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
-            }
-
             footer {
                 flex-direction: column;
                 gap: 8px;
                 text-align: center
             }
+        }
 
-            .hero-rune-circle,
-            .hero-rune-circle-2 {
-                display: none
-            }
+        /* ─── SELECTION ──────────────────────────────── */
+        ::selection {
+            background: rgba(212, 168, 67, .25);
+            color: var(--gold2)
         }
     </style>
 </head>
 
 <body>
 
-    <div id="cursor"></div>
-    <div id="cursor-ring"></div>
+    <!-- CURSOR -->
+    <div id="c-dot"></div>
+    <div id="c-ring"></div>
+    <div id="c-aura"></div>
     <div id="prog"></div>
 
     <!-- LOADER -->
     <div id="loader">
-        <div class="loader-rune">✦</div>
-        <div class="loader-text">Awakening the Arcane</div>
-        <div class="loader-bar">
-            <div class="loader-fill" id="lf"></div>
+        <div class="l-sigil">
+            <div class="l-sigil-ring"></div>
+            <div class="l-sigil-ring"></div>
+            <div class="l-sigil-ring"></div>
+            <div class="l-sigil-core"></div>
         </div>
-        <div class="loader-spell" id="ls"></div>
+        <div class="l-text">Awakening the Arcane</div>
+        <div class="l-bar">
+            <div class="l-fill" id="lf"></div>
+        </div>
+        <div class="l-status" id="ls"></div>
     </div>
 
-    <!-- AMBIENT -->
+    <!-- AMBIENT + NOISE -->
     <div class="amb amb-1"></div>
     <div class="amb amb-2"></div>
     <div class="amb amb-3"></div>
-    <canvas id="bg-canvas"></canvas>
+    <div id="noise-overlay"></div>
+    <canvas id="bg"></canvas>
 
     <!-- FLOATING RUNES -->
-    <div class="float-rune" style="font-size:24px;left:5%;animation-duration:18s;animation-delay:0s">ᚱ</div>
-    <div class="float-rune" style="font-size:18px;left:20%;animation-duration:22s;animation-delay:4s">ᚷ</div>
-    <div class="float-rune" style="font-size:30px;left:75%;animation-duration:16s;animation-delay:8s">ᚹ</div>
-    <div class="float-rune" style="font-size:20px;left:88%;animation-duration:25s;animation-delay:2s">ᚠ</div>
-    <div class="float-rune" style="font-size:22px;left:45%;animation-duration:20s;animation-delay:11s">ᛟ</div>
-    <div class="float-rune" style="font-size:16px;left:60%;animation-duration:19s;animation-delay:6s">ᚦ</div>
+    <div class="float-rune" style="font-size:22px;left:4%;animation-duration:20s;animation-delay:0s">ᚱ</div>
+    <div class="float-rune" style="font-size:17px;left:18%;animation-duration:25s;animation-delay:5s">ᚷ</div>
+    <div class="float-rune" style="font-size:28px;left:76%;animation-duration:18s;animation-delay:9s">ᚹ</div>
+    <div class="float-rune" style="font-size:19px;left:88%;animation-duration:28s;animation-delay:3s">ᚠ</div>
+    <div class="float-rune" style="font-size:24px;left:45%;animation-duration:22s;animation-delay:13s">ᛟ</div>
+    <div class="float-rune" style="font-size:15px;left:62%;animation-duration:21s;animation-delay:7s">ᚦ</div>
 
     <!-- NAV -->
-    <nav>
+    <nav id="nav">
         <a href="#hero">Origin</a>
         <a href="#about">Chronicle</a>
         <a href="#projects">Quests</a>
@@ -1289,24 +1601,37 @@
         <a href="#contact">Summon</a>
     </nav>
 
-    <!-- ═══════════════════════════════════════════════════ HERO -->
+    <!-- ══════════════════════════════════════ HERO -->
     <section id="hero">
-        <div class="hero-rune-circle"></div>
-        <div class="hero-rune-circle-2"></div>
-        <div class="hero-rune-circle-3"></div>
+        <canvas id="hero-canvas"></canvas>
+        <div class="orbit-ring or-1">
+            <div class="orbit-dot"
+                style="width:5px;height:5px;top:-2.5px;left:calc(50% - 2.5px);box-shadow:0 0 12px var(--glow-gold)">
+            </div>
+        </div>
+        <div class="orbit-ring or-2">
+            <div class="orbit-dot" style="width:3px;height:3px;top:-1.5px;left:calc(50% - 1.5px);opacity:.6"></div>
+        </div>
+        <div class="orbit-ring or-3">
+            <div class="orbit-dot" style="width:6px;height:6px;top:-3px;left:calc(50% - 3px)"></div>
+        </div>
+        <div class="orbit-ring or-4"></div>
         <div class="hero-vignette"></div>
-
-        <!-- Rune marks around circle -->
-        <div class="rune-marks" id="runeMarks"></div>
-
-        <div class="hero-eyebrow">◈ The Arcane Engineer Awakens ◈</div>
-        <h1 class="hero-title">YATIN<br /><span>ANCHAN</span></h1>
-        <div class="hero-divider"><span>AI Engineer · Deep Learning · Builder</span></div>
-        <p class="hero-subtitle">"Build things that matter." — Maharashtra, India 🇮🇳</p>
-
+        <div class="hero-inner" id="heroInner">
+            <div class="hero-eyebrow">◈ The Arcane Engineer Awakens ◈</div>
+            <h1 class="hero-title" id="heroTitle">YATIN<br /><span class="name-gold">ANCHAN</span></h1>
+            <div class="hero-div"><span>AI Engineer · Deep Learning · Builder</span></div>
+            <p class="hero-sub">"Build things that matter." — Maharashtra, India 🇮🇳</p>
+            <div class="hero-cta">
+                <a href="#projects" class="btn-arcane primary">View Quests</a>
+                <a href="#contact" class="btn-arcane">Summon Me</a>
+            </div>
+        </div>
         <div class="hero-scroll">
-            <div class="scroll-rune">Descend</div>
-            <div class="scroll-gem"></div>
+            <div class="s-label">Descend</div>
+            <div class="s-track">
+                <div class="s-line"></div>
+            </div>
         </div>
     </section>
 
@@ -1314,49 +1639,50 @@
         <div class="arc-divider-gem"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ ABOUT -->
+    <!-- ══════════════════════════════════════ ABOUT -->
     <section id="about">
         <div class="section-wrap">
             <div class="about-grid">
                 <div class="reveal">
                     <div class="section-eyebrow">Chapter I · The Scholar's Chronicle</div>
                     <h2 class="section-title">Forged in<br /><span class="accent">Fire & Code</span></h2>
-                    <p class="about-lore">
-                        An <em>AI/ML Engineer</em> born of Maharashtra, pursuing B.Sc. Computer Science at Royal
-                        College. I conjure systems that bridge the ancient and the futuristic — from <em>real-time
-                            driver safety AI</em> published in international research journals, to
-                        <em>blockchain-powered donation protocols</em> built for transparent aid. Trained by open-source
-                        orders, certified by ISRO in the mystic arts of Geospatial AI. I debug at 2AM and call it
-                        ritual.
-                    </p>
-                    <p class="about-lore"
-                        style="font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(212,168,67,0.4);line-height:2.2">
-                        > class ............. AI / ML Engineer<br />
-                        > origin ............ Maharashtra, India<br />
-                        > faction ........... Open Source Alliance<br />
-                        > wildcard .......... Space Science 🚀<br />
-                        > motto ............. "Build things that matter."
-                    </p>
-                    <div class="about-facts arcane-panel" style="border-radius:0">
-                        <div class="panel-corner tl"></div>
-                        <div class="panel-corner tr"></div>
-                        <div class="panel-corner bl"></div>
-                        <div class="panel-corner br"></div>
-                        <div class="fact-cell"><span class="fact-val">4+</span><span class="fact-lbl">Quests
-                                Complete</span></div>
-                        <div class="fact-cell"><span class="fact-val">1</span><span class="fact-lbl">Published
-                                Tome</span></div>
-                        <div class="fact-cell"><span class="fact-val">9.4</span><span class="fact-lbl">Arcane
-                                CGPI</span></div>
+                    <p class="about-lore">An <em>AI/ML Engineer</em> born of Maharashtra, pursuing B.Sc. Computer
+                        Science at Royal College. I conjure systems bridging the ancient and the futuristic — from
+                        <em>real-time driver safety AI</em> published in international research journals, to
+                        <em>blockchain-powered donation protocols</em> built for transparent aid.</p>
+                    <p class="about-lore">Trained by open-source orders, certified by <em>ISRO</em> in Geospatial AI. I
+                        debug at 2AM and call it ritual.</p>
+                    <div class="about-terminal">
+                        <div><span class="t-prompt">❯</span> class ............. <span
+                                style="color:rgba(245,230,200,.55)">AI / ML Engineer</span></div>
+                        <div><span class="t-prompt">❯</span> origin ............ <span
+                                style="color:rgba(245,230,200,.55)">Maharashtra, India</span></div>
+                        <div><span class="t-prompt">❯</span> faction ........... <span
+                                style="color:rgba(245,230,200,.55)">Open Source Alliance</span></div>
+                        <div><span class="t-prompt">❯</span> wildcard .......... <span
+                                style="color:rgba(245,230,200,.55)">Space Science 🚀</span></div>
+                        <div><span class="t-prompt">❯</span> motto ............. <span
+                                style="color:rgba(245,230,200,.55)">"Build things that matter."</span></div>
+                    </div>
+                    <div class="about-facts arcane-panel">
+                        <div class="pc tl"></div>
+                        <div class="pc tr"></div>
+                        <div class="pc bl"></div>
+                        <div class="pc br"></div>
+                        <div class="fact-cell"><span class="fact-val" data-count="4">0</span><span
+                                class="fact-lbl">Quests Complete</span></div>
+                        <div class="fact-cell"><span class="fact-val" data-count="1">0</span><span
+                                class="fact-lbl">Published Tome</span></div>
+                        <div class="fact-cell"><span class="fact-val" data-count-dec="9.4">0</span><span
+                                class="fact-lbl">Arcane CGPI</span></div>
                     </div>
                 </div>
-
                 <div class="reveal reveal-delay-2">
-                    <div class="skills-tome arcane-panel" style="border-radius:0">
-                        <div class="panel-corner tl"></div>
-                        <div class="panel-corner tr"></div>
-                        <div class="panel-corner bl"></div>
-                        <div class="panel-corner br"></div>
+                    <div class="skills-tome arcane-panel">
+                        <div class="pc tl"></div>
+                        <div class="pc tr"></div>
+                        <div class="pc bl"></div>
+                        <div class="pc br"></div>
                         <div class="tome-section">
                             <div class="tome-title">Core Languages</div>
                             <div class="skill-line"><span class="sk-name">Python</span>
@@ -1394,19 +1720,19 @@
                             <div class="tome-title">AI · ML Arts</div>
                             <div class="skill-line"><span class="sk-name">MediaPipe</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="88%"></div>
+                                    <div class="sk-fill" style="width:0%" data-w="90%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="5"></div>
                             </div>
                             <div class="skill-line"><span class="sk-name">PyTorch</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="80%"></div>
+                                    <div class="sk-fill" style="width:0%" data-w="82%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
                             <div class="skill-line"><span class="sk-name">TensorFlow</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="75%"></div>
+                                    <div class="sk-fill" style="width:0%" data-w="76%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
@@ -1427,7 +1753,7 @@
         <div class="arc-divider-gem"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ PROJECTS -->
+    <!-- ══════════════════════════════════════ PROJECTS -->
     <section id="projects">
         <div class="section-wrap">
             <div class="reveal">
@@ -1435,28 +1761,25 @@
                 <h2 class="section-title">Tomes of<br /><span class="accent">Great Works</span></h2>
             </div>
             <div class="scrolls-grid">
-
-                <!-- AUTONIX LEGENDARY -->
-                <div class="scroll-card legendary arcane-panel reveal" style="border-radius:0"
-                    onmousemove="tilt(this,event)">
-                    <div class="panel-corner tl"></div>
-                    <div class="panel-corner tr"></div>
-                    <div class="panel-corner bl"></div>
-                    <div class="panel-corner br"></div>
+                <div class="scroll-card legendary arcane-panel reveal" onmousemove="cardTilt(this,event)"
+                    onmouseleave="cardReset(this)">
+                    <div class="pc tl"></div>
+                    <div class="pc tr"></div>
+                    <div class="pc bl"></div>
+                    <div class="pc br"></div>
                     <div class="card-glow"></div>
+                    <div class="card-bg-shine"></div>
                     <div class="card-rune-deco">ᚱ</div>
-                    <div class="scroll-badge">✦ Legendary · Published in International Journal</div>
+                    <div class="scroll-badge">Legendary · Published in International Journal</div>
                     <div class="scroll-relic">Quest I · Main Chronicle · Active</div>
                     <div class="scroll-title">AUTONIX</div>
                     <p class="scroll-lore">An Android safety application using real-time AI to guard against driver
                         drowsiness. 468-point facial landmark tracking via MediaPipe detects eye closure through EAR
                         mathematics. Accelerometer & Gyroscope fusion triggers crash detection and auto-dispatches GPS
                         coordinates to emergency contacts via Firebase.</p>
-                    <div class="scroll-runes">
-                        <span class="scroll-rune">Kotlin</span><span class="scroll-rune">MediaPipe</span><span
-                            class="scroll-rune">Firebase</span><span class="scroll-rune">ML Kit</span><span
-                            class="scroll-rune">Android</span>
-                    </div>
+                    <div class="scroll-runes"><span class="scroll-rune">Kotlin</span><span
+                            class="scroll-rune">MediaPipe</span><span class="scroll-rune">Firebase</span><span
+                            class="scroll-rune">ML Kit</span><span class="scroll-rune">Android</span></div>
                     <div class="scroll-links">
                         <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="scroll-link">The Vault
                             →</a>
@@ -1466,73 +1789,62 @@
                             class="scroll-link">The Tome →</a>
                     </div>
                 </div>
-
-                <!-- DAANSETU -->
-                <div class="scroll-card arcane-panel reveal reveal-delay-1" style="border-radius:0"
-                    onmousemove="tilt(this,event)">
-                    <div class="panel-corner tl"></div>
-                    <div class="panel-corner tr"></div>
-                    <div class="panel-corner bl"></div>
-                    <div class="panel-corner br"></div>
+                <div class="scroll-card arcane-panel reveal reveal-delay-1" onmousemove="cardTilt(this,event)"
+                    onmouseleave="cardReset(this)">
+                    <div class="pc tl"></div>
+                    <div class="pc tr"></div>
+                    <div class="pc bl"></div>
+                    <div class="pc br"></div>
                     <div class="card-glow"></div>
+                    <div class="card-bg-shine"></div>
                     <div class="card-rune-deco">ᚷ</div>
                     <div class="scroll-relic">Quest II · Guild Mission · In Progress</div>
                     <div class="scroll-title">DaanSetu</div>
                     <p class="scroll-lore">A blockchain-powered donation platform on Polygon — every coin of aid is
                         publicly verifiable, immutable, and incorruptible. Geolocation targets relief to the afflicted.
                         IPFS for decentralized campaign scrolls.</p>
-                    <div class="scroll-runes">
-                        <span class="scroll-rune">React</span><span class="scroll-rune">Ethers.js</span><span
-                            class="scroll-rune">Polygon</span><span class="scroll-rune">IPFS</span>
-                    </div>
-                    <div class="scroll-links">
-                        <a href="https://github.com/kshaan-ali/daan-setu" target="_blank" class="scroll-link">The Vault
-                            →</a>
-                    </div>
+                    <div class="scroll-runes"><span class="scroll-rune">React</span><span
+                            class="scroll-rune">Ethers.js</span><span class="scroll-rune">Polygon</span><span
+                            class="scroll-rune">IPFS</span></div>
+                    <div class="scroll-links"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank"
+                            class="scroll-link">The Vault →</a></div>
                 </div>
-
-                <!-- PY_OS -->
-                <div class="scroll-card arcane-panel reveal reveal-delay-2" style="border-radius:0"
-                    onmousemove="tilt(this,event)">
-                    <div class="panel-corner tl"></div>
-                    <div class="panel-corner tr"></div>
-                    <div class="panel-corner bl"></div>
-                    <div class="panel-corner br"></div>
+                <div class="scroll-card arcane-panel reveal reveal-delay-2" onmousemove="cardTilt(this,event)"
+                    onmouseleave="cardReset(this)">
+                    <div class="pc tl"></div>
+                    <div class="pc tr"></div>
+                    <div class="pc bl"></div>
+                    <div class="pc br"></div>
                     <div class="card-glow"></div>
+                    <div class="card-bg-shine"></div>
                     <div class="card-rune-deco">ᚹ</div>
                     <div class="scroll-relic">Quest III · Solo Endeavour · Complete</div>
                     <div class="scroll-title">Py_OS</div>
                     <p class="scroll-lore">A simulated kingdom of computing — a fully functional operating system
                         conjured in pure Python. File realms, software markets, drag-and-drop sorcery, and living
                         notifications.</p>
-                    <div class="scroll-runes">
-                        <span class="scroll-rune">Python</span><span class="scroll-rune">Tkinter</span><span
-                            class="scroll-rune">Custom GUI</span>
-                    </div>
-                    <div class="scroll-links">
-                        <a href="https://github.com/yatin-anchan/Py_OS" target="_blank" class="scroll-link">The Vault
-                            →</a>
-                    </div>
+                    <div class="scroll-runes"><span class="scroll-rune">Python</span><span
+                            class="scroll-rune">Tkinter</span><span class="scroll-rune">Custom GUI</span></div>
+                    <div class="scroll-links"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank"
+                            class="scroll-link">The Vault →</a></div>
                 </div>
-
-                <!-- AUTONIX WEBSITE -->
-                <div class="scroll-card arcane-panel reveal reveal-delay-3" style="border-radius:0"
-                    onmousemove="tilt(this,event)">
-                    <div class="panel-corner tl"></div>
-                    <div class="panel-corner tr"></div>
-                    <div class="panel-corner bl"></div>
-                    <div class="panel-corner br"></div>
+                <div class="scroll-card arcane-panel reveal reveal-delay-3" onmousemove="cardTilt(this,event)"
+                    onmouseleave="cardReset(this)">
+                    <div class="pc tl"></div>
+                    <div class="pc tr"></div>
+                    <div class="pc bl"></div>
+                    <div class="pc br"></div>
                     <div class="card-glow"></div>
+                    <div class="card-bg-shine"></div>
                     <div class="card-rune-deco">ᛟ</div>
                     <div class="scroll-relic">Quest IV · Artisan Craft · Deployed</div>
                     <div class="scroll-title">AUTONIX<br />Website</div>
                     <p class="scroll-lore">A cinematic digital exhibition — no frameworks, pure incantations of HTML,
                         CSS, and Vanilla JS. Particles form a motorcycle. 3D mouse-tilt. Live webcam EAR oracle.
-                        Exhibition mode for the grand halls.</p>
-                    <div class="scroll-runes">
-                        <span class="scroll-rune">HTML5</span><span class="scroll-rune">CSS3</span><span
-                            class="scroll-rune">Vanilla JS</span><span class="scroll-rune">Canvas</span>
-                    </div>
+                        Exhibition mode for grand halls.</p>
+                    <div class="scroll-runes"><span class="scroll-rune">HTML5</span><span
+                            class="scroll-rune">CSS3</span><span class="scroll-rune">Vanilla JS</span><span
+                            class="scroll-rune">Canvas</span></div>
                     <div class="scroll-links">
                         <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank"
                             class="scroll-link">The Realm →</a>
@@ -1540,7 +1852,6 @@
                             class="scroll-link">The Vault →</a>
                     </div>
                 </div>
-
             </div>
         </div>
     </section>
@@ -1549,15 +1860,14 @@
         <div class="arc-divider-gem"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ SKILLS -->
+    <!-- ══════════════════════════════════════ SKILLS -->
     <section id="skills">
         <div class="section-wrap">
             <div class="reveal">
                 <div class="section-eyebrow">Chapter III · The Arcane Arsenal</div>
                 <h2 class="section-title">Mastered<br /><span class="accent">Disciplines</span></h2>
             </div>
-
-            <div class="reveal" style="margin-top:20px">
+            <div class="reveal">
                 <div class="arts-category-title">AI · Machine Learning · Vision</div>
                 <div class="arcane-arts">
                     <div class="art-orb"><span class="art-icon">🔥</span><span class="art-name">PyTorch</span><span
@@ -1574,7 +1884,6 @@
                             Pandas</span><span class="art-rank">Expert</span></div>
                 </div>
             </div>
-
             <div class="reveal reveal-delay-1">
                 <div class="arts-category-title">Frameworks · Platforms</div>
                 <div class="arcane-arts">
@@ -1588,7 +1897,6 @@
                             class="art-rank">Advanced</span></div>
                 </div>
             </div>
-
             <div class="reveal reveal-delay-2">
                 <div class="arts-category-title">Databases · Cloud · Web3</div>
                 <div class="arcane-arts">
@@ -1613,7 +1921,7 @@
         <div class="arc-divider-gem"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ CONTACT -->
+    <!-- ══════════════════════════════════════ CONTACT -->
     <section id="contact">
         <div class="section-wrap">
             <div id="contact-wrap">
@@ -1621,7 +1929,7 @@
                     <div class="section-eyebrow" style="justify-content:center">Chapter IV · Open the Portal</div>
                     <h2 class="section-title" style="text-align:center">Summon the<br /><span class="accent">Arcane
                             Engineer</span></h2>
-                    <p class="contact-scroll">Open to quests, collaborations, and undertakings that matter. If your
+                    <p class="contact-scroll">Open to quests, collaborations, and undertakings that matter.<br />If your
                         mission is worthy, the connection shall be made.</p>
                 </div>
                 <div class="reveal reveal-delay-1">
@@ -1636,15 +1944,15 @@
                         class="portal-link">Autonix Realm</a>
                 </div>
                 <div class="grimoire reveal reveal-delay-3">
-                    <div>> <span class="g-green">[ CHRONICLE ]</span> &nbsp;<span class="g-bright">Research published —
-                            AIJFR International Journal (2025)</span></div>
-                    <div>> <span class="g-gold">[ SIGIL ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+                    <div>&gt; <span class="g-green">[ CHRONICLE ]</span> &nbsp;<span class="g-bright">Research published
+                            — AIJFR International Journal (2025)</span></div>
+                    <div>&gt; <span class="g-gold">[ SIGIL ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
                             class="g-bright">ISRO Certified · AI/ML for Geo-data Analysis</span></div>
-                    <div>> <span class="g-gold">[ RANK ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+                    <div>&gt; <span class="g-gold">[ RANK ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
                             class="g-bright">Semester IV CGPI: 9.4 · B.Sc. Computer Science</span></div>
-                    <div>> <span class="g-gold">[ ORDER ]</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="g-bright">Open
+                    <div>&gt; <span class="g-gold">[ ORDER ]</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="g-bright">Open
                             Source Alliance · Maharashtra, India</span></div>
-                    <div>> <span class="g-green">[ STATUS ]</span> &nbsp;<span class="g-bright">Awaiting your
+                    <div>&gt; <span class="g-green">[ STATUS ]</span> &nbsp;<span class="g-bright">Awaiting your
                             transmission. Standing by. <span id="blink">▌</span></span></div>
                 </div>
             </div>
@@ -1653,78 +1961,198 @@
 
     <footer>
         <span>© 2026 Yatin Anil Anchan · Maharashtra, India</span>
-        <span style="color:rgba(212,168,67,0.4)">✦</span>
+        <span style="color:rgba(212,168,67,.4)">✦</span>
         <span>"Build things that matter." 🚀</span>
     </footer>
 
     <script>
-        // ── LOADER ─────────────────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        // LOADER
+        // ═══════════════════════════════════════════════════════════════
         const spells = [
             '✦ Binding the arcane circuits...',
             '✦ Summoning particle entities...',
             '✦ Inscribing the rune matrix...',
+            '✦ Calibrating 3D motion fields...',
             '✦ Opening the portal...',
             '✦ The Engineer awakens. ▌'
         ];
         const lf = document.getElementById('lf');
         const ls = document.getElementById('ls');
-        let prog = 0, si = 0;
+        let loadProg = 0, si = 0;
         const lint = setInterval(() => {
-            prog = Math.min(prog + Math.random() * 3.5 + 0.8, 100);
-            lf.style.width = prog + '%';
-            if (si < spells.length && prog > (si + 1) * 20) {
+            loadProg = Math.min(loadProg + Math.random() * 3 + 0.6, 100);
+            lf.style.width = loadProg + '%';
+            if (si < spells.length && loadProg > (si + 1) * 16) {
                 ls.innerHTML += (si > 0 ? '<br/>' : '') + spells[si++];
             }
-            if (prog >= 100) {
+            if (loadProg >= 100) {
                 clearInterval(lint);
                 setTimeout(() => {
                     const l = document.getElementById('loader');
-                    l.classList.add('hidden');
-                    setTimeout(() => l.style.display = 'none', 1200);
-                }, 700);
+                    l.style.opacity = '0';
+                    l.style.transform = 'scale(1.05)';
+                    setTimeout(() => l.style.display = 'none', 1400);
+                }, 600);
             }
-        }, 70);
+        }, 65);
 
-        // ── CURSOR ──────────────────────────────────────────────────────────────────
-        const cur = document.getElementById('cursor');
-        const curR = document.getElementById('cursor-ring');
-        let mx = 0, my = 0, rx = 0, ry = 0;
-        document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-        (function animC() {
-            rx += (mx - rx) * 0.1; ry += (my - ry) * 0.1;
-            cur.style.left = mx + 'px'; cur.style.top = my + 'px';
-            curR.style.left = rx + 'px'; curR.style.top = ry + 'px';
-            requestAnimationFrame(animC);
-        })();
-        document.querySelectorAll('a,.scroll-card,.art-orb').forEach(el => {
-            el.addEventListener('mouseenter', () => { cur.style.transform = 'translate(-50%,-50%) scale(2.5)'; curR.style.transform = 'translate(-50%,-50%) scale(1.8)'; });
-            el.addEventListener('mouseleave', () => { cur.style.transform = 'translate(-50%,-50%) scale(1)'; curR.style.transform = 'translate(-50%,-50%) scale(1)'; });
+        // ═══════════════════════════════════════════════════════════════
+        // MAGNETIC CURSOR WITH SPARKLE TRAILS
+        // ═══════════════════════════════════════════════════════════════
+        const dot = document.getElementById('c-dot');
+        const ring = document.getElementById('c-ring');
+        const aura = document.getElementById('c-aura');
+        let mx = 0, my = 0, rx = 0, ry = 0, ax = 0, ay = 0;
+        let lastSparkle = 0;
+
+        document.addEventListener('mousemove', e => {
+            mx = e.clientX; my = e.clientY;
+            // Sparkle trail
+            const now = Date.now();
+            if (now - lastSparkle > 60) {
+                lastSparkle = now;
+                const s = document.createElement('div');
+                s.className = 'sparkle';
+                const size = Math.random() * 4 + 2;
+                s.style.cssText = `left:${mx}px;top:${my}px;width:${size}px;height:${size}px;opacity:${Math.random() * .6 + .2}`;
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 700);
+            }
         });
 
-        // ── PARTICLE CANVAS ──────────────────────────────────────────────────────────
-        const cv = document.getElementById('bg-canvas');
-        const ctx = cv.getContext('2d');
-        let W, H, pts = [], mpx = 0, mpy = 0;
-        function rsz() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
-        rsz(); window.addEventListener('resize', rsz);
-        document.addEventListener('mousemove', e => { mpx = e.clientX; mpy = e.clientY; });
+        (function animCursor() {
+            rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+            ax += (mx - ax) * 0.06; ay += (my - ay) * 0.06;
+            dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+            ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+            aura.style.left = ax + 'px'; aura.style.top = ay + 'px';
+            requestAnimationFrame(animCursor);
+        })();
 
-        // Gold dust particles
-        class GoldDust {
+        document.addEventListener('mousedown', () => document.body.classList.add('cursor-click'));
+        document.addEventListener('mouseup', () => document.body.classList.remove('cursor-click'));
+
+        const hoverTargets = 'a,.scroll-card,.art-orb,.btn-arcane,.portal-link,.summon-email';
+        document.querySelectorAll(hoverTargets).forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // HERO PARTICLE CANVAS — advanced constellation with gold nebula
+        // ═══════════════════════════════════════════════════════════════
+        const hc = document.getElementById('hero-canvas');
+        const hctx = hc.getContext('2d');
+        let HW, HH;
+        function resizeHero() { HW = hc.width = hc.offsetWidth; HH = hc.height = hc.offsetHeight; }
+        resizeHero();
+        window.addEventListener('resize', resizeHero);
+
+        class HeroParticle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * HW;
+                this.y = Math.random() * HH;
+                this.ox = this.x; this.oy = this.y;
+                this.vx = (Math.random() - .5) * .25;
+                this.vy = (Math.random() - .5) * .25;
+                this.r = Math.random() * 1.6 + .3;
+                this.a = Math.random() * .7 + .1;
+                this.type = Math.random() > .7 ? 'gold' : Math.random() > .5 ? 'white' : 'dim';
+            }
+            update(pmx, pmy) {
+                const dx = pmx - this.x, dy = pmy - this.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 140) { this.vx += dx / d * .018; this.vy += dy / d * .018; }
+                this.vx *= .98; this.vy *= .98;
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0) this.x = HW; if (this.x > HW) this.x = 0;
+                if (this.y < 0) this.y = HH; if (this.y > HH) this.y = 0;
+            }
+            draw() {
+                hctx.beginPath();
+                hctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                if (this.type === 'gold') hctx.fillStyle = '#d4a843';
+                else if (this.type === 'white') hctx.fillStyle = 'rgba(245,230,200,.8)';
+                else hctx.fillStyle = 'rgba(212,168,67,.4)';
+                hctx.globalAlpha = this.a;
+                hctx.fill();
+                hctx.globalAlpha = 1;
+            }
+        }
+
+        const heroParticles = Array.from({ length: 200 }, () => new HeroParticle());
+        let heroMx = HW / 2, heroMy = HH / 2;
+        document.addEventListener('mousemove', e => { heroMx = e.clientX; heroMy = e.clientY; });
+
+        // Nebula glow patches
+        const nebulaPoints = Array.from({ length: 5 }, () => ({
+            x: Math.random() * HW, y: Math.random() * HH,
+            r: Math.random() * 200 + 80, a: Math.random() * .03 + .01,
+            dx: (Math.random() - .5) * .3, dy: (Math.random() - .5) * .3
+        }));
+
+        (function heroAnim() {
+            hctx.clearRect(0, 0, HW, HH);
+            // Nebula
+            nebulaPoints.forEach(n => {
+                n.x += n.dx; n.y += n.dy;
+                if (n.x < 0 || n.x > HW) n.dx *= -1;
+                if (n.y < 0 || n.y > HH) n.dy *= -1;
+                const g = hctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+                g.addColorStop(0, `rgba(212,168,67,${n.a})`);
+                g.addColorStop(1, 'transparent');
+                hctx.fillStyle = g;
+                hctx.beginPath();
+                hctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+                hctx.fill();
+            });
+            // Connections
+            for (let i = 0; i < heroParticles.length; i++) {
+                for (let j = i + 1; j < heroParticles.length; j++) {
+                    const dx = heroParticles[i].x - heroParticles[j].x;
+                    const dy = heroParticles[i].y - heroParticles[j].y;
+                    const d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 100) {
+                        hctx.beginPath();
+                        hctx.moveTo(heroParticles[i].x, heroParticles[i].y);
+                        hctx.lineTo(heroParticles[j].x, heroParticles[j].y);
+                        hctx.strokeStyle = '#d4a843';
+                        hctx.globalAlpha = (1 - d / 100) * .1;
+                        hctx.lineWidth = .7;
+                        hctx.stroke();
+                        hctx.globalAlpha = 1;
+                    }
+                }
+            }
+            heroParticles.forEach(p => { p.update(heroMx, heroMy); p.draw(); });
+            requestAnimationFrame(heroAnim);
+        })();
+
+        // ═══════════════════════════════════════════════════════════════
+        // GLOBAL BG CANVAS
+        // ═══════════════════════════════════════════════════════════════
+        const cv = document.getElementById('bg');
+        const ctx = cv.getContext('2d');
+        let W, H;
+        function resizeBg() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+        resizeBg(); window.addEventListener('resize', resizeBg);
+
+        class BgDust {
             constructor() { this.reset(); }
             reset() {
                 this.x = Math.random() * W; this.y = Math.random() * H;
-                this.vx = (Math.random() - 0.5) * 0.2; this.vy = -Math.random() * 0.4 - 0.1;
-                this.r = Math.random() * 1.2 + 0.3;
-                this.a = Math.random() * 0.5 + 0.1;
-                this.life = 1; this.decay = Math.random() * 0.003 + 0.001;
-                this.gold = Math.random() > 0.6;
+                this.vx = (Math.random() - .5) * .15; this.vy = -Math.random() * .35 - .05;
+                this.r = Math.random() * .9 + .2;
+                this.a = Math.random() * .3 + .05;
+                this.life = 1; this.decay = Math.random() * .002 + .0005;
             }
             update() {
-                const dx = mpx - this.x, dy = mpy - this.y;
+                const dx = mx - this.x, dy = my - this.y;
                 const d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 120) { this.vx += dx / d * 0.015; this.vy += dy / d * 0.015; }
-                this.vx *= 0.99; this.vy *= 0.99;
+                if (d < 100) { this.vx += dx / d * .01; this.vy += dy / d * .01; }
+                this.vx *= .99; this.vy *= .99;
                 this.x += this.vx; this.y += this.vy;
                 this.life -= this.decay;
                 if (this.life <= 0 || this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
@@ -1732,68 +2160,73 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                ctx.fillStyle = this.gold ? '#d4a843' : this.r > 0.9 ? '#f5c842' : 'rgba(255,255,255,0.8)';
+                ctx.fillStyle = Math.random() > .5 ? '#d4a843' : 'rgba(255,255,255,.7)';
                 ctx.globalAlpha = this.a * this.life;
                 ctx.fill();
                 ctx.globalAlpha = 1;
             }
         }
-        for (let i = 0; i < 150; i++) pts.push(new GoldDust());
-
-        // Arcane constellation lines
-        function drawConstellations() {
-            for (let i = 0; i < pts.length; i++) {
-                for (let j = i + 1; j < pts.length; j++) {
-                    const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
-                    const d = Math.sqrt(dx * dx + dy * dy);
-                    if (d < 90) {
-                        ctx.beginPath();
-                        ctx.moveTo(pts[i].x, pts[i].y);
-                        ctx.lineTo(pts[j].x, pts[j].y);
-                        ctx.strokeStyle = '#d4a843';
-                        ctx.globalAlpha = (1 - d / 90) * 0.08;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                        ctx.globalAlpha = 1;
-                    }
-                }
-            }
-        }
-        (function anim() {
+        const bgDust = Array.from({ length: 100 }, () => new BgDust());
+        (function bgAnim() {
             ctx.clearRect(0, 0, W, H);
-            drawConstellations();
-            pts.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(anim);
+            bgDust.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(bgAnim);
         })();
 
-        // ── SCROLL PROGRESS ──────────────────────────────────────────────────────────
-        const pb = document.getElementById('prog');
+        // ═══════════════════════════════════════════════════════════════
+        // SCROLL PROGRESS
+        // ═══════════════════════════════════════════════════════════════
         window.addEventListener('scroll', () => {
             const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-            pb.style.width = p + '%';
-            // Hero grid zoom
-            const hero = document.getElementById('hero');
-            const sc = window.scrollY;
-            if (sc < window.innerHeight) {
-                const circles = hero.querySelectorAll('.hero-rune-circle,.hero-rune-circle-2,.hero-rune-circle-3');
-                const scl = 1 + sc * 0.0015;
-                circles.forEach(c => c.style.transform = `translate(-50%,-50%) scale(${scl})`);
+            document.getElementById('prog').style.width = p + '%';
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // HERO 3D PARALLAX MOUSE
+        // ═══════════════════════════════════════════════════════════════
+        const heroInner = document.getElementById('heroInner');
+        const heroTitle = document.getElementById('heroTitle');
+        document.addEventListener('mousemove', e => {
+            const xp = (e.clientX / window.innerWidth - .5);
+            const yp = (e.clientY / window.innerHeight - .5);
+            if (heroInner && window.scrollY < window.innerHeight) {
+                heroInner.style.transform = `rotateX(${-yp * 6}deg) rotateY(${xp * 6}deg) translateZ(20px)`;
+                heroInner.style.transformStyle = 'preserve-3d';
+                if (heroTitle) {
+                    heroTitle.style.textShadow = `${xp * 20}px ${yp * 20}px 80px rgba(212,168,67,.4), 0 0 40px rgba(212,168,67,.15)`;
+                }
+            }
+            // Ambient parallax
+            document.querySelectorAll('.amb').forEach((a, i) => {
+                const sp = (i + 1) * .015;
+                a.style.transform = `translate(${xp * sp * 100}px,${yp * sp * 100}px)`;
+            });
+        });
+
+        // Reset hero 3D on scroll
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > window.innerHeight * .3 && heroInner) {
+                heroInner.style.transform = '';
             }
         });
 
-        // ── REVEAL ──────────────────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        // REVEAL OBSERVER
+        // ═══════════════════════════════════════════════════════════════
         const revObs = new IntersectionObserver(ents => {
             ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); } });
-        }, { threshold: 0.12 });
+        }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
 
-        // ── SKILL BARS ──────────────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        // SKILL BARS + GEMS
+        // ═══════════════════════════════════════════════════════════════
         const skillObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
                 if (e.isIntersecting) {
                     e.target.querySelectorAll('.sk-fill').forEach(bar => {
                         const w = bar.getAttribute('data-w');
-                        setTimeout(() => { bar.style.width = w; }, 300);
+                        setTimeout(() => { bar.style.width = w; }, 350);
                     });
                     e.target.querySelectorAll('.sk-gems').forEach(gem => {
                         const n = parseInt(gem.getAttribute('data-gems'));
@@ -1806,51 +2239,119 @@
                     });
                 }
             });
-        }, { threshold: 0.3 });
+        }, { threshold: 0.2 });
         document.querySelectorAll('.skills-tome').forEach(el => skillObs.observe(el));
 
-        // ── 3D TILT ──────────────────────────────────────────────────────────────────
-        function tilt(el, e) {
+        // ═══════════════════════════════════════════════════════════════
+        // COUNTER ANIMATION
+        // ═══════════════════════════════════════════════════════════════
+        const countObs = new IntersectionObserver(ents => {
+            ents.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.querySelectorAll('[data-count]').forEach(el => {
+                        const target = parseInt(el.getAttribute('data-count'));
+                        let curr = 0;
+                        const inc = setInterval(() => {
+                            curr = Math.min(curr + 1, target);
+                            el.textContent = curr + '+';
+                            if (curr >= target) clearInterval(inc);
+                        }, 60);
+                    });
+                    e.target.querySelectorAll('[data-count-dec]').forEach(el => {
+                        const target = parseFloat(el.getAttribute('data-count-dec'));
+                        let curr = 0;
+                        const inc = setInterval(() => {
+                            curr = Math.min(+(curr + .1).toFixed(1), target);
+                            el.textContent = curr.toFixed(1);
+                            if (curr >= target) clearInterval(inc);
+                        }, 40);
+                    });
+                    countObs.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.3 });
+        document.querySelectorAll('.about-facts').forEach(el => countObs.observe(el));
+
+        // ═══════════════════════════════════════════════════════════════
+        // 3D CARD TILT
+        // ═══════════════════════════════════════════════════════════════
+        function cardTilt(el, e) {
             const r = el.getBoundingClientRect();
-            const x = (e.clientX - r.left) / r.width - 0.5;
-            const y = (e.clientY - r.top) / r.height - 0.5;
-            el.style.transform = `translateY(-6px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg)`;
+            const x = (e.clientX - r.left) / r.width - .5;
+            const y = (e.clientY - r.top) / r.height - .5;
+            el.style.transform = `translateY(-8px) rotateX(${-y * 9}deg) rotateY(${x * 9}deg) scale(1.01)`;
             el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
             el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
         }
-        document.querySelectorAll('.scroll-card').forEach(el => {
-            el.addEventListener('mouseleave', () => el.style.transform = '');
-        });
-
-        // ── HERO PARALLAX MOUSE ──────────────────────────────────────────────────────
-        document.addEventListener('mousemove', e => {
-            const xp = (e.clientX / window.innerWidth - 0.5) * 15;
-            const yp = (e.clientY / window.innerHeight - 0.5) * 15;
-            const rm = document.getElementById('runeMarks');
-            if (rm) rm.style.transform = `translate(calc(-50% + ${xp * 0.5}px), calc(-50% + ${yp * 0.5}px)) rotate(${xp * 0.3}deg)`;
-            const ht = document.querySelector('.hero-title');
-            if (ht) ht.style.textShadow = `${xp * 0.3}px ${yp * 0.3}px 60px rgba(212,168,67,0.35)`;
-        });
-
-        // ── RUNE MARKS ──────────────────────────────────────────────────────────────
-        const runeChars = ['ᚱ', 'ᚷ', 'ᚹ', 'ᚠ', 'ᛟ', 'ᚦ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ'];
-        const rm = document.getElementById('runeMarks');
-        if (rm) {
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2;
-                const r = 295;
-                const el = document.createElement('div');
-                el.className = 'rune-mark';
-                el.textContent = runeChars[i % runeChars.length];
-                el.style.left = (300 + r * Math.cos(angle) - 10) + 'px';
-                el.style.top = (300 + r * Math.sin(angle) - 10) + 'px';
-                rm.appendChild(el);
-            }
+        function cardReset(el) {
+            el.style.transform = '';
         }
 
-        // ── BLINK ────────────────────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        // NAV ACTIVE HIGHLIGHT
+        // ═══════════════════════════════════════════════════════════════
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('nav a');
+        const navObs = new IntersectionObserver(ents => {
+            ents.forEach(e => {
+                if (e.isIntersecting) {
+                    navLinks.forEach(a => a.style.color = '');
+                    const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+                    if (active) active.style.color = 'var(--gold)';
+                }
+            });
+        }, { rootMargin: '-40% 0px -40% 0px' });
+        sections.forEach(s => navObs.observe(s));
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCROLL-DRIVEN ORBIT RING SCALE
+        // ═══════════════════════════════════════════════════════════════
+        window.addEventListener('scroll', () => {
+            const sc = window.scrollY;
+            const rings = document.querySelectorAll('.orbit-ring');
+            if (sc < window.innerHeight) {
+                const scl = 1 + sc * .0012;
+                rings.forEach(r => { r.style.transform = r.style.transform.replace(/scale\([^)]*\)/, '') + ` scale(${scl})`; });
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // BLINK
+        // ═══════════════════════════════════════════════════════════════
         const bl = document.getElementById('blink');
-        if (bl) setInterval(() => { bl.style.opacity = bl.style.opacity === '0' ? '1' : '0'; }, 600);
+        if (bl) setInterval(() => bl.style.opacity = bl.style.opacity === '0' ? '1' : '0', 550);
+
+        // ═══════════════════════════════════════════════════════════════
+        // ART ORB RIPPLE ON CLICK
+        // ═══════════════════════════════════════════════════════════════
+        document.querySelectorAll('.art-orb').forEach(orb => {
+            orb.addEventListener('click', function (e) {
+                const r = document.createElement('div');
+                r.style.cssText = `position:absolute;border-radius:50%;border:1px solid rgba(212,168,67,.5);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;animation:ripple .6s forwards`;
+                this.appendChild(r);
+                setTimeout(() => r.remove(), 700);
+            });
+        });
+        // Ripple keyframe
+        const style = document.createElement('style');
+        style.textContent = '@keyframes ripple{to{width:200px;height:200px;opacity:0;border-color:transparent}}';
+        document.head.appendChild(style);
+
+        // ═══════════════════════════════════════════════════════════════
+        // MAGNETIC BUTTONS
+        // ═══════════════════════════════════════════════════════════════
+        document.querySelectorAll('.btn-arcane,.portal-link').forEach(btn => {
+            btn.addEventListener('mousemove', function (e) {
+                const r = this.getBoundingClientRect();
+                const x = e.clientX - r.left - r.width / 2;
+                const y = e.clientY - r.top - r.height / 2;
+                this.style.transform = `translate(${x * .2}px,${y * .2}px)`;
+            });
+            btn.addEventListener('mouseleave', function () {
+                this.style.transform = '';
+                this.style.transition = 'transform .5s var(--ease-out-expo)';
+            });
+        });
     </script>
 </body>
 
