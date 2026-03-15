@@ -1625,10 +1625,99 @@
         /* LIGHT THEME */
         body.light {
             --dark: #f0e8d5;
-            --parchment: #2a1a08;
-            --pdim: rgba(42, 26, 8, .65);
-            --gb: rgba(140, 80, 20, .18);
-            background: var(--dark)
+            --dark2: #e8dcc8;
+            --parchment: #1a0e04;
+            --pdim: rgba(26, 14, 4, .75);
+            --gb: rgba(140, 80, 20, .2);
+            --gg: rgba(160, 100, 20, .6);
+            background: var(--dark);
+            color: var(--parchment)
+        }
+
+        body.light .alore {
+            color: rgba(26, 14, 4, .72)
+        }
+
+        body.light .slore {
+            color: rgba(26, 14, 4, .65)
+        }
+
+        body.light .clore {
+            color: rgba(26, 14, 4, .6)
+        }
+
+        body.light .seye {
+            color: rgba(160, 100, 20, .8)
+        }
+
+        body.light .stitle {
+            color: #1a0e04
+        }
+
+        body.light .sctitle {
+            color: #1a0e04
+        }
+
+        body.light .srelic {
+            color: rgba(140, 80, 20, .7)
+        }
+
+        body.light .tbox {
+            color: rgba(26, 14, 4, .55);
+            border-color: rgba(140, 80, 20, .2)
+        }
+
+        body.light .grim {
+            color: rgba(26, 14, 4, .55);
+            border-color: rgba(140, 80, 20, .15)
+        }
+
+        body.light .gbr {
+            color: rgba(26, 14, 4, .75)
+        }
+
+        body.light .fv {
+            color: #8a5a10
+        }
+
+        body.light .fl {
+            color: rgba(100, 60, 10, .55)
+        }
+
+        body.light .skn {
+            color: rgba(26, 14, 4, .65)
+        }
+
+        body.light .an {
+            color: rgba(100, 60, 10, .65)
+        }
+
+        body.light .ar {
+            color: rgba(100, 60, 10, .45)
+        }
+
+        body.light footer {
+            color: rgba(100, 60, 10, .45)
+        }
+
+        body.light .htitle {
+            color: #1a0e04
+        }
+
+        body.light .hey {
+            color: #8a5a10
+        }
+
+        body.light .hsub {
+            color: rgba(26, 14, 4, .55)
+        }
+
+        body.light .hdiv span {
+            color: rgba(100, 60, 10, .65)
+        }
+
+        body.light .semail {
+            color: #1a0e04
         }
 
         body.light .ap {
@@ -2749,7 +2838,7 @@
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal({ target: document.getElementById('mo') }); });
 
         // ── SOUND ─────────────────────────────────────────────────────
-        let actx = null, sOn = false;
+        let actx = null, sOn = true;
         const sbEl = document.getElementById('soundBtn');
         function getAC() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
         function playTone(freq, dur = .12, vol = .04, type = 'sine') {
