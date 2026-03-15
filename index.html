@@ -5,11 +5,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Yatin Anchan — Arcane Engineer</title>
+    <meta name="description"
+        content="AI/ML Engineer from Maharashtra. Builder of real-time driver safety AI, blockchain platforms, and arcane software systems." />
+    <meta property="og:title" content="Yatin Anchan — Arcane Engineer" />
+    <meta property="og:description" content="AI/ML Engineer · Deep Learning · Builder. Maharashtra, India." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Yatin Anchan — Arcane Engineer" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Share+Tech+Mono&display=swap"
         rel="stylesheet" />
+
+    <!-- GSAP + Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
+        /* ════════════════════════════════════════════════════
+   ROOT & RESET
+════════════════════════════════════════════════════ */
         *,
         *::before,
         *::after {
@@ -23,17 +41,16 @@
             --gold2: #f5c842;
             --ember: #c0392b;
             --arcane: #7b2fbe;
-            --mist: #8ecae6;
             --parchment: #f5e6c8;
-            --dark: #060402;
-            --dark2: #0d0a06;
+            --parchment-dim: rgba(245, 230, 200, .65);
+            --dark: #040302;
+            --dark2: #0a0705;
             --dark3: #1a1208;
-            --rune: #b8860b;
-            --glow-gold: rgba(212, 168, 67, 0.5);
-            --glow-arcane: rgba(123, 47, 190, 0.4);
-            --glass: rgba(212, 168, 67, 0.04);
-            --glass-border: rgba(212, 168, 67, 0.15);
-            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --glow-gold: rgba(212, 168, 67, .5);
+            --glow-gold-lg: rgba(212, 168, 67, .2);
+            --glass-border: rgba(212, 168, 67, .14);
+            --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         html {
@@ -48,7 +65,41 @@
             cursor: none
         }
 
-        /* ─── CUSTOM CURSOR ─────────────────────────── */
+        @media(prefers-reduced-motion:reduce) {
+            * {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important
+            }
+        }
+
+        ::selection {
+            background: rgba(212, 168, 67, .22);
+            color: var(--gold2)
+        }
+
+        /* ════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR
+════════════════════════════════════════════════════ */
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--ember), var(--gold), var(--gold2));
+            border-radius: 3px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold)
+        }
+
+        /* ════════════════════════════════════════════════════
+   CURSOR SYSTEM
+════════════════════════════════════════════════════ */
         #c-dot {
             position: fixed;
             width: 8px;
@@ -58,83 +109,195 @@
             pointer-events: none;
             z-index: 9999;
             transform: translate(-50%, -50%);
-            transition: width .15s, height .15s, opacity .15s;
-            box-shadow: 0 0 16px var(--glow-gold), 0 0 32px rgba(245, 200, 66, .3)
+            will-change: left, top;
+            box-shadow: 0 0 16px var(--glow-gold), 0 0 32px rgba(245, 200, 66, .25)
         }
 
         #c-ring {
             position: fixed;
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            border: 1.5px solid rgba(212, 168, 67, .4);
+            border: 1.5px solid rgba(212, 168, 67, .38);
             pointer-events: none;
             z-index: 9998;
             transform: translate(-50%, -50%);
-            transition: width .4s var(--ease-out-expo), height .4s var(--ease-out-expo), border-color .3s, opacity .3s
+            will-change: left, top;
+            transition: width .4s var(--ease-expo), height .4s var(--ease-expo), border-color .3s, opacity .3s
         }
 
         #c-aura {
             position: fixed;
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(212, 168, 67, .07), transparent 70%);
+            background: radial-gradient(circle, rgba(212, 168, 67, .06), transparent 70%);
             pointer-events: none;
             z-index: 9997;
             transform: translate(-50%, -50%);
-            transition: all .6s var(--ease-out-expo)
+            will-change: left, top;
+            transition: width .7s var(--ease-expo), height .7s var(--ease-expo)
         }
 
-        body.cursor-hover #c-dot {
-            width: 14px;
-            height: 14px
+        body.ch #c-dot {
+            width: 12px;
+            height: 12px;
+            box-shadow: 0 0 24px var(--glow-gold)
         }
 
-        body.cursor-hover #c-ring {
-            width: 64px;
-            height: 64px;
-            border-color: rgba(212, 168, 67, .7)
+        body.ch #c-ring {
+            width: 60px;
+            height: 60px;
+            border-color: rgba(212, 168, 67, .65)
         }
 
-        body.cursor-hover #c-aura {
-            width: 160px;
-            height: 160px
+        body.ch #c-aura {
+            width: 150px;
+            height: 150px
         }
 
-        body.cursor-click #c-dot {
+        body.cc #c-dot {
             width: 4px;
             height: 4px
         }
 
-        body.cursor-click #c-ring {
-            width: 24px;
-            height: 24px
+        body.cc #c-ring {
+            width: 20px;
+            height: 20px
         }
 
-        /* ─── SPARKLE TRAILS ─────────────────────────── */
         .sparkle {
             position: fixed;
             pointer-events: none;
             z-index: 9996;
             border-radius: 50%;
             background: var(--gold2);
-            animation: sparkFade .7s forwards
+            transform: translate(-50%, -50%);
+            animation: sparkFade .65s forwards
         }
 
         @keyframes sparkFade {
             0% {
-                opacity: .8;
-                transform: scale(1) translate(-50%, -50%)
+                opacity: .9;
+                transform: translate(-50%, -50%) scale(1)
             }
 
             100% {
                 opacity: 0;
-                transform: scale(0) translate(-50%, -50%) translateY(-20px)
+                transform: translate(-50%, -50%) scale(0) translateY(-18px)
             }
         }
 
-        /* ─── LOADER ─────────────────────────────────── */
+        /* ════════════════════════════════════════════════════
+   NOISE + AMBIENT
+════════════════════════════════════════════════════ */
+        #noise {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: .038;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 200px;
+            animation: grainShift 8s steps(1) infinite
+        }
+
+        @keyframes grainShift {
+            0% {
+                background-position: 0 0
+            }
+
+            10% {
+                background-position: -5%, -10%
+            }
+
+            20% {
+                background-position: -15%, 5%
+            }
+
+            30% {
+                background-position: 7%, -25%
+            }
+
+            40% {
+                background-position: -5%, 25%
+            }
+
+            50% {
+                background-position: -15%, 10%
+            }
+
+            60% {
+                background-position: 15%, 0
+            }
+
+            70% {
+                background-position: 0, 15%
+            }
+
+            80% {
+                background-position: 3%, 35%
+            }
+
+            90% {
+                background-position: -10%, 10%
+            }
+
+            100% {
+                background-position: 0, 0
+            }
+        }
+
+        .amb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 0
+        }
+
+        .a1 {
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(212, 168, 67, .065), transparent);
+            top: -250px;
+            right: -250px;
+            animation: ad 14s ease-in-out infinite
+        }
+
+        .a2 {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(192, 57, 43, .04), transparent);
+            bottom: -100px;
+            left: -180px;
+            animation: ad 17s ease-in-out infinite reverse
+        }
+
+        .a3 {
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(123, 47, 190, .055), transparent);
+            top: 45%;
+            right: 6%;
+            animation: ad 10s ease-in-out infinite 3s
+        }
+
+        @keyframes ad {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(25px, -45px) scale(1.08)
+            }
+        }
+
+        /* ════════════════════════════════════════════════════
+   LOADER
+════════════════════════════════════════════════════ */
         #loader {
             position: fixed;
             inset: 0;
@@ -144,59 +307,81 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 1.4s var(--ease-out-expo)
+            transition: opacity 1.6s var(--ease-expo), transform 1.6s var(--ease-expo)
         }
 
-        #loader.hidden {
+        #loader.out {
             opacity: 0;
+            transform: scale(1.04);
             pointer-events: none
         }
 
-        .l-sigil {
+        .l-outer {
             position: relative;
-            width: 120px;
-            height: 120px;
-            margin-bottom: 40px
+            width: 160px;
+            height: 160px;
+            margin-bottom: 48px
         }
 
-        .l-sigil-ring {
+        .l-ring {
             position: absolute;
             inset: 0;
             border-radius: 50%;
-            border: 1px solid rgba(212, 168, 67, .15);
-            animation: lRingSpin 3s linear infinite
+            border: 1px solid
         }
 
-        .l-sigil-ring:nth-child(2) {
-            inset: 16px;
-            border-color: rgba(212, 168, 67, .25);
-            animation-duration: 2s;
-            animation-direction: reverse
+        .l-ring:nth-child(1) {
+            border-color: rgba(212, 168, 67, .1);
+            animation: ls 4s linear infinite
         }
 
-        .l-sigil-ring:nth-child(3) {
-            inset: 32px;
-            border-color: rgba(212, 168, 67, .4);
-            animation-duration: 1.5s
+        .l-ring:nth-child(2) {
+            inset: 20px;
+            border-color: rgba(212, 168, 67, .18);
+            animation: ls 2.8s linear infinite reverse
         }
 
-        .l-sigil-core {
+        .l-ring:nth-child(3) {
+            inset: 40px;
+            border-color: rgba(212, 168, 67, .3);
+            animation: ls 2s linear infinite
+        }
+
+        .l-ring:nth-child(4) {
+            inset: 60px;
+            border-color: rgba(212, 168, 67, .5);
+            animation: ls 1.4s linear infinite reverse
+        }
+
+        .l-core {
             position: absolute;
-            inset: 44px;
+            inset: 70px;
             border-radius: 50%;
-            background: radial-gradient(circle, var(--gold), transparent);
-            animation: lCoreGlow 1.5s ease-in-out infinite alternate
+            background: radial-gradient(circle, var(--gold2), var(--gold));
+            animation: lc 1.2s ease-in-out infinite alternate;
+            box-shadow: 0 0 30px var(--glow-gold)
         }
 
-        @keyframes lRingSpin {
+        .l-ring-dot {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--glow-gold);
+            top: -2.5px;
+            left: calc(50% - 2.5px)
+        }
+
+        @keyframes ls {
             to {
                 transform: rotate(360deg)
             }
         }
 
-        @keyframes lCoreGlow {
+        @keyframes lc {
             from {
-                opacity: .4;
+                opacity: .5;
                 transform: scale(.8)
             }
 
@@ -206,10 +391,10 @@
             }
         }
 
-        .l-text {
+        .l-label {
             font-family: 'Cinzel', serif;
-            font-size: 11px;
-            letter-spacing: .5em;
+            font-size: 10.5px;
+            letter-spacing: .55em;
             color: var(--gold);
             text-transform: uppercase;
             margin-bottom: 28px;
@@ -217,9 +402,9 @@
         }
 
         .l-bar {
-            width: 300px;
+            width: 320px;
             height: 1px;
-            background: rgba(212, 168, 67, .1);
+            background: rgba(212, 168, 67, .08);
             position: relative;
             overflow: hidden
         }
@@ -228,107 +413,32 @@
             height: 100%;
             background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
             width: 0%;
-            transition: width .05s linear;
-            box-shadow: 0 0 12px var(--glow-gold)
+            box-shadow: 0 0 14px var(--glow-gold)
         }
 
-        .l-bar::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent 60%, rgba(212, 168, 67, .2));
-            animation: lShimmer 1.5s ease-in-out infinite
-        }
-
-        @keyframes lShimmer {
-
-            0%,
-            100% {
-                opacity: 0
-            }
-
-            50% {
-                opacity: 1
-            }
-        }
-
-        .l-status {
-            margin-top: 20px;
+        .l-log {
+            margin-top: 24px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 11px;
-            color: rgba(212, 168, 67, .4);
-            letter-spacing: .15em;
-            min-height: 60px;
+            font-size: 10.5px;
+            color: rgba(212, 168, 67, .38);
+            letter-spacing: .14em;
+            min-height: 100px;
             text-align: center;
-            line-height: 2.2
+            line-height: 2.4;
+            max-width: 400px
         }
 
-        /* ─── BACKGROUND ─────────────────────────────── */
-        #bg {
-            position: fixed;
-            inset: 0;
-            z-index: 0
+        .l-pct {
+            margin-top: 12px;
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            color: rgba(212, 168, 67, .35);
+            letter-spacing: .3em
         }
 
-        #noise-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            opacity: .04;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-size: 256px;
-            pointer-events: none
-        }
-
-        .amb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(90px);
-            pointer-events: none;
-            z-index: 0;
-            transition: transform 1s ease
-        }
-
-        .amb-1 {
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(212, 168, 67, .07), transparent);
-            top: -200px;
-            right: -200px;
-            animation: ambDrift 12s ease-in-out infinite
-        }
-
-        .amb-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(192, 57, 43, .05), transparent);
-            bottom: 0;
-            left: -150px;
-            animation: ambDrift 15s ease-in-out infinite reverse
-        }
-
-        .amb-3 {
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(123, 47, 190, .06), transparent);
-            top: 40%;
-            right: 8%;
-            animation: ambDrift 9s ease-in-out infinite 4s
-        }
-
-        @keyframes ambDrift {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1)
-            }
-
-            50% {
-                transform: translate(30px, -50px) scale(1.1)
-            }
-        }
-
-        /* ─── PROGRESS ───────────────────────────────── */
+        /* ════════════════════════════════════════════════════
+   PROGRESS BAR
+════════════════════════════════════════════════════ */
         #prog {
             position: fixed;
             top: 0;
@@ -337,56 +447,66 @@
             background: linear-gradient(90deg, var(--ember), var(--gold), var(--gold2));
             z-index: 2000;
             width: 0%;
-            box-shadow: 0 0 10px var(--glow-gold);
-            transition: width .1s
+            box-shadow: 0 0 12px var(--glow-gold);
+            transition: width .12s
         }
 
-        /* ─── NAV ─────────────────────────────────────── */
+        /* ════════════════════════════════════════════════════
+   NAV
+════════════════════════════════════════════════════ */
         nav {
             position: fixed;
-            top: 24px;
+            top: 22px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            padding: 14px 44px;
-            background: rgba(6, 4, 2, .88);
-            backdrop-filter: blur(24px) saturate(1.5);
+            padding: 13px 44px;
+            background: rgba(4, 3, 2, .88);
+            backdrop-filter: blur(28px) saturate(1.6);
             border: 1px solid var(--glass-border);
             clip-path: polygon(14px 0%, 100% 0%, calc(100% - 14px) 100%, 0% 100%);
             display: flex;
-            gap: 40px;
-            transition: all .4s
+            gap: 38px;
+            transition: all .4s;
+            opacity: 0;
+            pointer-events: none
         }
 
-        nav::before,
-        nav::after {
-            content: '◆';
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gold);
-            font-size: 7px;
-            opacity: .8
+        nav.ready {
+            opacity: 1;
+            pointer-events: all
         }
 
         nav::before {
-            left: 8px
+            content: '◆';
+            position: absolute;
+            left: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 6px
         }
 
         nav::after {
-            right: 8px
+            content: '◆';
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 6px
         }
 
         nav a {
             font-family: 'Cinzel', serif;
-            font-size: 9.5px;
+            font-size: 9px;
             letter-spacing: .28em;
             text-transform: uppercase;
-            color: rgba(212, 168, 67, .4);
+            color: rgba(212, 168, 67, .38);
             text-decoration: none;
-            transition: all .3s;
+            transition: color .3s;
             position: relative;
-            padding-bottom: 2px
+            padding-bottom: 3px
         }
 
         nav a::after {
@@ -397,147 +517,132 @@
             width: 0;
             height: 1px;
             background: var(--gold);
-            transition: width .3s var(--ease-out-expo);
+            transition: width .35s var(--ease-expo);
             box-shadow: 0 0 8px var(--glow-gold)
         }
 
-        nav a:hover {
-            color: var(--gold);
-            text-shadow: 0 0 20px var(--glow-gold)
+        nav a:hover,
+        nav a.active {
+            color: var(--gold)
         }
 
-        nav a:hover::after {
+        nav a:hover::after,
+        nav a.active::after {
             width: 100%
         }
 
-        /* ─── HERO ─────────────────────────────────────── */
+        /* theme toggle in nav */
+        .theme-btn {
+            background: none;
+            border: 1px solid rgba(212, 168, 67, .2);
+            color: rgba(212, 168, 67, .4);
+            font-family: 'Cinzel', serif;
+            font-size: 8px;
+            letter-spacing: .2em;
+            padding: 4px 10px;
+            cursor: none;
+            transition: all .3s;
+            text-transform: uppercase
+        }
+
+        .theme-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold)
+        }
+
+        /* sound toggle */
+        .sound-btn {
+            background: none;
+            border: none;
+            color: rgba(212, 168, 67, .4);
+            font-size: 14px;
+            cursor: none;
+            transition: all .3s;
+            padding: 0 4px
+        }
+
+        .sound-btn:hover {
+            color: var(--gold)
+        }
+
+        /* ════════════════════════════════════════════════════
+   HERO
+════════════════════════════════════════════════════ */
         #hero {
             height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             position: relative;
-            overflow: hidden;
-            perspective: 1000px
+            overflow: hidden
         }
 
-        .hero-vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse 65% 75% at 50% 50%, transparent 35%, rgba(6, 4, 2, .95) 100%);
-            pointer-events: none;
-            z-index: 2
-        }
-
-        #hero-canvas {
+        #threejs-canvas {
             position: absolute;
             inset: 0;
             z-index: 1
         }
 
-        /* Orbital rings */
-        .orbit-ring {
+        .hero-vignette {
             position: absolute;
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 1px solid;
-            pointer-events: none
+            inset: 0;
+            background: radial-gradient(ellipse 60% 70% at 50% 50%, transparent 30%, rgba(4, 3, 2, .97) 100%);
+            pointer-events: none;
+            z-index: 2
         }
 
-        .or-1 {
-            width: 500px;
-            height: 500px;
-            border-color: rgba(212, 168, 67, .07);
-            animation: orbitSpin 50s linear infinite
-        }
-
-        .or-2 {
-            width: 700px;
-            height: 700px;
-            border-color: rgba(212, 168, 67, .04);
-            animation: orbitSpin 80s linear infinite reverse
-        }
-
-        .or-3 {
-            width: 340px;
-            height: 340px;
-            border-color: rgba(212, 168, 67, .1);
-            animation: orbitSpin 35s linear infinite
-        }
-
-        .or-4 {
-            width: 900px;
-            height: 900px;
-            border-color: rgba(123, 47, 190, .03);
-            animation: orbitSpin 120s linear infinite
-        }
-
-        /* dot on orbit */
-        .orbit-dot {
-            position: absolute;
-            border-radius: 50%;
-            background: var(--gold);
-            box-shadow: 0 0 10px var(--glow-gold)
-        }
-
-        @keyframes orbitSpin {
-            to {
-                transform: translate(-50%, -50%) rotate(360deg)
-            }
-        }
-
-        /* Hero content */
         .hero-inner {
             position: relative;
-            z-index: 3
+            z-index: 3;
+            transform-style: preserve-3d;
+            perspective: 800px
         }
 
         .hero-eyebrow {
             font-family: 'Cinzel', serif;
             font-size: 10px;
-            letter-spacing: .55em;
+            letter-spacing: .6em;
             color: var(--gold);
             text-transform: uppercase;
-            margin-bottom: 24px;
-            opacity: 0;
-            animation: revealUp 1.2s .8s var(--ease-out-expo) forwards
+            margin-bottom: 22px;
+            opacity: 0
         }
 
         .hero-title {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(42px, 9vw, 110px);
+            font-size: clamp(46px, 10vw, 120px);
             font-weight: 900;
-            line-height: .9;
+            line-height: .88;
             color: var(--parchment);
-            text-shadow: 0 0 80px rgba(212, 168, 67, .25), 0 4px 8px rgba(0, 0, 0, .9);
-            opacity: 0;
-            animation: revealUp 1.4s 1s var(--ease-out-expo) forwards;
             letter-spacing: -.02em;
-            transform-style: preserve-3d
+            perspective: 600px;
+            opacity: 0
         }
 
-        .hero-title .name-gold {
+        .hero-title .letter {
+            display: inline-block;
+            transform-origin: bottom center
+        }
+
+        .name-gold {
             color: var(--gold);
-            text-shadow: 0 0 40px var(--glow-gold), 0 0 80px rgba(212, 168, 67, .3), 0 0 120px rgba(212, 168, 67, .15)
+            text-shadow: 0 0 50px var(--glow-gold), 0 0 100px rgba(212, 168, 67, .2)
         }
 
         .hero-div {
             display: flex;
             align-items: center;
             gap: 16px;
-            margin: 28px 0;
-            opacity: 0;
-            animation: revealUp 1.2s 1.2s var(--ease-out-expo) forwards
+            margin: 26px auto;
+            max-width: 600px;
+            opacity: 0
         }
 
         .hero-div::before,
         .hero-div::after {
             content: '';
-            flex: 100px 0 0;
+            flex: 1;
             height: 1px
         }
 
@@ -552,74 +657,73 @@
         .hero-div span {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            letter-spacing: .4em;
-            color: rgba(212, 168, 67, .6);
+            letter-spacing: .42em;
+            color: rgba(212, 168, 67, .58);
             text-transform: uppercase;
             white-space: nowrap
         }
 
         .hero-sub {
-            font-size: clamp(15px, 2vw, 21px);
+            font-size: clamp(14px, 2vw, 20px);
             font-style: italic;
-            color: rgba(245, 230, 200, .55);
-            letter-spacing: .08em;
-            opacity: 0;
-            animation: revealUp 1.2s 1.4s var(--ease-out-expo) forwards
+            color: rgba(245, 230, 200, .5);
+            letter-spacing: .07em;
+            opacity: 0
         }
 
         .hero-cta {
             margin-top: 44px;
-            opacity: 0;
-            animation: revealUp 1.2s 1.7s var(--ease-out-expo) forwards;
             display: flex;
             gap: 16px;
-            justify-content: center
+            justify-content: center;
+            opacity: 0
         }
 
-        .btn-arcane {
+        .btn-a {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 14px 36px;
-            border: 1px solid rgba(212, 168, 67, .3);
-            color: rgba(212, 168, 67, .7);
+            border: 1px solid rgba(212, 168, 67, .28);
+            color: rgba(212, 168, 67, .65);
             text-decoration: none;
-            transition: all .4s;
-            letter-spacing: .2em;
+            letter-spacing: .22em;
             text-transform: uppercase;
             clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
             position: relative;
-            overflow: hidden
+            overflow: hidden;
+            transition: color .35s, border-color .35s, box-shadow .35s;
+            display: inline-block
         }
 
-        .btn-arcane::before {
+        .btn-a::before {
             content: '';
             position: absolute;
             inset: 0;
             background: linear-gradient(135deg, rgba(212, 168, 67, .12), transparent);
-            transform: translateX(-100%);
-            transition: transform .5s var(--ease-out-expo)
+            transform: translateX(-105%);
+            transition: transform .5s var(--ease-expo)
         }
 
-        .btn-arcane:hover {
+        .btn-a:hover {
             border-color: var(--gold);
             color: var(--gold);
-            text-shadow: 0 0 12px var(--glow-gold);
-            box-shadow: 0 0 30px rgba(212, 168, 67, .15)
+            text-shadow: 0 0 14px var(--glow-gold);
+            box-shadow: 0 0 40px rgba(212, 168, 67, .12)
         }
 
-        .btn-arcane:hover::before {
+        .btn-a:hover::before {
             transform: translateX(0)
         }
 
-        .btn-arcane.primary {
-            background: rgba(212, 168, 67, .1);
-            border-color: rgba(212, 168, 67, .5)
+        .btn-a.primary {
+            background: rgba(212, 168, 67, .09);
+            border-color: rgba(212, 168, 67, .42)
         }
 
-        /* Scroll cue */
-        .hero-scroll {
+        /* scroll cue */
+        .hero-scroll-cue {
             position: absolute;
-            bottom: 40px;
+            bottom: 38px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 3;
@@ -627,37 +731,35 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
-            opacity: 0;
-            animation: revealFade 1.5s 2.2s forwards
+            opacity: 0
         }
 
-        .s-label {
+        .sc-label {
             font-family: 'Cinzel', serif;
             font-size: 8px;
-            letter-spacing: .4em;
-            color: rgba(212, 168, 67, .35);
+            letter-spacing: .45em;
+            color: rgba(212, 168, 67, .32);
             text-transform: uppercase
         }
 
-        .s-track {
+        .sc-track {
             width: 1px;
-            height: 50px;
-            background: rgba(212, 168, 67, .1);
-            position: relative;
-            overflow: hidden
+            height: 48px;
+            background: rgba(212, 168, 67, .08);
+            overflow: hidden;
+            position: relative
         }
 
-        .s-line {
+        .sc-line {
             position: absolute;
             top: -100%;
-            left: 0;
             width: 100%;
             height: 100%;
             background: linear-gradient(180deg, transparent, var(--gold));
-            animation: scrollLine 2s ease-in-out infinite
+            animation: scLine 2.2s ease-in-out infinite
         }
 
-        @keyframes scrollLine {
+        @keyframes scLine {
             0% {
                 top: -100%
             }
@@ -667,30 +769,56 @@
             }
         }
 
-        @keyframes revealUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
+        /* ════════════════════════════════════════════════════
+   PAGE TRANSITION WIPE
+════════════════════════════════════════════════════ */
+        #page-wipe {
+            position: fixed;
+            inset: 0;
+            z-index: 9500;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center
         }
 
-        @keyframes revealFade {
-            from {
-                opacity: 0
-            }
-
-            to {
-                opacity: 1
-            }
+        .wipe-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 168, 67, .6);
+            transform: scale(0);
+            opacity: 0
         }
 
-        /* ─── SECTION COMMON ─────────────────────────── */
-        .section-wrap {
+        .wipe-ring:nth-child(1) {
+            width: 60px;
+            height: 60px
+        }
+
+        .wipe-ring:nth-child(2) {
+            width: 120px;
+            height: 120px
+        }
+
+        .wipe-ring:nth-child(3) {
+            width: 200px;
+            height: 200px
+        }
+
+        .wipe-center {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--gold);
+            transform: scale(0);
+            opacity: 0;
+            box-shadow: 0 0 30px var(--glow-gold)
+        }
+
+        /* ════════════════════════════════════════════════════
+   SECTIONS COMMON
+════════════════════════════════════════════════════ */
+        .sw {
             position: relative;
             z-index: 1;
             padding: 130px 6vw;
@@ -698,40 +826,53 @@
             margin: 0 auto
         }
 
-        .section-eyebrow {
+        .s-eye {
             font-family: 'Cinzel', serif;
             font-size: 9.5px;
-            letter-spacing: .45em;
+            letter-spacing: .48em;
             color: var(--gold);
             text-transform: uppercase;
             margin-bottom: 14px;
-            opacity: .65;
+            opacity: .62;
             display: flex;
             align-items: center;
             gap: 12px
         }
 
-        .section-eyebrow::before {
+        .s-eye::before {
             content: '✦';
             font-size: 7px
         }
 
-        .section-title {
+        .s-title {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: clamp(30px, 5.5vw, 62px);
+            font-size: clamp(30px, 5.5vw, 64px);
             font-weight: 700;
-            line-height: 1.05;
+            line-height: 1.04;
             margin-bottom: 56px;
-            color: var(--parchment);
             letter-spacing: -.01em
         }
 
-        .section-title .accent {
+        .s-title .acc {
             color: var(--gold);
-            text-shadow: 0 0 40px rgba(212, 168, 67, .25)
+            text-shadow: 0 0 40px rgba(212, 168, 67, .22)
         }
 
-        .arc-divider {
+        /* split chars */
+        .split-char {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(80px) rotateX(-40deg);
+            transform-origin: bottom
+        }
+
+        .split-word {
+            display: inline-block;
+            overflow: hidden
+        }
+
+        /* DIVIDER */
+        .adiv {
             position: relative;
             z-index: 1;
             display: flex;
@@ -740,17 +881,17 @@
             padding: 16px 0
         }
 
-        .arc-divider::before {
+        .adiv::before {
             content: '';
             position: absolute;
             left: 0;
             right: 0;
             top: 50%;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .15), rgba(212, 168, 67, .35), rgba(212, 168, 67, .15), transparent)
+            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .12), rgba(212, 168, 67, .32), rgba(212, 168, 67, .12), transparent)
         }
 
-        .arc-divider-gem {
+        .adiv-gem {
             width: 10px;
             height: 10px;
             background: var(--gold);
@@ -758,54 +899,52 @@
             box-shadow: 0 0 16px var(--glow-gold);
             position: relative;
             z-index: 1;
-            transition: transform .3s
+            transition: transform .5s var(--ease-back), box-shadow .3s;
+            cursor: none
         }
 
-        .arc-divider:hover .arc-divider-gem {
-            transform: rotate(225deg) scale(1.5)
+        .adiv:hover .adiv-gem {
+            transform: rotate(225deg) scale(1.6);
+            box-shadow: 0 0 30px var(--glow-gold)
         }
 
-        /* ─── PANELS ─────────────────────────────────── */
-        .arcane-panel {
-            background: rgba(6, 4, 2, .75);
-            backdrop-filter: blur(24px);
+        /* PANELS */
+        .ap {
+            background: rgba(4, 3, 2, .78);
+            backdrop-filter: blur(28px);
             border: 1px solid var(--glass-border);
             position: relative;
             overflow: hidden;
             transition: border-color .4s, box-shadow .4s
         }
 
-        .arcane-panel:hover {
-            border-color: rgba(212, 168, 67, .25);
-            box-shadow: 0 0 60px rgba(212, 168, 67, .05)
-        }
-
-        .arcane-panel::before {
+        .ap::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .6), transparent);
-            opacity: .4
+            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .55), transparent);
+            opacity: .38
         }
 
-        .arcane-panel::after {
+        .ap::after {
             content: '';
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .3), transparent);
-            opacity: .3
+            background: linear-gradient(90deg, transparent, rgba(212, 168, 67, .28), transparent);
+            opacity: .28
         }
 
         .pc {
             position: absolute;
             width: 18px;
-            height: 18px
+            height: 18px;
+            transition: all .4s
         }
 
         .pc.tl {
@@ -836,45 +975,75 @@
             border-right: 1px solid var(--gold)
         }
 
-        /* ─── ABOUT ──────────────────────────────────── */
+        .ap:hover {
+            border-color: rgba(212, 168, 67, .28);
+            box-shadow: 0 0 60px rgba(212, 168, 67, .05), 0 20px 60px rgba(0, 0, 0, .5)
+        }
+
+        .ap:hover .pc {
+            width: 24px;
+            height: 24px
+        }
+
+        /* ════════════════════════════════════════════════════
+   ABOUT
+════════════════════════════════════════════════════ */
         .about-grid {
             display: grid;
             grid-template-columns: 1.3fr 1fr;
-            gap: 70px;
+            gap: 72px;
             align-items: start
         }
 
         .about-lore {
-            font-size: 19.5px;
-            line-height: 1.95;
-            color: rgba(245, 230, 200, .68);
+            font-size: 19px;
+            line-height: 2;
+            color: var(--parchment-dim);
             font-style: italic;
-            margin-bottom: 32px
+            margin-bottom: 28px
         }
 
         .about-lore em {
             color: var(--gold);
             font-style: normal;
-            text-shadow: 0 0 20px rgba(212, 168, 67, .3)
+            text-shadow: 0 0 20px rgba(212, 168, 67, .28)
         }
 
-        .about-terminal {
+        /* typing terminal */
+        .terminal-box {
             font-family: 'Share Tech Mono', monospace;
             font-size: 13px;
             color: rgba(212, 168, 67, .4);
-            line-height: 2.4;
-            margin-bottom: 32px
+            line-height: 2.5;
+            margin-bottom: 32px;
+            border-left: 1px solid rgba(212, 168, 67, .12);
+            padding-left: 20px
         }
 
-        .about-terminal .t-prompt {
+        .t-line {
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: opacity .4s, transform .4s
+        }
+
+        .t-line.vis {
+            opacity: 1;
+            transform: translateX(0)
+        }
+
+        .t-prompt {
             color: rgba(212, 168, 67, .6)
         }
 
+        .t-val {
+            color: rgba(245, 230, 200, .55)
+        }
+
+        /* stats */
         .about-facts {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             border: 1px solid var(--glass-border);
-            margin-top: 40px;
             position: relative;
             overflow: hidden
         }
@@ -883,100 +1052,101 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(212, 168, 67, .03), transparent);
-            pointer-events: none
+            background: linear-gradient(135deg, rgba(212, 168, 67, .025), transparent)
         }
 
         .fact-cell {
-            padding: 28px 20px;
+            padding: 30px 20px;
             text-align: center;
             position: relative;
-            transition: background .3s
-        }
-
-        .fact-cell:hover {
-            background: rgba(212, 168, 67, .04)
+            transition: background .4s, transform .3s
         }
 
         .fact-cell:not(:last-child) {
             border-right: 1px solid var(--glass-border)
         }
 
+        .fact-cell:hover {
+            background: rgba(212, 168, 67, .05);
+            transform: translateY(-2px)
+        }
+
         .fact-val {
             font-family: 'Cinzel Decorative', cursive;
-            font-size: 32px;
+            font-size: 34px;
             color: var(--gold);
             display: block;
-            text-shadow: 0 0 24px var(--glow-gold)
+            text-shadow: 0 0 28px var(--glow-gold)
         }
 
         .fact-lbl {
             font-family: 'Cinzel', serif;
             font-size: 8.5px;
             letter-spacing: .3em;
-            color: rgba(212, 168, 67, .45);
+            color: rgba(212, 168, 67, .42);
             text-transform: uppercase;
             margin-top: 8px;
             display: block
         }
 
+        /* skill tome */
         .skills-tome {
-            padding: 40px
+            padding: 42px
         }
 
-        .tome-section {
-            margin-bottom: 32px
+        .tome-sec {
+            margin-bottom: 34px
         }
 
-        .tome-title {
+        .tome-ttl {
             font-family: 'Cinzel', serif;
             font-size: 9.5px;
-            letter-spacing: .3em;
+            letter-spacing: .32em;
             color: var(--gold);
             text-transform: uppercase;
             margin-bottom: 18px;
-            opacity: .65;
+            opacity: .62;
             display: flex;
             align-items: center;
             gap: 8px
         }
 
-        .tome-title::before {
+        .tome-ttl::before {
             content: '◈';
             font-size: 8px
         }
 
-        .skill-line {
+        .sk-line {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 12px;
-            transition: transform .3s
+            margin-bottom: 13px;
+            transition: transform .3s var(--ease-expo)
         }
 
-        .skill-line:hover {
-            transform: translateX(4px)
+        .sk-line:hover {
+            transform: translateX(5px)
         }
 
         .sk-name {
             font-family: 'Crimson Text', serif;
             font-size: 15px;
-            color: rgba(245, 230, 200, .55);
-            width: 95px;
+            color: rgba(245, 230, 200, .52);
+            width: 96px;
             flex-shrink: 0;
             transition: color .3s
         }
 
-        .skill-line:hover .sk-name {
-            color: rgba(245, 230, 200, .85)
+        .sk-line:hover .sk-name {
+            color: rgba(245, 230, 200, .88)
         }
 
         .sk-track {
             flex: 1;
             height: 1.5px;
-            background: rgba(212, 168, 67, .08);
+            background: rgba(212, 168, 67, .07);
             position: relative;
-            border-radius: 2px
+            border-radius: 1px
         }
 
         .sk-fill {
@@ -984,10 +1154,11 @@
             top: 0;
             left: 0;
             height: 100%;
-            background: linear-gradient(90deg, rgba(212, 168, 67, .6), var(--gold), var(--gold2));
-            box-shadow: 0 0 8px var(--glow-gold);
-            transition: width 1.6s cubic-bezier(0.23, 1, 0.32, 1);
-            border-radius: 2px
+            background: linear-gradient(90deg, rgba(212, 168, 67, .5), var(--gold), var(--gold2));
+            box-shadow: 0 0 10px var(--glow-gold);
+            transition: width 1.8s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 1px;
+            width: 0%
         }
 
         .sk-gems {
@@ -1000,7 +1171,7 @@
             width: 7px;
             height: 7px;
             transform: rotate(45deg);
-            border: 1px solid rgba(212, 168, 67, .2);
+            border: 1px solid rgba(212, 168, 67, .18);
             flex-shrink: 0;
             transition: all .4s
         }
@@ -1011,7 +1182,9 @@
             box-shadow: 0 0 8px var(--glow-gold)
         }
 
-        /* ─── PROJECTS ───────────────────────────────── */
+        /* ════════════════════════════════════════════════════
+   PROJECTS
+════════════════════════════════════════════════════ */
         .scrolls-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -1019,124 +1192,124 @@
             margin-top: 64px
         }
 
-        .scroll-card {
+        .sc-card {
             position: relative;
             padding: 44px;
-            cursor: pointer;
-            transition: transform .6s var(--ease-out-expo), border-color .4s, box-shadow .4s;
+            cursor: none;
+            transition: box-shadow .5s var(--ease-expo);
             overflow: hidden;
             transform-style: preserve-3d
         }
 
-        .scroll-card .card-bg-shine {
+        .sc-card .cb-shine {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(212, 168, 67, .08), transparent 55%);
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(212, 168, 67, .09), transparent 55%);
             opacity: 0;
             transition: opacity .4s;
             pointer-events: none
         }
 
-        .scroll-card:hover .card-bg-shine {
+        .sc-card:hover .cb-shine {
             opacity: 1
         }
 
-        .scroll-card:hover {
-            box-shadow: 0 30px 70px rgba(0, 0, 0, .7), 0 0 50px rgba(212, 168, 67, .07), inset 0 1px 0 rgba(212, 168, 67, .2)
+        .sc-card:hover {
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .75), 0 0 60px rgba(212, 168, 67, .07), inset 0 1px 0 rgba(212, 168, 67, .18)
         }
 
-        .scroll-card.legendary {
+        .sc-card.legendary {
             grid-column: span 2;
-            background: linear-gradient(135deg, rgba(212, 168, 67, .06), rgba(192, 57, 43, .03), rgba(123, 47, 190, .04))
+            background: linear-gradient(135deg, rgba(212, 168, 67, .055), rgba(192, 57, 43, .03), rgba(123, 47, 190, .035))
         }
 
-        .scroll-relic {
+        .sc-relic {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             letter-spacing: .3em;
             color: var(--gold);
-            opacity: .45;
+            opacity: .42;
             margin-bottom: 10px;
             text-transform: uppercase
         }
 
-        .scroll-badge {
+        .sc-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
             font-family: 'Cinzel', serif;
             font-size: 8px;
             padding: 5px 16px;
-            background: rgba(212, 168, 67, .1);
-            border: 1px solid rgba(212, 168, 67, .25);
+            background: rgba(212, 168, 67, .09);
+            border: 1px solid rgba(212, 168, 67, .22);
             color: var(--gold);
             letter-spacing: .2em;
             text-transform: uppercase;
             margin-bottom: 14px
         }
 
-        .scroll-badge::before {
+        .sc-badge::before {
             content: '✦';
             font-size: 7px
         }
 
-        .scroll-title {
+        .sc-title {
             font-family: 'Cinzel Decorative', cursive;
             font-size: clamp(22px, 3vw, 36px);
             font-weight: 700;
             color: var(--parchment);
             margin-bottom: 14px;
             line-height: 1.1;
-            transition: color .3s
+            transition: color .35s
         }
 
-        .scroll-card:hover .scroll-title {
+        .sc-card:hover .sc-title {
             color: var(--gold)
         }
 
-        .scroll-lore {
+        .sc-lore {
             font-size: 16.5px;
-            line-height: 1.85;
-            color: rgba(245, 230, 200, .5);
+            line-height: 1.88;
+            color: rgba(245, 230, 200, .48);
             margin-bottom: 26px;
             font-style: italic
         }
 
-        .scroll-runes {
+        .sc-runes {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 22px
         }
 
-        .scroll-rune {
+        .sc-rune {
             font-family: 'Cinzel', serif;
             font-size: 8px;
             padding: 5px 14px;
-            border: 1px solid rgba(212, 168, 67, .12);
-            color: rgba(212, 168, 67, .45);
+            border: 1px solid rgba(212, 168, 67, .1);
+            color: rgba(212, 168, 67, .42);
             letter-spacing: .12em;
             text-transform: uppercase;
             transition: all .3s
         }
 
-        .scroll-rune:hover {
+        .sc-rune:hover {
             border-color: rgba(212, 168, 67, .4);
             color: rgba(212, 168, 67, .8);
-            background: rgba(212, 168, 67, .06)
+            background: rgba(212, 168, 67, .05)
         }
 
-        .scroll-links {
+        .sc-links {
             display: flex;
             gap: 12px
         }
 
-        .scroll-link {
+        .sc-link {
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 10px 22px;
-            border: 1px solid rgba(212, 168, 67, .2);
-            color: rgba(212, 168, 67, .55);
+            border: 1px solid rgba(212, 168, 67, .18);
+            color: rgba(212, 168, 67, .52);
             text-decoration: none;
             transition: all .35s;
             letter-spacing: .15em;
@@ -1145,23 +1318,23 @@
             overflow: hidden
         }
 
-        .scroll-link::before {
+        .sc-link::before {
             content: '';
             position: absolute;
             inset: 0;
             background: rgba(212, 168, 67, .08);
             transform: scaleX(0);
             transform-origin: left;
-            transition: transform .35s var(--ease-out-expo)
+            transition: transform .38s var(--ease-expo)
         }
 
-        .scroll-link:hover {
-            border-color: rgba(212, 168, 67, .6);
+        .sc-link:hover {
+            border-color: rgba(212, 168, 67, .58);
             color: var(--gold);
-            text-shadow: 0 0 10px var(--glow-gold)
+            text-shadow: 0 0 12px var(--glow-gold)
         }
 
-        .scroll-link:hover::before {
+        .sc-link:hover::before {
             transform: scaleX(1)
         }
 
@@ -1169,34 +1342,107 @@
             position: absolute;
             top: -80px;
             right: -80px;
-            width: 220px;
-            height: 220px;
+            width: 240px;
+            height: 240px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(212, 168, 67, .1), transparent 70%);
-            pointer-events: none;
-            transition: opacity .4s
+            background: radial-gradient(circle, rgba(212, 168, 67, .09), transparent 70%);
+            pointer-events: none
         }
 
-        .card-rune-deco {
+        .card-rune-bg {
             position: absolute;
-            bottom: 16px;
-            right: 22px;
+            bottom: 14px;
+            right: 20px;
             font-family: 'Cinzel Decorative', cursive;
-            font-size: 52px;
+            font-size: 56px;
             color: rgba(212, 168, 67, .04);
             pointer-events: none;
-            line-height: 1;
-            transition: color .4s
+            transition: color .4s, transform .4s
         }
 
-        .scroll-card:hover .card-rune-deco {
-            color: rgba(212, 168, 67, .08)
+        .sc-card:hover .card-rune-bg {
+            color: rgba(212, 168, 67, .09);
+            transform: rotate(12deg) scale(1.1)
         }
 
-        /* ─── SKILLS ARCANE ARTS ─────────────────────── */
+        /* Modal */
+        #modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 8000;
+            background: rgba(4, 3, 2, .92);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .5s
+        }
+
+        #modal-overlay.open {
+            opacity: 1;
+            pointer-events: all
+        }
+
+        .modal-box {
+            position: relative;
+            max-width: 800px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 52px;
+            background: rgba(10, 7, 5, .95);
+            border: 1px solid rgba(212, 168, 67, .2);
+            transform: scale(.9) translateY(30px);
+            transition: transform .5s var(--ease-expo)
+        }
+
+        #modal-overlay.open .modal-box {
+            transform: scale(1) translateY(0)
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            background: none;
+            border: 1px solid rgba(212, 168, 67, .2);
+            color: rgba(212, 168, 67, .5);
+            font-family: 'Cinzel', serif;
+            font-size: 8px;
+            padding: 6px 14px;
+            letter-spacing: .2em;
+            cursor: none;
+            transition: all .3s
+        }
+
+        .modal-close:hover {
+            border-color: var(--gold);
+            color: var(--gold)
+        }
+
+        .expand-hint {
+            font-family: 'Cinzel', serif;
+            font-size: 8px;
+            color: rgba(212, 168, 67, .3);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            margin-top: 16px;
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .sc-card:hover .expand-hint {
+            opacity: 1
+        }
+
+        /* ════════════════════════════════════════════════════
+   SKILLS
+════════════════════════════════════════════════════ */
         .arcane-arts {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(134px, 1fr));
             gap: 16px;
             margin-top: 20px
         }
@@ -1204,25 +1450,25 @@
         .art-orb {
             padding: 30px 16px;
             text-align: center;
-            transition: all .45s var(--ease-out-expo);
-            cursor: default;
+            transition: all .45s var(--ease-expo);
+            cursor: none;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(212, 168, 67, .08)
+            border: 1px solid rgba(212, 168, 67, .07)
         }
 
         .art-orb::before {
             content: '';
             position: absolute;
-            top: -40px;
+            top: -50px;
             left: 50%;
             transform: translateX(-50%);
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(212, 168, 67, .3), transparent);
+            background: radial-gradient(circle, rgba(212, 168, 67, .32), transparent);
             opacity: 0;
-            transition: opacity .4s, top .4s var(--ease-out-expo)
+            transition: opacity .4s, top .4s var(--ease-expo)
         }
 
         .art-orb::after {
@@ -1234,19 +1480,19 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             transform: scaleX(0);
-            transition: transform .4s var(--ease-out-expo)
+            transition: transform .4s var(--ease-expo)
         }
 
         .art-orb:hover {
-            transform: translateY(-8px) scale(1.03);
+            transform: translateY(-9px) scale(1.04);
             border-color: rgba(212, 168, 67, .3);
-            background: rgba(212, 168, 67, .04);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, .5), 0 0 30px rgba(212, 168, 67, .08)
+            background: rgba(212, 168, 67, .035);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, .55), 0 0 36px rgba(212, 168, 67, .07)
         }
 
         .art-orb:hover::before {
             opacity: 1;
-            top: -20px
+            top: -18px
         }
 
         .art-orb:hover::after {
@@ -1257,18 +1503,18 @@
             font-size: 28px;
             margin-bottom: 12px;
             display: block;
-            transition: transform .4s var(--ease-out-expo)
+            transition: transform .4s var(--ease-back)
         }
 
         .art-orb:hover .art-icon {
-            transform: scale(1.2) translateY(-4px)
+            transform: scale(1.25) translateY(-5px)
         }
 
         .art-name {
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            letter-spacing: .15em;
-            color: rgba(212, 168, 67, .55);
+            letter-spacing: .14em;
+            color: rgba(212, 168, 67, .52);
             text-transform: uppercase;
             display: block;
             transition: color .3s
@@ -1276,8 +1522,8 @@
 
         .art-rank {
             font-family: 'Crimson Text', serif;
-            font-size: 12.5px;
-            color: rgba(212, 168, 67, .3);
+            font-size: 12px;
+            color: rgba(212, 168, 67, .28);
             margin-top: 5px;
             font-style: italic;
             display: block;
@@ -1289,40 +1535,53 @@
         }
 
         .art-orb:hover .art-rank {
-            color: rgba(212, 168, 67, .6)
+            color: rgba(212, 168, 67, .58)
         }
 
-        .arts-category-title {
+        .arts-cat {
             font-family: 'Cinzel', serif;
             font-size: 9.5px;
             letter-spacing: .3em;
-            color: rgba(212, 168, 67, .35);
+            color: rgba(212, 168, 67, .32);
             text-transform: uppercase;
-            margin: 50px 0 18px;
+            margin: 52px 0 18px;
             display: flex;
             align-items: center;
             gap: 14px
         }
 
-        .arts-category-title::before,
-        .arts-category-title::after {
+        .arts-cat::before,
+        .arts-cat::after {
             content: '';
             flex: 1;
             height: 1px;
-            background: rgba(212, 168, 67, .08)
+            background: rgba(212, 168, 67, .07)
         }
 
-        /* ─── CONTACT ────────────────────────────────── */
+        /* radar chart */
+        .radar-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0 20px
+        }
+
+        #radar-canvas {
+            filter: drop-shadow(0 0 20px rgba(212, 168, 67, .2))
+        }
+
+        /* ════════════════════════════════════════════════════
+   CONTACT
+════════════════════════════════════════════════════ */
         #contact-wrap {
             text-align: center;
             max-width: 920px;
             margin: 0 auto
         }
 
-        .contact-scroll {
+        .contact-lore {
             font-size: 18.5px;
-            line-height: 1.9;
-            color: rgba(245, 230, 200, .5);
+            line-height: 1.95;
+            color: rgba(245, 230, 200, .48);
             font-style: italic;
             margin-bottom: 52px
         }
@@ -1335,8 +1594,7 @@
             display: inline-block;
             position: relative;
             padding: 0 0 10px;
-            transition: all .4s;
-            letter-spacing: -.01em
+            transition: all .4s
         }
 
         .summon-email::after {
@@ -1348,12 +1606,12 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             transform: scaleX(0);
-            transition: transform .6s var(--ease-out-expo)
+            transition: transform .6s var(--ease-expo)
         }
 
         .summon-email:hover {
             color: var(--gold);
-            text-shadow: 0 0 30px var(--glow-gold)
+            text-shadow: 0 0 36px var(--glow-gold)
         }
 
         .summon-email:hover::after {
@@ -1362,7 +1620,7 @@
 
         .portal-links {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             justify-content: center;
             flex-wrap: wrap;
             margin-top: 52px
@@ -1372,8 +1630,8 @@
             font-family: 'Cinzel', serif;
             font-size: 9px;
             padding: 13px 30px;
-            border: 1px solid rgba(212, 168, 67, .18);
-            color: rgba(212, 168, 67, .45);
+            border: 1px solid rgba(212, 168, 67, .16);
+            color: rgba(212, 168, 67, .42);
             text-decoration: none;
             transition: all .35s;
             letter-spacing: .2em;
@@ -1392,20 +1650,20 @@
         }
 
         .portal-link:hover {
-            border-color: rgba(212, 168, 67, .55);
+            border-color: rgba(212, 168, 67, .52);
             color: var(--gold);
             text-shadow: 0 0 10px var(--glow-gold);
-            box-shadow: 0 0 30px rgba(212, 168, 67, .1)
+            box-shadow: 0 0 32px rgba(212, 168, 67, .08)
         }
 
         .grimoire {
             font-family: 'Share Tech Mono', monospace;
             font-size: 11.5px;
-            line-height: 2.4;
-            color: rgba(212, 168, 67, .28);
-            background: rgba(0, 0, 0, .6);
-            border: 1px solid rgba(212, 168, 67, .09);
-            padding: 32px 40px;
+            line-height: 2.5;
+            color: rgba(212, 168, 67, .26);
+            background: rgba(0, 0, 0, .65);
+            border: 1px solid rgba(212, 168, 67, .08);
+            padding: 34px 42px;
             text-align: left;
             margin-top: 52px;
             letter-spacing: .08em;
@@ -1421,7 +1679,7 @@
             background: var(--dark);
             padding: 0 10px;
             letter-spacing: .22em;
-            color: rgba(212, 168, 67, .38)
+            color: rgba(212, 168, 67, .36)
         }
 
         .g-green {
@@ -1430,74 +1688,158 @@
 
         .g-gold {
             color: var(--gold);
-            opacity: .8
+            opacity: .78
         }
 
         .g-bright {
-            color: rgba(245, 230, 200, .65)
+            color: rgba(245, 230, 200, .62)
         }
 
-        /* ─── FOOTER ─────────────────────────────────── */
+        /* ════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════ */
         footer {
-            border-top: 1px solid rgba(212, 168, 67, .08);
+            border-top: 1px solid rgba(212, 168, 67, .07);
             padding: 36px 6vw;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-family: 'Cinzel', serif;
             font-size: 9px;
-            color: rgba(212, 168, 67, .22);
+            color: rgba(212, 168, 67, .2);
             letter-spacing: .22em;
             text-transform: uppercase;
             position: relative;
             z-index: 1
         }
 
-        /* ─── SCROLL REVEAL ──────────────────────────── */
-        .reveal {
+        /* ════════════════════════════════════════════════════
+   LIGHT THEME
+════════════════════════════════════════════════════ */
+        body.light {
+            --dark: #f0e8d5;
+            --dark2: #e8dcc8;
+            --parchment: #2a1a08;
+            --parchment-dim: rgba(42, 26, 8, .65);
+            --glass-border: rgba(140, 80, 20, .18);
+            background: var(--dark)
+        }
+
+        body.light .ap {
+            background: rgba(240, 232, 213, .82)
+        }
+
+        body.light nav {
+            background: rgba(240, 232, 213, .92)
+        }
+
+        body.light .grimoire {
+            background: rgba(240, 232, 213, .6);
+            border-color: rgba(140, 80, 20, .1)
+        }
+
+        body.light #noise {
+            opacity: .025
+        }
+
+        /* ════════════════════════════════════════════════════
+   KONAMI / EASTER EGG
+════════════════════════════════════════════════════ */
+        #easter-egg {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(4, 3, 2, .96);
             opacity: 0;
-            transform: translateY(60px);
-            transition: opacity 1s var(--ease-out-expo), transform 1s var(--ease-out-expo)
+            pointer-events: none;
+            transition: opacity .5s;
+            flex-direction: column;
+            gap: 20px
         }
 
-        .reveal.visible {
+        #easter-egg.show {
             opacity: 1;
-            transform: translateY(0)
+            pointer-events: all
         }
 
-        .reveal-delay-1 {
-            transition-delay: .15s
+        .egg-text {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: clamp(20px, 4vw, 48px);
+            color: var(--gold);
+            text-align: center;
+            text-shadow: 0 0 60px var(--glow-gold);
+            animation: eggPulse 1.5s ease-in-out infinite alternate
         }
 
-        .reveal-delay-2 {
-            transition-delay: .3s
+        .egg-sub {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: .4em;
+            color: rgba(212, 168, 67, .5);
+            text-transform: uppercase
         }
 
-        .reveal-delay-3 {
-            transition-delay: .45s
+        @keyframes eggPulse {
+            from {
+                text-shadow: 0 0 20px var(--glow-gold)
+            }
+
+            to {
+                text-shadow: 0 0 80px var(--glow-gold), 0 0 120px rgba(212, 168, 67, .3)
+            }
         }
 
-        /* ─── FLOATING RUNES ─────────────────────────── */
-        .float-rune {
+        .egg-close {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            padding: 10px 24px;
+            border: 1px solid rgba(212, 168, 67, .3);
+            color: rgba(212, 168, 67, .6);
+            background: none;
+            cursor: none;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            transition: all .3s;
+            margin-top: 20px
+        }
+
+        .egg-close:hover {
+            border-color: var(--gold);
+            color: var(--gold)
+        }
+
+        #egg-canvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+
+        /* ════════════════════════════════════════════════════
+   FLOATING RUNES
+════════════════════════════════════════════════════ */
+        .fr {
             position: fixed;
             font-family: 'Cinzel Decorative', cursive;
-            color: rgba(212, 168, 67, .05);
+            color: rgba(212, 168, 67, .048);
             pointer-events: none;
             z-index: 0;
-            animation: runeFloat linear infinite
+            animation: frFloat linear infinite
         }
 
-        @keyframes runeFloat {
+        @keyframes frFloat {
             0% {
                 transform: translateY(110vh) rotate(0deg);
                 opacity: 0
             }
 
-            10% {
+            8% {
                 opacity: 1
             }
 
-            90% {
+            92% {
                 opacity: 1
             }
 
@@ -1507,24 +1849,39 @@
             }
         }
 
-        /* ─── STAT COUNTER ───────────────────────────── */
-        @keyframes countUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
+        /* ════════════════════════════════════════════════════
+   REVEAL
+════════════════════════════════════════════════════ */
+        .rv {
+            opacity: 0;
+            transform: translateY(55px);
+            transition: opacity 1s var(--ease-expo), transform 1s var(--ease-expo)
         }
 
-        /* ─── MOBILE ─────────────────────────────────── */
+        .rv.vis {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        .rv-d1 {
+            transition-delay: .12s
+        }
+
+        .rv-d2 {
+            transition-delay: .24s
+        }
+
+        .rv-d3 {
+            transition-delay: .36s
+        }
+
+        /* ════════════════════════════════════════════════════
+   MOBILE
+════════════════════════════════════════════════════ */
         @media(max-width:768px) {
             nav {
-                gap: 14px;
-                padding: 12px 20px
+                gap: 12px;
+                padding: 11px 18px
             }
 
             .about-grid {
@@ -1535,7 +1892,7 @@
                 grid-template-columns: 1fr
             }
 
-            .scroll-card.legendary {
+            .sc-card.legendary {
                 grid-column: span 1
             }
 
@@ -1544,12 +1901,10 @@
                 gap: 8px;
                 text-align: center
             }
-        }
 
-        /* ─── SELECTION ──────────────────────────────── */
-        ::selection {
-            background: rgba(212, 168, 67, .25);
-            color: var(--gold2)
+            .hero-title {
+                font-size: clamp(38px, 12vw, 80px)
+            }
         }
     </style>
 </head>
@@ -1562,114 +1917,124 @@
     <div id="c-aura"></div>
     <div id="prog"></div>
 
+    <!-- NOISE + AMBIENT -->
+    <div id="noise"></div>
+    <div class="amb a1"></div>
+    <div class="amb a2"></div>
+    <div class="amb a3"></div>
+
+    <!-- FLOATING RUNES -->
+    <div class="fr" style="font-size:24px;left:4%;animation-duration:22s;animation-delay:0s">ᚱ</div>
+    <div class="fr" style="font-size:16px;left:19%;animation-duration:27s;animation-delay:5s">ᚷ</div>
+    <div class="fr" style="font-size:30px;left:77%;animation-duration:19s;animation-delay:9s">ᚹ</div>
+    <div class="fr" style="font-size:18px;left:89%;animation-duration:31s;animation-delay:3s">ᚠ</div>
+    <div class="fr" style="font-size:25px;left:46%;animation-duration:24s;animation-delay:14s">ᛟ</div>
+    <div class="fr" style="font-size:14px;left:63%;animation-duration:20s;animation-delay:7s">ᚦ</div>
+
     <!-- LOADER -->
     <div id="loader">
-        <div class="l-sigil">
-            <div class="l-sigil-ring"></div>
-            <div class="l-sigil-ring"></div>
-            <div class="l-sigil-ring"></div>
-            <div class="l-sigil-core"></div>
+        <div class="l-outer">
+            <div class="l-ring">
+                <div class="l-ring-dot"></div>
+            </div>
+            <div class="l-ring">
+                <div class="l-ring-dot"></div>
+            </div>
+            <div class="l-ring">
+                <div class="l-ring-dot"></div>
+            </div>
+            <div class="l-ring">
+                <div class="l-ring-dot"></div>
+            </div>
+            <div class="l-core"></div>
         </div>
-        <div class="l-text">Awakening the Arcane</div>
+        <div class="l-label">Awakening the Arcane</div>
         <div class="l-bar">
             <div class="l-fill" id="lf"></div>
         </div>
-        <div class="l-status" id="ls"></div>
+        <div class="l-log" id="ll"></div>
+        <div class="l-pct" id="lpct">0%</div>
     </div>
 
-    <!-- AMBIENT + NOISE -->
-    <div class="amb amb-1"></div>
-    <div class="amb amb-2"></div>
-    <div class="amb amb-3"></div>
-    <div id="noise-overlay"></div>
-    <canvas id="bg"></canvas>
-
-    <!-- FLOATING RUNES -->
-    <div class="float-rune" style="font-size:22px;left:4%;animation-duration:20s;animation-delay:0s">ᚱ</div>
-    <div class="float-rune" style="font-size:17px;left:18%;animation-duration:25s;animation-delay:5s">ᚷ</div>
-    <div class="float-rune" style="font-size:28px;left:76%;animation-duration:18s;animation-delay:9s">ᚹ</div>
-    <div class="float-rune" style="font-size:19px;left:88%;animation-duration:28s;animation-delay:3s">ᚠ</div>
-    <div class="float-rune" style="font-size:24px;left:45%;animation-duration:22s;animation-delay:13s">ᛟ</div>
-    <div class="float-rune" style="font-size:15px;left:62%;animation-duration:21s;animation-delay:7s">ᚦ</div>
+    <!-- PAGE WIPE -->
+    <div id="page-wipe">
+        <div class="wipe-ring"></div>
+        <div class="wipe-ring"></div>
+        <div class="wipe-ring"></div>
+        <div class="wipe-center"></div>
+    </div>
 
     <!-- NAV -->
     <nav id="nav">
-        <a href="#hero">Origin</a>
-        <a href="#about">Chronicle</a>
-        <a href="#projects">Quests</a>
-        <a href="#skills">Grimoire</a>
-        <a href="#contact">Summon</a>
+        <a href="#hero" class="nav-link">Origin</a>
+        <a href="#about" class="nav-link">Chronicle</a>
+        <a href="#projects" class="nav-link">Quests</a>
+        <a href="#skills" class="nav-link">Grimoire</a>
+        <a href="#contact" class="nav-link">Summon</a>
+        <button class="theme-btn" id="themeBtn" title="Toggle theme">☀ Parchment</button>
+        <button class="sound-btn" id="soundBtn" title="Toggle sound">🔇</button>
     </nav>
 
-    <!-- ══════════════════════════════════════ HERO -->
+    <!-- ══════════════════════════ HERO -->
     <section id="hero">
-        <canvas id="hero-canvas"></canvas>
-        <div class="orbit-ring or-1">
-            <div class="orbit-dot"
-                style="width:5px;height:5px;top:-2.5px;left:calc(50% - 2.5px);box-shadow:0 0 12px var(--glow-gold)">
-            </div>
-        </div>
-        <div class="orbit-ring or-2">
-            <div class="orbit-dot" style="width:3px;height:3px;top:-1.5px;left:calc(50% - 1.5px);opacity:.6"></div>
-        </div>
-        <div class="orbit-ring or-3">
-            <div class="orbit-dot" style="width:6px;height:6px;top:-3px;left:calc(50% - 3px)"></div>
-        </div>
-        <div class="orbit-ring or-4"></div>
+        <canvas id="threejs-canvas"></canvas>
         <div class="hero-vignette"></div>
         <div class="hero-inner" id="heroInner">
-            <div class="hero-eyebrow">◈ The Arcane Engineer Awakens ◈</div>
-            <h1 class="hero-title" id="heroTitle">YATIN<br /><span class="name-gold">ANCHAN</span></h1>
-            <div class="hero-div"><span>AI Engineer · Deep Learning · Builder</span></div>
-            <p class="hero-sub">"Build things that matter." — Maharashtra, India 🇮🇳</p>
-            <div class="hero-cta">
-                <a href="#projects" class="btn-arcane primary">View Quests</a>
-                <a href="#contact" class="btn-arcane">Summon Me</a>
+            <div class="hero-eyebrow" id="heroEye">◈ The Arcane Engineer Awakens ◈</div>
+            <h1 class="hero-title" id="heroTitle">
+                <span id="titleLine1">YATIN</span><br />
+                <span class="name-gold" id="titleLine2">ANCHAN</span>
+            </h1>
+            <div class="hero-div" id="heroDivider"><span>AI Engineer · Deep Learning · Builder</span></div>
+            <p class="hero-sub" id="heroSub">"Build things that matter." — Maharashtra, India 🇮🇳</p>
+            <div class="hero-cta" id="heroCta">
+                <a href="#projects" class="btn-a primary">View Quests</a>
+                <a href="#contact" class="btn-a">Summon Me</a>
             </div>
         </div>
-        <div class="hero-scroll">
-            <div class="s-label">Descend</div>
-            <div class="s-track">
-                <div class="s-line"></div>
+        <div class="hero-scroll-cue" id="scrollCue">
+            <div class="sc-label">Descend</div>
+            <div class="sc-track">
+                <div class="sc-line"></div>
             </div>
         </div>
     </section>
 
-    <div class="arc-divider">
-        <div class="arc-divider-gem"></div>
+    <div class="adiv">
+        <div class="adiv-gem"></div>
     </div>
 
-    <!-- ══════════════════════════════════════ ABOUT -->
+    <!-- ══════════════════════════ ABOUT -->
     <section id="about">
-        <div class="section-wrap">
+        <div class="sw">
             <div class="about-grid">
-                <div class="reveal">
-                    <div class="section-eyebrow">Chapter I · The Scholar's Chronicle</div>
-                    <h2 class="section-title">Forged in<br /><span class="accent">Fire & Code</span></h2>
+                <div class="rv">
+                    <div class="s-eye">Chapter I · The Scholar's Chronicle</div>
+                    <h2 class="s-title split-title">Forged in<br /><span class="acc">Fire &amp; Code</span></h2>
                     <p class="about-lore">An <em>AI/ML Engineer</em> born of Maharashtra, pursuing B.Sc. Computer
                         Science at Royal College. I conjure systems bridging the ancient and the futuristic — from
                         <em>real-time driver safety AI</em> published in international research journals, to
                         <em>blockchain-powered donation protocols</em> built for transparent aid.</p>
-                    <p class="about-lore">Trained by open-source orders, certified by <em>ISRO</em> in Geospatial AI. I
-                        debug at 2AM and call it ritual.</p>
-                    <div class="about-terminal">
-                        <div><span class="t-prompt">❯</span> class ............. <span
-                                style="color:rgba(245,230,200,.55)">AI / ML Engineer</span></div>
-                        <div><span class="t-prompt">❯</span> origin ............ <span
-                                style="color:rgba(245,230,200,.55)">Maharashtra, India</span></div>
-                        <div><span class="t-prompt">❯</span> faction ........... <span
-                                style="color:rgba(245,230,200,.55)">Open Source Alliance</span></div>
-                        <div><span class="t-prompt">❯</span> wildcard .......... <span
-                                style="color:rgba(245,230,200,.55)">Space Science 🚀</span></div>
-                        <div><span class="t-prompt">❯</span> motto ............. <span
-                                style="color:rgba(245,230,200,.55)">"Build things that matter."</span></div>
+                    <p class="about-lore">Trained by open-source orders, certified by <em>ISRO</em> in the mystic arts
+                        of Geospatial AI. I debug at 2AM and call it ritual.</p>
+                    <div class="terminal-box" id="terminalBox">
+                        <div class="t-line" id="tl0"><span class="t-prompt">❯</span> class ............. <span
+                                class="t-val" id="tv0"></span></div>
+                        <div class="t-line" id="tl1"><span class="t-prompt">❯</span> origin ............ <span
+                                class="t-val" id="tv1"></span></div>
+                        <div class="t-line" id="tl2"><span class="t-prompt">❯</span> faction ........... <span
+                                class="t-val" id="tv2"></span></div>
+                        <div class="t-line" id="tl3"><span class="t-prompt">❯</span> wildcard .......... <span
+                                class="t-val" id="tv3"></span></div>
+                        <div class="t-line" id="tl4"><span class="t-prompt">❯</span> motto ............. <span
+                                class="t-val" id="tv4"></span></div>
                     </div>
-                    <div class="about-facts arcane-panel">
+                    <div class="about-facts ap rv-d1" style="margin-top:40px">
                         <div class="pc tl"></div>
                         <div class="pc tr"></div>
                         <div class="pc bl"></div>
                         <div class="pc br"></div>
-                        <div class="fact-cell"><span class="fact-val" data-count="4">0</span><span
+                        <div class="fact-cell"><span class="fact-val" data-count="4" data-suffix="+">0</span><span
                                 class="fact-lbl">Quests Complete</span></div>
                         <div class="fact-cell"><span class="fact-val" data-count="1">0</span><span
                                 class="fact-lbl">Published Tome</span></div>
@@ -1677,68 +2042,68 @@
                                 class="fact-lbl">Arcane CGPI</span></div>
                     </div>
                 </div>
-                <div class="reveal reveal-delay-2">
-                    <div class="skills-tome arcane-panel">
+                <div class="rv rv-d2">
+                    <div class="skills-tome ap">
                         <div class="pc tl"></div>
                         <div class="pc tr"></div>
                         <div class="pc bl"></div>
                         <div class="pc br"></div>
-                        <div class="tome-section">
-                            <div class="tome-title">Core Languages</div>
-                            <div class="skill-line"><span class="sk-name">Python</span>
+                        <div class="tome-sec">
+                            <div class="tome-ttl">Core Languages</div>
+                            <div class="sk-line"><span class="sk-name">Python</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="95%"></div>
+                                    <div class="sk-fill" data-w="95%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="5"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">Kotlin</span>
+                            <div class="sk-line"><span class="sk-name">Kotlin</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="80%"></div>
+                                    <div class="sk-fill" data-w="80%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">JavaScript</span>
+                            <div class="sk-line"><span class="sk-name">JavaScript</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="75%"></div>
+                                    <div class="sk-fill" data-w="75%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">TypeScript</span>
+                            <div class="sk-line"><span class="sk-name">TypeScript</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="70%"></div>
+                                    <div class="sk-fill" data-w="70%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">C++</span>
+                            <div class="sk-line"><span class="sk-name">C++</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="60%"></div>
+                                    <div class="sk-fill" data-w="60%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="3"></div>
                             </div>
                         </div>
-                        <div class="tome-section">
-                            <div class="tome-title">AI · ML Arts</div>
-                            <div class="skill-line"><span class="sk-name">MediaPipe</span>
+                        <div class="tome-sec">
+                            <div class="tome-ttl">AI · ML Arts</div>
+                            <div class="sk-line"><span class="sk-name">MediaPipe</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="90%"></div>
+                                    <div class="sk-fill" data-w="92%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="5"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">PyTorch</span>
+                            <div class="sk-line"><span class="sk-name">PyTorch</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="82%"></div>
+                                    <div class="sk-fill" data-w="82%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">TensorFlow</span>
+                            <div class="sk-line"><span class="sk-name">TensorFlow</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="76%"></div>
+                                    <div class="sk-fill" data-w="76%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
-                            <div class="skill-line"><span class="sk-name">OpenCV</span>
+                            <div class="sk-line"><span class="sk-name">OpenCV</span>
                                 <div class="sk-track">
-                                    <div class="sk-fill" style="width:0%" data-w="78%"></div>
+                                    <div class="sk-fill" data-w="80%"></div>
                                 </div>
                                 <div class="sk-gems" data-gems="4"></div>
                             </div>
@@ -1749,126 +2114,145 @@
         </div>
     </section>
 
-    <div class="arc-divider">
-        <div class="arc-divider-gem"></div>
+    <div class="adiv">
+        <div class="adiv-gem"></div>
     </div>
 
-    <!-- ══════════════════════════════════════ PROJECTS -->
+    <!-- ══════════════════════════ PROJECTS -->
     <section id="projects">
-        <div class="section-wrap">
-            <div class="reveal">
-                <div class="section-eyebrow">Chapter II · The Legendary Quests</div>
-                <h2 class="section-title">Tomes of<br /><span class="accent">Great Works</span></h2>
+        <div class="sw">
+            <div class="rv">
+                <div class="s-eye">Chapter II · The Legendary Quests</div>
+                <h2 class="s-title split-title">Tomes of<br /><span class="acc">Great Works</span></h2>
             </div>
             <div class="scrolls-grid">
-                <div class="scroll-card legendary arcane-panel reveal" onmousemove="cardTilt(this,event)"
-                    onmouseleave="cardReset(this)">
+
+                <div class="sc-card legendary ap rv" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                    onclick="openModal('autonix')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
                     <div class="card-glow"></div>
-                    <div class="card-bg-shine"></div>
-                    <div class="card-rune-deco">ᚱ</div>
-                    <div class="scroll-badge">Legendary · Published in International Journal</div>
-                    <div class="scroll-relic">Quest I · Main Chronicle · Active</div>
-                    <div class="scroll-title">AUTONIX</div>
-                    <p class="scroll-lore">An Android safety application using real-time AI to guard against driver
+                    <div class="cb-shine"></div>
+                    <div class="card-rune-bg">ᚱ</div>
+                    <div class="sc-badge">Legendary · Published in International Journal</div>
+                    <div class="sc-relic">Quest I · Main Chronicle · Active</div>
+                    <div class="sc-title">AUTONIX</div>
+                    <p class="sc-lore">An Android safety application using real-time AI to guard against driver
                         drowsiness. 468-point facial landmark tracking via MediaPipe detects eye closure through EAR
-                        mathematics. Accelerometer & Gyroscope fusion triggers crash detection and auto-dispatches GPS
-                        coordinates to emergency contacts via Firebase.</p>
-                    <div class="scroll-runes"><span class="scroll-rune">Kotlin</span><span
-                            class="scroll-rune">MediaPipe</span><span class="scroll-rune">Firebase</span><span
-                            class="scroll-rune">ML Kit</span><span class="scroll-rune">Android</span></div>
-                    <div class="scroll-links">
-                        <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="scroll-link">The Vault
-                            →</a>
-                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank"
-                            class="scroll-link">The Realm →</a>
-                        <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank"
-                            class="scroll-link">The Tome →</a>
+                        mathematics.</p>
+                    <div class="sc-runes"><span class="sc-rune">Kotlin</span><span class="sc-rune">MediaPipe</span><span
+                            class="sc-rune">Firebase</span><span class="sc-rune">ML Kit</span><span
+                            class="sc-rune">Android</span></div>
+                    <div class="sc-links">
+                        <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="sc-link"
+                            onclick="e=>e.stopPropagation()">The Vault →</a>
+                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">The
+                            Realm →</a>
+                        <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank" class="sc-link">The
+                            Tome →</a>
                     </div>
+                    <div class="expand-hint">✦ Click to expand</div>
                 </div>
-                <div class="scroll-card arcane-panel reveal reveal-delay-1" onmousemove="cardTilt(this,event)"
-                    onmouseleave="cardReset(this)">
+
+                <div class="sc-card ap rv rv-d1" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                    onclick="openModal('daansetu')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
                     <div class="card-glow"></div>
-                    <div class="card-bg-shine"></div>
-                    <div class="card-rune-deco">ᚷ</div>
-                    <div class="scroll-relic">Quest II · Guild Mission · In Progress</div>
-                    <div class="scroll-title">DaanSetu</div>
-                    <p class="scroll-lore">A blockchain-powered donation platform on Polygon — every coin of aid is
-                        publicly verifiable, immutable, and incorruptible. Geolocation targets relief to the afflicted.
-                        IPFS for decentralized campaign scrolls.</p>
-                    <div class="scroll-runes"><span class="scroll-rune">React</span><span
-                            class="scroll-rune">Ethers.js</span><span class="scroll-rune">Polygon</span><span
-                            class="scroll-rune">IPFS</span></div>
-                    <div class="scroll-links"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank"
-                            class="scroll-link">The Vault →</a></div>
+                    <div class="cb-shine"></div>
+                    <div class="card-rune-bg">ᚷ</div>
+                    <div class="sc-relic">Quest II · Guild Mission · In Progress</div>
+                    <div class="sc-title">DaanSetu</div>
+                    <p class="sc-lore">A blockchain-powered donation platform on Polygon — every coin of aid is publicly
+                        verifiable, immutable, and incorruptible. Geolocation targets relief to the afflicted.</p>
+                    <div class="sc-runes"><span class="sc-rune">React</span><span class="sc-rune">Ethers.js</span><span
+                            class="sc-rune">Polygon</span><span class="sc-rune">IPFS</span></div>
+                    <div class="sc-links"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank"
+                            class="sc-link">The Vault →</a></div>
+                    <div class="expand-hint">✦ Click to expand</div>
                 </div>
-                <div class="scroll-card arcane-panel reveal reveal-delay-2" onmousemove="cardTilt(this,event)"
-                    onmouseleave="cardReset(this)">
+
+                <div class="sc-card ap rv rv-d2" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                    onclick="openModal('pyos')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
                     <div class="card-glow"></div>
-                    <div class="card-bg-shine"></div>
-                    <div class="card-rune-deco">ᚹ</div>
-                    <div class="scroll-relic">Quest III · Solo Endeavour · Complete</div>
-                    <div class="scroll-title">Py_OS</div>
-                    <p class="scroll-lore">A simulated kingdom of computing — a fully functional operating system
-                        conjured in pure Python. File realms, software markets, drag-and-drop sorcery, and living
-                        notifications.</p>
-                    <div class="scroll-runes"><span class="scroll-rune">Python</span><span
-                            class="scroll-rune">Tkinter</span><span class="scroll-rune">Custom GUI</span></div>
-                    <div class="scroll-links"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank"
-                            class="scroll-link">The Vault →</a></div>
+                    <div class="cb-shine"></div>
+                    <div class="card-rune-bg">ᚹ</div>
+                    <div class="sc-relic">Quest III · Solo Endeavour · Complete</div>
+                    <div class="sc-title">Py_OS</div>
+                    <p class="sc-lore">A simulated kingdom of computing — a fully functional operating system conjured
+                        in pure Python. File realms, software markets, drag-and-drop sorcery.</p>
+                    <div class="sc-runes"><span class="sc-rune">Python</span><span class="sc-rune">Tkinter</span><span
+                            class="sc-rune">Custom GUI</span></div>
+                    <div class="sc-links"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank"
+                            class="sc-link">The Vault →</a></div>
+                    <div class="expand-hint">✦ Click to expand</div>
                 </div>
-                <div class="scroll-card arcane-panel reveal reveal-delay-3" onmousemove="cardTilt(this,event)"
-                    onmouseleave="cardReset(this)">
+
+                <div class="sc-card ap rv rv-d3" onmousemove="cardTilt(this,event)" onmouseleave="cardReset(this)"
+                    onclick="openModal('autonixweb')">
                     <div class="pc tl"></div>
                     <div class="pc tr"></div>
                     <div class="pc bl"></div>
                     <div class="pc br"></div>
                     <div class="card-glow"></div>
-                    <div class="card-bg-shine"></div>
-                    <div class="card-rune-deco">ᛟ</div>
-                    <div class="scroll-relic">Quest IV · Artisan Craft · Deployed</div>
-                    <div class="scroll-title">AUTONIX<br />Website</div>
-                    <p class="scroll-lore">A cinematic digital exhibition — no frameworks, pure incantations of HTML,
-                        CSS, and Vanilla JS. Particles form a motorcycle. 3D mouse-tilt. Live webcam EAR oracle.
-                        Exhibition mode for grand halls.</p>
-                    <div class="scroll-runes"><span class="scroll-rune">HTML5</span><span
-                            class="scroll-rune">CSS3</span><span class="scroll-rune">Vanilla JS</span><span
-                            class="scroll-rune">Canvas</span></div>
-                    <div class="scroll-links">
-                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank"
-                            class="scroll-link">The Realm →</a>
-                        <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank"
-                            class="scroll-link">The Vault →</a>
+                    <div class="cb-shine"></div>
+                    <div class="card-rune-bg">ᛟ</div>
+                    <div class="sc-relic">Quest IV · Artisan Craft · Deployed</div>
+                    <div class="sc-title">AUTONIX Website</div>
+                    <p class="sc-lore">A cinematic digital exhibition — no frameworks, pure incantations of HTML, CSS,
+                        and Vanilla JS. Particles form a motorcycle. 3D mouse-tilt.</p>
+                    <div class="sc-runes"><span class="sc-rune">HTML5</span><span class="sc-rune">CSS3</span><span
+                            class="sc-rune">Vanilla JS</span><span class="sc-rune">Canvas</span></div>
+                    <div class="sc-links">
+                        <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">The
+                            Realm →</a>
+                        <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank" class="sc-link">The
+                            Vault →</a>
                     </div>
+                    <div class="expand-hint">✦ Click to expand</div>
                 </div>
+
             </div>
         </div>
     </section>
 
-    <div class="arc-divider">
-        <div class="arc-divider-gem"></div>
+    <!-- PROJECT MODAL -->
+    <div id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box ap" onclick="e=>e.stopPropagation()">
+            <div class="pc tl"></div>
+            <div class="pc tr"></div>
+            <div class="pc bl"></div>
+            <div class="pc br"></div>
+            <button class="modal-close" onclick="closeModal()">✕ Close</button>
+            <div id="modal-content"></div>
+        </div>
     </div>
 
-    <!-- ══════════════════════════════════════ SKILLS -->
+    <div class="adiv">
+        <div class="adiv-gem"></div>
+    </div>
+
+    <!-- ══════════════════════════ SKILLS -->
     <section id="skills">
-        <div class="section-wrap">
-            <div class="reveal">
-                <div class="section-eyebrow">Chapter III · The Arcane Arsenal</div>
-                <h2 class="section-title">Mastered<br /><span class="accent">Disciplines</span></h2>
+        <div class="sw">
+            <div class="rv">
+                <div class="s-eye">Chapter III · The Arcane Arsenal</div>
+                <h2 class="s-title split-title">Mastered<br /><span class="acc">Disciplines</span></h2>
             </div>
-            <div class="reveal">
-                <div class="arts-category-title">AI · Machine Learning · Vision</div>
+            <!-- Radar Chart -->
+            <div class="rv radar-wrap">
+                <canvas id="radar-canvas" width="420" height="420"></canvas>
+            </div>
+            <div class="rv">
+                <div class="arts-cat">AI · Machine Learning · Vision</div>
                 <div class="arcane-arts">
                     <div class="art-orb"><span class="art-icon">🔥</span><span class="art-name">PyTorch</span><span
                             class="art-rank">Advanced</span></div>
@@ -1880,12 +2264,12 @@
                             class="art-rank">Advanced</span></div>
                     <div class="art-orb"><span class="art-icon">🤗</span><span class="art-name">HuggingFace</span><span
                             class="art-rank">Apprentice</span></div>
-                    <div class="art-orb"><span class="art-icon">📊</span><span class="art-name">Numpy ·
-                            Pandas</span><span class="art-rank">Expert</span></div>
+                    <div class="art-orb"><span class="art-icon">📊</span><span class="art-name">Numpy·Pandas</span><span
+                            class="art-rank">Expert</span></div>
                 </div>
             </div>
-            <div class="reveal reveal-delay-1">
-                <div class="arts-category-title">Frameworks · Platforms</div>
+            <div class="rv rv-d1">
+                <div class="arts-cat">Frameworks · Platforms</div>
                 <div class="arcane-arts">
                     <div class="art-orb"><span class="art-icon">⚛️</span><span class="art-name">React</span><span
                             class="art-rank">Journeyman</span></div>
@@ -1897,8 +2281,8 @@
                             class="art-rank">Advanced</span></div>
                 </div>
             </div>
-            <div class="reveal reveal-delay-2">
-                <div class="arts-category-title">Databases · Cloud · Web3</div>
+            <div class="rv rv-d2">
+                <div class="arts-cat">Databases · Cloud · Web3</div>
                 <div class="arcane-arts">
                     <div class="art-orb"><span class="art-icon">🔥</span><span class="art-name">Firebase</span><span
                             class="art-rank">Advanced</span></div>
@@ -1917,25 +2301,25 @@
         </div>
     </section>
 
-    <div class="arc-divider">
-        <div class="arc-divider-gem"></div>
+    <div class="adiv">
+        <div class="adiv-gem"></div>
     </div>
 
-    <!-- ══════════════════════════════════════ CONTACT -->
+    <!-- ══════════════════════════ CONTACT -->
     <section id="contact">
-        <div class="section-wrap">
+        <div class="sw">
             <div id="contact-wrap">
-                <div class="reveal">
-                    <div class="section-eyebrow" style="justify-content:center">Chapter IV · Open the Portal</div>
-                    <h2 class="section-title" style="text-align:center">Summon the<br /><span class="accent">Arcane
+                <div class="rv">
+                    <div class="s-eye" style="justify-content:center">Chapter IV · Open the Portal</div>
+                    <h2 class="s-title split-title" style="text-align:center">Summon the<br /><span class="acc">Arcane
                             Engineer</span></h2>
-                    <p class="contact-scroll">Open to quests, collaborations, and undertakings that matter.<br />If your
+                    <p class="contact-lore">Open to quests, collaborations, and undertakings that matter.<br />If your
                         mission is worthy, the connection shall be made.</p>
                 </div>
-                <div class="reveal reveal-delay-1">
+                <div class="rv rv-d1">
                     <a href="mailto:yatin.a.anchan@gmail.com" class="summon-email">yatin.a.anchan@gmail.com</a>
                 </div>
-                <div class="portal-links reveal reveal-delay-2">
+                <div class="portal-links rv rv-d2">
                     <a href="https://github.com/yatin-anchan" target="_blank" class="portal-link">GitHub</a>
                     <a href="https://www.linkedin.com/in/yatin-anchan-976823200" target="_blank"
                         class="portal-link">LinkedIn</a>
@@ -1943,7 +2327,7 @@
                     <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank"
                         class="portal-link">Autonix Realm</a>
                 </div>
-                <div class="grimoire reveal reveal-delay-3">
+                <div class="grimoire rv rv-d3">
                     <div>&gt; <span class="g-green">[ CHRONICLE ]</span> &nbsp;<span class="g-bright">Research published
                             — AIJFR International Journal (2025)</span></div>
                     <div>&gt; <span class="g-gold">[ SIGIL ]</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
@@ -1961,396 +2345,797 @@
 
     <footer>
         <span>© 2026 Yatin Anil Anchan · Maharashtra, India</span>
-        <span style="color:rgba(212,168,67,.4)">✦</span>
+        <span style="color:rgba(212,168,67,.38)">✦</span>
         <span>"Build things that matter." 🚀</span>
     </footer>
 
+    <!-- EASTER EGG -->
+    <div id="easter-egg">
+        <canvas id="egg-canvas"></canvas>
+        <div class="egg-text">✦ ARCANE CODE UNLOCKED ✦</div>
+        <div class="egg-sub">The ritual is complete. You found the secret.</div>
+        <div class="egg-sub" style="font-size:9px;margin-top:8px;opacity:.5">↑ ↑ ↓ ↓ ← → ← → B A</div>
+        <button class="egg-close" onclick="document.getElementById('easter-egg').classList.remove('show')">Dispel the
+            Vision</button>
+    </div>
+
     <script>
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // GSAP REGISTER
+        // ══════════════════════════════════════════════════════════════
+        gsap.registerPlugin(ScrollTrigger, TextPlugin);
+
+        // ══════════════════════════════════════════════════════════════
         // LOADER
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         const spells = [
             '✦ Binding the arcane circuits...',
+            '✦ Weaving Three.js cosmology...',
             '✦ Summoning particle entities...',
             '✦ Inscribing the rune matrix...',
             '✦ Calibrating 3D motion fields...',
+            '✦ Charging the radar sigil...',
             '✦ Opening the portal...',
             '✦ The Engineer awakens. ▌'
         ];
         const lf = document.getElementById('lf');
-        const ls = document.getElementById('ls');
-        let loadProg = 0, si = 0;
+        const ll = document.getElementById('ll');
+        const lpct = document.getElementById('lpct');
+        let loadP = 0, si = 0;
         const lint = setInterval(() => {
-            loadProg = Math.min(loadProg + Math.random() * 3 + 0.6, 100);
-            lf.style.width = loadProg + '%';
-            if (si < spells.length && loadProg > (si + 1) * 16) {
-                ls.innerHTML += (si > 0 ? '<br/>' : '') + spells[si++];
+            loadP = Math.min(loadP + Math.random() * 2.8 + 0.5, 100);
+            lf.style.width = loadP + '%';
+            lpct.textContent = Math.floor(loadP) + '%';
+            if (si < spells.length && loadP > (si + 1) * 12) {
+                ll.innerHTML += (si > 0 ? '<br/>' : '') + spells[si++];
+                ll.scrollTop = ll.scrollHeight;
             }
-            if (loadProg >= 100) {
+            if (loadP >= 100) {
                 clearInterval(lint);
                 setTimeout(() => {
                     const l = document.getElementById('loader');
-                    l.style.opacity = '0';
-                    l.style.transform = 'scale(1.05)';
-                    setTimeout(() => l.style.display = 'none', 1400);
+                    l.classList.add('out');
+                    setTimeout(() => {
+                        l.style.display = 'none';
+                        initHeroGSAP();
+                        document.getElementById('nav').classList.add('ready');
+                    }, 1600);
                 }, 600);
             }
-        }, 65);
+        }, 60);
 
-        // ═══════════════════════════════════════════════════════════════
-        // MAGNETIC CURSOR WITH SPARKLE TRAILS
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // CURSOR
+        // ══════════════════════════════════════════════════════════════
         const dot = document.getElementById('c-dot');
         const ring = document.getElementById('c-ring');
         const aura = document.getElementById('c-aura');
-        let mx = 0, my = 0, rx = 0, ry = 0, ax = 0, ay = 0;
-        let lastSparkle = 0;
+        let mx = 0, my = 0, rx = 0, ry = 0, ax = 0, ay = 0, lastSp = 0;
 
         document.addEventListener('mousemove', e => {
             mx = e.clientX; my = e.clientY;
-            // Sparkle trail
             const now = Date.now();
-            if (now - lastSparkle > 60) {
-                lastSparkle = now;
-                const s = document.createElement('div');
-                s.className = 'sparkle';
-                const size = Math.random() * 4 + 2;
-                s.style.cssText = `left:${mx}px;top:${my}px;width:${size}px;height:${size}px;opacity:${Math.random() * .6 + .2}`;
-                document.body.appendChild(s);
-                setTimeout(() => s.remove(), 700);
+            if (now - lastSp > 55) {
+                lastSp = now;
+                const sp = document.createElement('div');
+                sp.className = 'sparkle';
+                const sz = Math.random() * 3.5 + 1.5;
+                sp.style.cssText = `left:${mx}px;top:${my}px;width:${sz}px;height:${sz}px`;
+                document.body.appendChild(sp);
+                setTimeout(() => sp.remove(), 700);
             }
         });
+        document.addEventListener('mousedown', () => document.body.classList.add('cc'));
+        document.addEventListener('mouseup', () => document.body.classList.remove('cc'));
 
-        (function animCursor() {
-            rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
-            ax += (mx - ax) * 0.06; ay += (my - ay) * 0.06;
+        (function animCur() {
+            rx += (mx - rx) * .12; ry += (my - ry) * .12;
+            ax += (mx - ax) * .06; ay += (my - ay) * .06;
             dot.style.left = mx + 'px'; dot.style.top = my + 'px';
             ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
             aura.style.left = ax + 'px'; aura.style.top = ay + 'px';
-            requestAnimationFrame(animCursor);
+            requestAnimationFrame(animCur);
         })();
 
-        document.addEventListener('mousedown', () => document.body.classList.add('cursor-click'));
-        document.addEventListener('mouseup', () => document.body.classList.remove('cursor-click'));
-
-        const hoverTargets = 'a,.scroll-card,.art-orb,.btn-arcane,.portal-link,.summon-email';
-        document.querySelectorAll(hoverTargets).forEach(el => {
-            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
-            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+        document.querySelectorAll('a,button,.sc-card,.art-orb,.adiv-gem').forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('ch'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('ch'));
         });
 
-        // ═══════════════════════════════════════════════════════════════
-        // HERO PARTICLE CANVAS — advanced constellation with gold nebula
-        // ═══════════════════════════════════════════════════════════════
-        const hc = document.getElementById('hero-canvas');
-        const hctx = hc.getContext('2d');
-        let HW, HH;
-        function resizeHero() { HW = hc.width = hc.offsetWidth; HH = hc.height = hc.offsetHeight; }
-        resizeHero();
-        window.addEventListener('resize', resizeHero);
+        // ══════════════════════════════════════════════════════════════
+        // THREE.JS HERO — Rotating arcane geometry + particle field
+        // ══════════════════════════════════════════════════════════════
+        (function initThreeJS() {
+            const canvas = document.getElementById('threejs-canvas');
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x000000, 0);
 
-        class HeroParticle {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * HW;
-                this.y = Math.random() * HH;
-                this.ox = this.x; this.oy = this.y;
-                this.vx = (Math.random() - .5) * .25;
-                this.vy = (Math.random() - .5) * .25;
-                this.r = Math.random() * 1.6 + .3;
-                this.a = Math.random() * .7 + .1;
-                this.type = Math.random() > .7 ? 'gold' : Math.random() > .5 ? 'white' : 'dim';
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+            camera.position.z = 5;
+
+            function resize3() {
+                const w = canvas.offsetWidth, h = canvas.offsetHeight;
+                renderer.setSize(w, h, false);
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
             }
-            update(pmx, pmy) {
-                const dx = pmx - this.x, dy = pmy - this.y;
-                const d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 140) { this.vx += dx / d * .018; this.vy += dy / d * .018; }
-                this.vx *= .98; this.vy *= .98;
-                this.x += this.vx; this.y += this.vy;
-                if (this.x < 0) this.x = HW; if (this.x > HW) this.x = 0;
-                if (this.y < 0) this.y = HH; if (this.y > HH) this.y = 0;
+            resize3();
+            window.addEventListener('resize', resize3);
+
+            // Central icosahedron wireframe
+            const icoGeo = new THREE.IcosahedronGeometry(1.4, 1);
+            const icoMat = new THREE.MeshBasicMaterial({ color: 0xd4a843, wireframe: true, opacity: 0.18, transparent: true });
+            const ico = new THREE.Mesh(icoGeo, icoMat);
+            scene.add(ico);
+
+            // Outer ring torus
+            const torGeo = new THREE.TorusGeometry(2.2, 0.008, 8, 120);
+            const torMat = new THREE.MeshBasicMaterial({ color: 0xd4a843, opacity: 0.25, transparent: true });
+            const tor = new THREE.Mesh(torGeo, torMat);
+            scene.add(tor);
+
+            // Second torus rotated
+            const tor2 = new THREE.Mesh(
+                new THREE.TorusGeometry(2.8, 0.005, 8, 140),
+                new THREE.MeshBasicMaterial({ color: 0xf5c842, opacity: 0.12, transparent: true })
+            );
+            tor2.rotation.x = Math.PI / 3;
+            scene.add(tor2);
+
+            // Star particle field
+            const starCount = 1400;
+            const starGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(starCount * 3);
+            const sizes = new Float32Array(starCount);
+            for (let i = 0; i < starCount; i++) {
+                const r = 3.5 + Math.random() * 8;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+                sizes[i] = Math.random() * 2.5 + 0.5;
             }
-            draw() {
-                hctx.beginPath();
-                hctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                if (this.type === 'gold') hctx.fillStyle = '#d4a843';
-                else if (this.type === 'white') hctx.fillStyle = 'rgba(245,230,200,.8)';
-                else hctx.fillStyle = 'rgba(212,168,67,.4)';
-                hctx.globalAlpha = this.a;
-                hctx.fill();
-                hctx.globalAlpha = 1;
-            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            const starMat = new THREE.PointsMaterial({ color: 0xd4a843, size: 0.03, sizeAttenuation: true, transparent: true, opacity: 0.5 });
+            const stars = new THREE.Points(starGeo, starMat);
+            scene.add(stars);
+
+            // Octahedron inner
+            const octGeo = new THREE.OctahedronGeometry(0.7, 0);
+            const octMat = new THREE.MeshBasicMaterial({ color: 0xf5c842, wireframe: true, opacity: 0.35, transparent: true });
+            const oct = new THREE.Mesh(octGeo, octMat);
+            scene.add(oct);
+
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', e => {
+                mouseX = (e.clientX / window.innerWidth - .5) * 2;
+                mouseY = (e.clientY / window.innerHeight - .5) * 2;
+            });
+
+            let t = 0;
+            (function animate3() {
+                requestAnimationFrame(animate3);
+                t += 0.006;
+                ico.rotation.x = t * 0.3 + mouseY * 0.3;
+                ico.rotation.y = t * 0.5 + mouseX * 0.3;
+                oct.rotation.x = -t * 0.6;
+                oct.rotation.y = t * 0.8;
+                tor.rotation.y = t * 0.25;
+                tor.rotation.x = mouseY * 0.4;
+                tor2.rotation.z = t * 0.18;
+                stars.rotation.y = t * 0.04;
+                stars.rotation.x = mouseY * 0.06;
+                camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.04;
+                camera.position.y += (-mouseY * 0.4 - camera.position.y) * 0.04;
+                camera.lookAt(scene.position);
+                renderer.render(scene, camera);
+            })();
+        })();
+
+        // ══════════════════════════════════════════════════════════════
+        // GSAP HERO ENTRANCE
+        // ══════════════════════════════════════════════════════════════
+        function splitChars(el) {
+            const text = el.textContent;
+            el.innerHTML = '';
+            [...text].forEach(ch => {
+                const s = document.createElement('span');
+                s.className = 'split-char';
+                s.textContent = ch === ' ' ? '\u00a0' : ch;
+                el.appendChild(s);
+            });
+            return el.querySelectorAll('.split-char');
         }
 
-        const heroParticles = Array.from({ length: 200 }, () => new HeroParticle());
-        let heroMx = HW / 2, heroMy = HH / 2;
-        document.addEventListener('mousemove', e => { heroMx = e.clientX; heroMy = e.clientY; });
+        function initHeroGSAP() {
+            const tl = gsap.timeline();
+            tl.to('#heroEye', { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }, 0.1)
+                .to('#heroTitle', { opacity: 1, duration: 0.01 }, 0.3)
+                .from('#titleLine1 .split-char, #titleLine2 .split-char', {
+                    opacity: 0, y: 100, rotateX: -60, stagger: 0.045, duration: 1,
+                    ease: 'back.out(1.6)', transformOrigin: 'bottom center'
+                }, 0.35)
+                .to('#heroDivider', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 1.2)
+                .to('#heroSub', { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, 1.5)
+                .to('#heroCta', { opacity: 1, duration: 0.8 }, 1.8)
+                .to('#scrollCue', { opacity: 1, duration: 0.8 }, 2.2);
+            // Pre-split
+            splitChars(document.getElementById('titleLine1'));
+            splitChars(document.getElementById('titleLine2'));
+        }
+        // Pre-split before GSAP runs
+        setTimeout(() => {
+            splitChars(document.getElementById('titleLine1'));
+            splitChars(document.getElementById('titleLine2'));
+        }, 100);
 
-        // Nebula glow patches
-        const nebulaPoints = Array.from({ length: 5 }, () => ({
-            x: Math.random() * HW, y: Math.random() * HH,
-            r: Math.random() * 200 + 80, a: Math.random() * .03 + .01,
-            dx: (Math.random() - .5) * .3, dy: (Math.random() - .5) * .3
-        }));
-
-        (function heroAnim() {
-            hctx.clearRect(0, 0, HW, HH);
-            // Nebula
-            nebulaPoints.forEach(n => {
-                n.x += n.dx; n.y += n.dy;
-                if (n.x < 0 || n.x > HW) n.dx *= -1;
-                if (n.y < 0 || n.y > HH) n.dy *= -1;
-                const g = hctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-                g.addColorStop(0, `rgba(212,168,67,${n.a})`);
-                g.addColorStop(1, 'transparent');
-                hctx.fillStyle = g;
-                hctx.beginPath();
-                hctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-                hctx.fill();
-            });
-            // Connections
-            for (let i = 0; i < heroParticles.length; i++) {
-                for (let j = i + 1; j < heroParticles.length; j++) {
-                    const dx = heroParticles[i].x - heroParticles[j].x;
-                    const dy = heroParticles[i].y - heroParticles[j].y;
-                    const d = Math.sqrt(dx * dx + dy * dy);
-                    if (d < 100) {
-                        hctx.beginPath();
-                        hctx.moveTo(heroParticles[i].x, heroParticles[i].y);
-                        hctx.lineTo(heroParticles[j].x, heroParticles[j].y);
-                        hctx.strokeStyle = '#d4a843';
-                        hctx.globalAlpha = (1 - d / 100) * .1;
-                        hctx.lineWidth = .7;
-                        hctx.stroke();
-                        hctx.globalAlpha = 1;
+        // ══════════════════════════════════════════════════════════════
+        // GSAP SCROLL-TRIGGERED SECTION TITLES
+        // ══════════════════════════════════════════════════════════════
+        function initScrollAnimations() {
+            // Section title char reveals
+            document.querySelectorAll('.split-title').forEach(el => {
+                const chars = [];
+                el.childNodes.forEach(node => {
+                    if (node.nodeType === 3) {
+                        const wrap = document.createElement('span');
+                        wrap.style.display = 'inline';
+                        node.parentNode.insertBefore(wrap, node);
+                        [...node.textContent].forEach(ch => {
+                            const s = document.createElement('span');
+                            s.className = 'split-char';
+                            s.textContent = ch === ' ' ? '\u00a0' : ch;
+                            s.style.opacity = '0';
+                            s.style.transform = 'translateY(60px) rotateX(-35deg)';
+                            s.style.display = 'inline-block';
+                            s.style.transformOrigin = 'bottom';
+                            wrap.appendChild(s);
+                            chars.push(s);
+                        });
+                        node.remove();
+                    } else if (node.nodeType === 1) {
+                        const text = node.textContent;
+                        node.innerHTML = '';
+                        [...text].forEach(ch => {
+                            const s = document.createElement('span');
+                            s.className = 'split-char';
+                            s.textContent = ch === ' ' ? '\u00a0' : ch;
+                            s.style.opacity = '0';
+                            s.style.transform = 'translateY(60px) rotateX(-35deg)';
+                            s.style.display = 'inline-block';
+                            s.style.transformOrigin = 'bottom';
+                            node.appendChild(s);
+                            chars.push(s);
+                        });
                     }
+                });
+                ScrollTrigger.create({
+                    trigger: el,
+                    start: 'top 82%',
+                    onEnter: () => {
+                        gsap.to(chars, { opacity: 1, y: 0, rotateX: 0, stagger: 0.028, duration: 0.85, ease: 'back.out(1.4)' });
+                    }
+                });
+            });
+
+            // About lore lines
+            gsap.utils.toArray('.about-lore').forEach((el, i) => {
+                gsap.fromTo(el, { opacity: 0, x: -40 }, {
+                    opacity: 1, x: 0, duration: 1.1, ease: 'power3.out',
+                    scrollTrigger: { trigger: el, start: 'top 85%' },
+                    delay: i * 0.15
+                });
+            });
+
+            // Section eyebrows
+            gsap.utils.toArray('.s-eye').forEach(el => {
+                gsap.fromTo(el, { opacity: 0, x: -20 }, {
+                    opacity: 0.62, x: 0, duration: 0.8,
+                    scrollTrigger: { trigger: el, start: 'top 88%' }
+                });
+            });
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // TYPING TERMINAL
+        // ══════════════════════════════════════════════════════════════
+        const termLines = [
+            { id: 'tv0', text: 'AI / ML Engineer' },
+            { id: 'tv1', text: 'Maharashtra, India' },
+            { id: 'tv2', text: 'Open Source Alliance' },
+            { id: 'tv3', text: 'Space Science 🚀' },
+            { id: 'tv4', text: '"Build things that matter."' }
+        ];
+
+        function typeText(el, text, delay = 0) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    let i = 0;
+                    const iv = setInterval(() => {
+                        el.textContent = text.slice(0, ++i);
+                        if (i >= text.length) { clearInterval(iv); resolve(); }
+                    }, 38);
+                }, delay);
+            });
+        }
+
+        ScrollTrigger.create({
+            trigger: '#terminalBox',
+            start: 'top 80%',
+            once: true,
+            onEnter: async () => {
+                for (let i = 0; i < termLines.length; i++) {
+                    const lineEl = document.getElementById(`tl${i}`);
+                    lineEl.classList.add('vis');
+                    await typeText(document.getElementById(termLines[i].id), termLines[i].text, 80);
+                    await new Promise(r => setTimeout(r, 120));
                 }
             }
-            heroParticles.forEach(p => { p.update(heroMx, heroMy); p.draw(); });
-            requestAnimationFrame(heroAnim);
-        })();
+        });
 
-        // ═══════════════════════════════════════════════════════════════
-        // GLOBAL BG CANVAS
-        // ═══════════════════════════════════════════════════════════════
-        const cv = document.getElementById('bg');
-        const ctx = cv.getContext('2d');
-        let W, H;
-        function resizeBg() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
-        resizeBg(); window.addEventListener('resize', resizeBg);
-
-        class BgDust {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * W; this.y = Math.random() * H;
-                this.vx = (Math.random() - .5) * .15; this.vy = -Math.random() * .35 - .05;
-                this.r = Math.random() * .9 + .2;
-                this.a = Math.random() * .3 + .05;
-                this.life = 1; this.decay = Math.random() * .002 + .0005;
-            }
-            update() {
-                const dx = mx - this.x, dy = my - this.y;
-                const d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 100) { this.vx += dx / d * .01; this.vy += dy / d * .01; }
-                this.vx *= .99; this.vy *= .99;
-                this.x += this.vx; this.y += this.vy;
-                this.life -= this.decay;
-                if (this.life <= 0 || this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                ctx.fillStyle = Math.random() > .5 ? '#d4a843' : 'rgba(255,255,255,.7)';
-                ctx.globalAlpha = this.a * this.life;
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            }
-        }
-        const bgDust = Array.from({ length: 100 }, () => new BgDust());
-        (function bgAnim() {
-            ctx.clearRect(0, 0, W, H);
-            bgDust.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(bgAnim);
-        })();
-
-        // ═══════════════════════════════════════════════════════════════
-        // SCROLL PROGRESS
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // PROGRESS BAR
+        // ══════════════════════════════════════════════════════════════
         window.addEventListener('scroll', () => {
             const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
             document.getElementById('prog').style.width = p + '%';
         });
 
-        // ═══════════════════════════════════════════════════════════════
-        // HERO 3D PARALLAX MOUSE
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // HERO 3D PARALLAX
+        // ══════════════════════════════════════════════════════════════
         const heroInner = document.getElementById('heroInner');
-        const heroTitle = document.getElementById('heroTitle');
         document.addEventListener('mousemove', e => {
+            if (window.scrollY > window.innerHeight * 0.4) return;
             const xp = (e.clientX / window.innerWidth - .5);
             const yp = (e.clientY / window.innerHeight - .5);
-            if (heroInner && window.scrollY < window.innerHeight) {
-                heroInner.style.transform = `rotateX(${-yp * 6}deg) rotateY(${xp * 6}deg) translateZ(20px)`;
-                heroInner.style.transformStyle = 'preserve-3d';
-                if (heroTitle) {
-                    heroTitle.style.textShadow = `${xp * 20}px ${yp * 20}px 80px rgba(212,168,67,.4), 0 0 40px rgba(212,168,67,.15)`;
-                }
-            }
-            // Ambient parallax
-            document.querySelectorAll('.amb').forEach((a, i) => {
-                const sp = (i + 1) * .015;
-                a.style.transform = `translate(${xp * sp * 100}px,${yp * sp * 100}px)`;
-            });
+            gsap.to(heroInner, { rotateX: -yp * 7, rotateY: xp * 7, duration: 0.8, ease: 'power2.out', transformPerspective: 800 });
+            gsap.to('.a1', { x: xp * 40, y: yp * 30, duration: 1.2 });
+            gsap.to('.a2', { x: -xp * 25, y: -yp * 20, duration: 1.4 });
+            gsap.to('.a3', { x: xp * 18, y: yp * 15, duration: 1.6 });
         });
-
-        // Reset hero 3D on scroll
         window.addEventListener('scroll', () => {
-            if (window.scrollY > window.innerHeight * .3 && heroInner) {
-                heroInner.style.transform = '';
-            }
+            if (window.scrollY > window.innerHeight * 0.3) gsap.to(heroInner, { rotateX: 0, rotateY: 0, duration: 1 });
         });
 
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         // REVEAL OBSERVER
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         const revObs = new IntersectionObserver(ents => {
-            ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); } });
+            ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); revObs.unobserve(e.target); } });
         }, { threshold: 0.1 });
-        document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+        document.querySelectorAll('.rv').forEach(el => revObs.observe(el));
 
-        // ═══════════════════════════════════════════════════════════════
-        // SKILL BARS + GEMS
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // SKILL BARS
+        // ══════════════════════════════════════════════════════════════
         const skillObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
-                if (e.isIntersecting) {
-                    e.target.querySelectorAll('.sk-fill').forEach(bar => {
-                        const w = bar.getAttribute('data-w');
-                        setTimeout(() => { bar.style.width = w; }, 350);
-                    });
-                    e.target.querySelectorAll('.sk-gems').forEach(gem => {
-                        const n = parseInt(gem.getAttribute('data-gems'));
-                        gem.innerHTML = '';
-                        for (let i = 0; i < 5; i++) {
-                            const d = document.createElement('div');
-                            d.className = 'sk-gem' + (i < n ? ' lit' : '');
-                            gem.appendChild(d);
-                        }
-                    });
-                }
+                if (!e.isIntersecting) return;
+                e.target.querySelectorAll('.sk-fill').forEach((b, i) => {
+                    setTimeout(() => { b.style.width = b.getAttribute('data-w'); }, 300 + i * 80);
+                });
+                e.target.querySelectorAll('.sk-gems').forEach(g => {
+                    const n = parseInt(g.getAttribute('data-gems'));
+                    g.innerHTML = '';
+                    for (let i = 0; i < 5; i++) {
+                        const d = document.createElement('div');
+                        d.className = 'sk-gem' + (i < n ? ' lit' : '');
+                        g.appendChild(d);
+                    }
+                });
             });
         }, { threshold: 0.2 });
         document.querySelectorAll('.skills-tome').forEach(el => skillObs.observe(el));
 
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         // COUNTER ANIMATION
-        // ═══════════════════════════════════════════════════════════════
-        const countObs = new IntersectionObserver(ents => {
+        // ══════════════════════════════════════════════════════════════
+        const cntObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
-                if (e.isIntersecting) {
-                    e.target.querySelectorAll('[data-count]').forEach(el => {
-                        const target = parseInt(el.getAttribute('data-count'));
-                        let curr = 0;
-                        const inc = setInterval(() => {
-                            curr = Math.min(curr + 1, target);
-                            el.textContent = curr + '+';
-                            if (curr >= target) clearInterval(inc);
-                        }, 60);
-                    });
-                    e.target.querySelectorAll('[data-count-dec]').forEach(el => {
-                        const target = parseFloat(el.getAttribute('data-count-dec'));
-                        let curr = 0;
-                        const inc = setInterval(() => {
-                            curr = Math.min(+(curr + .1).toFixed(1), target);
-                            el.textContent = curr.toFixed(1);
-                            if (curr >= target) clearInterval(inc);
-                        }, 40);
-                    });
-                    countObs.unobserve(e.target);
-                }
+                if (!e.isIntersecting) return;
+                e.target.querySelectorAll('[data-count]').forEach(el => {
+                    const t = parseInt(el.getAttribute('data-count'));
+                    const suf = el.getAttribute('data-suffix') || '';
+                    let c = 0;
+                    const iv = setInterval(() => { el.textContent = (++c) + suf; if (c >= t) clearInterval(iv); }, 55);
+                });
+                e.target.querySelectorAll('[data-count-dec]').forEach(el => {
+                    const t = parseFloat(el.getAttribute('data-count-dec'));
+                    let c = 0;
+                    const iv = setInterval(() => {
+                        c = Math.min(+(c + .1).toFixed(1), t);
+                        el.textContent = c.toFixed(1);
+                        if (c >= t) clearInterval(iv);
+                    }, 40);
+                });
+                cntObs.unobserve(e.target);
             });
         }, { threshold: 0.3 });
-        document.querySelectorAll('.about-facts').forEach(el => countObs.observe(el));
+        document.querySelectorAll('.about-facts').forEach(el => cntObs.observe(el));
 
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         // 3D CARD TILT
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         function cardTilt(el, e) {
             const r = el.getBoundingClientRect();
             const x = (e.clientX - r.left) / r.width - .5;
             const y = (e.clientY - r.top) / r.height - .5;
-            el.style.transform = `translateY(-8px) rotateX(${-y * 9}deg) rotateY(${x * 9}deg) scale(1.01)`;
+            gsap.to(el, { rotateX: -y * 10, rotateY: x * 10, translateY: -8, scale: 1.01, duration: 0.5, ease: 'power2.out', transformPerspective: 800 });
             el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
             el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
         }
         function cardReset(el) {
-            el.style.transform = '';
+            gsap.to(el, { rotateX: 0, rotateY: 0, translateY: 0, scale: 1, duration: 0.7, ease: 'elastic.out(1,0.5)' });
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // NAV ACTIVE HIGHLIGHT
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // PAGE WIPE NAV
+        // ══════════════════════════════════════════════════════════════
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                const rings = document.querySelectorAll('.wipe-ring');
+                const center = document.querySelector('.wipe-center');
+                const tl = gsap.timeline({
+                    onComplete: () => {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                        gsap.to([...rings, center], { scale: 0, opacity: 0, duration: 0.5, stagger: 0.06 });
+                    }
+                });
+                tl.to(center, { scale: 1, opacity: 1, duration: 0.25, ease: 'back.out(2)' })
+                    .to(rings, { scale: 1, opacity: 1, stagger: 0.08, duration: 0.3, ease: 'power2.out' }, 0.1);
+            });
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // NAV ACTIVE
+        // ══════════════════════════════════════════════════════════════
         const sections = document.querySelectorAll('section[id]');
-        const navLinks = document.querySelectorAll('nav a');
+        const navLinks = document.querySelectorAll('nav a.nav-link');
         const navObs = new IntersectionObserver(ents => {
             ents.forEach(e => {
                 if (e.isIntersecting) {
-                    navLinks.forEach(a => a.style.color = '');
-                    const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
-                    if (active) active.style.color = 'var(--gold)';
+                    navLinks.forEach(a => a.classList.remove('active'));
+                    const act = document.querySelector(`nav a[href="#${e.target.id}"]`);
+                    if (act) act.classList.add('active');
                 }
             });
         }, { rootMargin: '-40% 0px -40% 0px' });
         sections.forEach(s => navObs.observe(s));
 
-        // ═══════════════════════════════════════════════════════════════
-        // SCROLL-DRIVEN ORBIT RING SCALE
-        // ═══════════════════════════════════════════════════════════════
-        window.addEventListener('scroll', () => {
-            const sc = window.scrollY;
-            const rings = document.querySelectorAll('.orbit-ring');
-            if (sc < window.innerHeight) {
-                const scl = 1 + sc * .0012;
-                rings.forEach(r => { r.style.transform = r.style.transform.replace(/scale\([^)]*\)/, '') + ` scale(${scl})`; });
-            }
-        });
-
-        // ═══════════════════════════════════════════════════════════════
-        // BLINK
-        // ═══════════════════════════════════════════════════════════════
-        const bl = document.getElementById('blink');
-        if (bl) setInterval(() => bl.style.opacity = bl.style.opacity === '0' ? '1' : '0', 550);
-
-        // ═══════════════════════════════════════════════════════════════
-        // ART ORB RIPPLE ON CLICK
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
+        // ART ORB RIPPLE
+        // ══════════════════════════════════════════════════════════════
+        const rippleStyle = document.createElement('style');
+        rippleStyle.textContent = '@keyframes ripple{to{width:180px;height:180px;opacity:0;border-color:transparent}}';
+        document.head.appendChild(rippleStyle);
         document.querySelectorAll('.art-orb').forEach(orb => {
-            orb.addEventListener('click', function (e) {
+            orb.addEventListener('click', function () {
                 const r = document.createElement('div');
-                r.style.cssText = `position:absolute;border-radius:50%;border:1px solid rgba(212,168,67,.5);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;animation:ripple .6s forwards`;
+                r.style.cssText = `position:absolute;border-radius:50%;border:1.5px solid rgba(212,168,67,.5);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;animation:ripple .65s forwards`;
                 this.appendChild(r);
                 setTimeout(() => r.remove(), 700);
             });
         });
-        // Ripple keyframe
-        const style = document.createElement('style');
-        style.textContent = '@keyframes ripple{to{width:200px;height:200px;opacity:0;border-color:transparent}}';
-        document.head.appendChild(style);
 
-        // ═══════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         // MAGNETIC BUTTONS
-        // ═══════════════════════════════════════════════════════════════
-        document.querySelectorAll('.btn-arcane,.portal-link').forEach(btn => {
+        // ══════════════════════════════════════════════════════════════
+        document.querySelectorAll('.btn-a,.portal-link').forEach(btn => {
             btn.addEventListener('mousemove', function (e) {
                 const r = this.getBoundingClientRect();
-                const x = e.clientX - r.left - r.width / 2;
-                const y = e.clientY - r.top - r.height / 2;
-                this.style.transform = `translate(${x * .2}px,${y * .2}px)`;
+                const x = (e.clientX - r.left - r.width / 2) * 0.22;
+                const y = (e.clientY - r.top - r.height / 2) * 0.22;
+                gsap.to(this, { x, y, duration: 0.4, ease: 'power2.out' });
             });
             btn.addEventListener('mouseleave', function () {
-                this.style.transform = '';
-                this.style.transition = 'transform .5s var(--ease-out-expo)';
+                gsap.to(this, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1,0.4)' });
             });
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // RADAR CHART CANVAS
+        // ══════════════════════════════════════════════════════════════
+        const radarCanvas = document.getElementById('radar-canvas');
+        const rctx = radarCanvas.getContext('2d');
+        const radarData = [
+            { label: 'Python', val: 0.95 },
+            { label: 'AI/ML', val: 0.90 },
+            { label: 'Android', val: 0.82 },
+            { label: 'CV/Vision', val: 0.88 },
+            { label: 'Web3', val: 0.60 },
+            { label: 'Frontend', val: 0.72 },
+            { label: 'Backend', val: 0.70 },
+            { label: 'C++', val: 0.62 }
+        ];
+        let radarAnim = 0;
+        let radarAnimId;
+
+        function drawRadar(progress) {
+            const cx = radarCanvas.width / 2, cy = radarCanvas.height / 2;
+            const R = 160, n = radarData.length;
+            rctx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
+            // Grid rings
+            for (let r = 1; r <= 5; r++) {
+                rctx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+                    const x = cx + (R * r / 5) * Math.cos(a);
+                    const y = cy + (R * r / 5) * Math.sin(a);
+                    i === 0 ? rctx.moveTo(x, y) : rctx.lineTo(x, y);
+                }
+                rctx.closePath();
+                rctx.strokeStyle = `rgba(212,168,67,${0.05 + r * 0.02})`;
+                rctx.lineWidth = 1;
+                rctx.stroke();
+            }
+            // Spokes
+            for (let i = 0; i < n; i++) {
+                const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+                rctx.beginPath();
+                rctx.moveTo(cx, cy);
+                rctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+                rctx.strokeStyle = 'rgba(212,168,67,.1)';
+                rctx.lineWidth = 1;
+                rctx.stroke();
+            }
+            // Data polygon
+            rctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+                const v = radarData[i].val * progress;
+                const x = cx + R * v * Math.cos(a);
+                const y = cy + R * v * Math.sin(a);
+                i === 0 ? rctx.moveTo(x, y) : rctx.lineTo(x, y);
+            }
+            rctx.closePath();
+            const grad = rctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+            grad.addColorStop(0, 'rgba(212,168,67,.25)');
+            grad.addColorStop(1, 'rgba(212,168,67,.06)');
+            rctx.fillStyle = grad;
+            rctx.fill();
+            rctx.strokeStyle = `rgba(212,168,67,${0.6 * progress})`;
+            rctx.lineWidth = 2;
+            rctx.shadowColor = 'rgba(212,168,67,.5)';
+            rctx.shadowBlur = 10;
+            rctx.stroke();
+            rctx.shadowBlur = 0;
+            // Dots + labels
+            for (let i = 0; i < n; i++) {
+                const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+                const v = radarData[i].val * progress;
+                const x = cx + R * v * Math.cos(a);
+                const y = cy + R * v * Math.sin(a);
+                rctx.beginPath();
+                rctx.arc(x, y, 4, 0, Math.PI * 2);
+                rctx.fillStyle = '#d4a843';
+                rctx.shadowColor = 'rgba(212,168,67,.8)';
+                rctx.shadowBlur = 12;
+                rctx.fill();
+                rctx.shadowBlur = 0;
+                // Label
+                const lx = cx + (R + 22) * Math.cos(a);
+                const ly = cy + (R + 22) * Math.sin(a);
+                rctx.font = '10px Cinzel,serif';
+                rctx.fillStyle = `rgba(212,168,67,${0.5 * progress})`;
+                rctx.textAlign = 'center';
+                rctx.textBaseline = 'middle';
+                rctx.fillText(radarData[i].label.toUpperCase(), lx, ly);
+            }
+        }
+
+        drawRadar(0);
+        ScrollTrigger.create({
+            trigger: '#radar-canvas',
+            start: 'top 80%',
+            once: true,
+            onEnter: () => {
+                gsap.to({ v: 0 }, {
+                    v: 1, duration: 2, ease: 'power2.out',
+                    onUpdate: function () { drawRadar(this.targets()[0].v); }
+                });
+            }
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // PROJECT MODALS
+        // ══════════════════════════════════════════════════════════════
+        const modalData = {
+            autonix: {
+                title: 'AUTONIX',
+                badge: '✦ Legendary · Published in International Journal',
+                relic: 'Quest I · Main Chronicle · Active',
+                body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">An Android safety application using real-time AI to guard against driver drowsiness and fatigue. Published in AIJFR International Journal (2025).</p>
+    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">468-point facial landmark tracking via MediaPipe detects eye closure through EAR (Eye Aspect Ratio) mathematics. Accelerometer & Gyroscope sensor fusion triggers crash detection and auto-dispatches GPS coordinates to emergency contacts via Firebase Cloud Messaging.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
+      <span class="sc-rune">Kotlin</span><span class="sc-rune">MediaPipe</span><span class="sc-rune">Firebase</span><span class="sc-rune">ML Kit</span><span class="sc-rune">Android</span><span class="sc-rune">Computer Vision</span><span class="sc-rune">EAR Algorithm</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+      <a href="https://github.com/yatin-anchan/Autonix" target="_blank" class="sc-link">GitHub →</a>
+      <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">Live Website →</a>
+      <a href="https://www.aijfr.com/research-paper.php?id=1559" target="_blank" class="sc-link">Research Paper →</a>
+    </div>`
+            },
+            daansetu: {
+                title: 'DaanSetu',
+                relic: 'Quest II · Guild Mission · In Progress',
+                body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A blockchain-powered donation platform on Polygon — every coin of aid is publicly verifiable, immutable, and incorruptible. Built with the mission of radical transparency in charitable giving.</p>
+    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Smart contracts on Polygon ensure funds go exactly where intended. Geolocation targets relief to the most afflicted regions. IPFS stores campaign data in a decentralized, censorship-resistant way.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
+      <span class="sc-rune">React</span><span class="sc-rune">Ethers.js</span><span class="sc-rune">Polygon</span><span class="sc-rune">IPFS</span><span class="sc-rune">Solidity</span><span class="sc-rune">Web3</span>
+    </div>
+    <div style="margin-top:24px"><a href="https://github.com/kshaan-ali/daan-setu" target="_blank" class="sc-link">GitHub →</a></div>`
+            },
+            pyos: {
+                title: 'Py_OS',
+                relic: 'Quest III · Solo Endeavour · Complete',
+                body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A fully simulated operating system built entirely in pure Python — a solo engineering feat that demonstrates deep understanding of OS architecture and GUI development.</p>
+    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Features a complete file system, software marketplace, drag-and-drop window management, live notifications, and a custom GUI shell — all rendered through Tkinter with zero external frameworks.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
+      <span class="sc-rune">Python</span><span class="sc-rune">Tkinter</span><span class="sc-rune">Custom GUI</span><span class="sc-rune">File System</span><span class="sc-rune">OS Architecture</span>
+    </div>
+    <div style="margin-top:24px"><a href="https://github.com/yatin-anchan/Py_OS" target="_blank" class="sc-link">GitHub →</a></div>`
+            },
+            autonixweb: {
+                title: 'AUTONIX Website',
+                relic: 'Quest IV · Artisan Craft · Deployed',
+                body: `<p style="font-size:17px;line-height:1.95;color:rgba(245,230,200,.6);font-style:italic;margin-bottom:20px">A cinematic digital exhibition for the AUTONIX project — built with zero frameworks, purely hand-crafted HTML, CSS, and Vanilla JS.</p>
+    <p style="font-size:16px;line-height:1.9;color:rgba(245,230,200,.5);font-style:italic;margin-bottom:20px">Canvas particles form a motorcycle animation on load. 3D mouse-tilt effects on every card. A live webcam EAR oracle that demonstrates the drowsiness detection algorithm in real-time. Exhibition mode for conference halls.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:20px 0">
+      <span class="sc-rune">HTML5</span><span class="sc-rune">CSS3</span><span class="sc-rune">Vanilla JS</span><span class="sc-rune">Canvas API</span><span class="sc-rune">WebRTC</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+      <a href="https://yatin-anchan.github.io/AUTONIX-Website/" target="_blank" class="sc-link">Live Site →</a>
+      <a href="https://github.com/yatin-anchan/AUTONIX-Website" target="_blank" class="sc-link">GitHub →</a>
+    </div>`
+            }
+        };
+
+        function openModal(id) {
+            const data = modalData[id];
+            if (!data) return;
+            const mc = document.getElementById('modal-content');
+            mc.innerHTML = `
+    ${data.badge ? `<div class="sc-badge" style="margin-bottom:12px">${data.badge}</div>` : ''}
+    <div class="sc-relic">${data.relic}</div>
+    <div class="sc-title" style="font-size:clamp(26px,4vw,44px);margin:12px 0 20px">${data.title}</div>
+    ${data.body}
+  `;
+            document.getElementById('modal-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(e) {
+            if (e && e.target !== document.getElementById('modal-overlay') && e.type !== 'click') return;
+            document.getElementById('modal-overlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal({ target: document.getElementById('modal-overlay') }); });
+
+        // ══════════════════════════════════════════════════════════════
+        // SOUND DESIGN (Web Audio API — subtle tones)
+        // ══════════════════════════════════════════════════════════════
+        let audioCtx = null, soundOn = false;
+        const soundBtn = document.getElementById('soundBtn');
+
+        function getAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        function playTone(freq, dur = 0.12, vol = 0.04, type = 'sine') {
+            if (!soundOn) return;
+            try {
+                const ac = getAudio();
+                const osc = ac.createOscillator();
+                const gain = ac.createGain();
+                osc.connect(gain); gain.connect(ac.destination);
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0, ac.currentTime);
+                gain.gain.linearRampToValueAtTime(vol, ac.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+                osc.start(ac.currentTime);
+                osc.stop(ac.currentTime + dur);
+            } catch (e) { }
+        }
+        soundBtn.addEventListener('click', () => {
+            soundOn = !soundOn;
+            soundBtn.textContent = soundOn ? '🔊' : '🔇';
+            if (soundOn) playTone(440, 0.3, 0.05);
+        });
+        document.querySelectorAll('a,button').forEach(el => {
+            el.addEventListener('mouseenter', () => playTone(660, 0.08, 0.025));
+            el.addEventListener('click', () => playTone(880, 0.15, 0.04));
+        });
+        // Scroll milestone chimes
+        let lastMilestone = 0;
+        window.addEventListener('scroll', () => {
+            const p = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+            const milestone = Math.floor(p * 4);
+            if (milestone !== lastMilestone) {
+                lastMilestone = milestone;
+                playTone(528 + milestone * 110, 0.4, 0.035, 'sine');
+            }
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // THEME TOGGLE
+        // ══════════════════════════════════════════════════════════════
+        const themeBtn = document.getElementById('themeBtn');
+        let isLight = false;
+        themeBtn.addEventListener('click', () => {
+            isLight = !isLight;
+            document.body.classList.toggle('light', isLight);
+            themeBtn.textContent = isLight ? '🌙 Arcane' : '☀ Parchment';
+            playTone(isLight ? 396 : 528, 0.3, 0.04);
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // KONAMI CODE EASTER EGG
+        // ══════════════════════════════════════════════════════════════
+        const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+        let konamiIdx = 0;
+        document.addEventListener('keydown', e => {
+            if (e.code === konami[konamiIdx]) {
+                konamiIdx++;
+                if (konamiIdx === konami.length) {
+                    konamiIdx = 0;
+                    showEasterEgg();
+                }
+            } else {
+                konamiIdx = 0;
+            }
+        });
+
+        function showEasterEgg() {
+            const egg = document.getElementById('easter-egg');
+            const ec = document.getElementById('egg-canvas');
+            egg.classList.add('show');
+            ec.width = window.innerWidth; ec.height = window.innerHeight;
+            const ectx = ec.getContext('2d');
+            const particles = Array.from({ length: 200 }, () => ({
+                x: Math.random() * ec.width, y: Math.random() * ec.height,
+                vx: (Math.random() - .5) * 3, vy: (Math.random() - .5) * 3,
+                r: Math.random() * 3 + 1, a: Math.random()
+            }));
+            let eggAnim = true;
+            egg.querySelector('.egg-close').addEventListener('click', () => { eggAnim = false; }, { once: true });
+            (function eggLoop() {
+                if (!eggAnim) return;
+                ectx.fillStyle = 'rgba(4,3,2,.15)';
+                ectx.fillRect(0, 0, ec.width, ec.height);
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > ec.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > ec.height) p.vy *= -1;
+                    ectx.beginPath();
+                    ectx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ectx.fillStyle = `rgba(212,168,67,${p.a})`;
+                    ectx.fill();
+                });
+                requestAnimationFrame(eggLoop);
+            })();
+            // Play arcane chord
+            [220, 277, 330, 440].forEach((f, i) => setTimeout(() => playTone(f, 1.5, 0.06), i * 120));
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // BLINK
+        // ══════════════════════════════════════════════════════════════
+        const bl = document.getElementById('blink');
+        if (bl) setInterval(() => bl.style.opacity = bl.style.opacity === '0' ? '1' : '0', 560);
+
+        // ══════════════════════════════════════════════════════════════
+        // INIT SCROLL ANIMATIONS ON DOM READY
+        // ══════════════════════════════════════════════════════════════
+        window.addEventListener('load', () => {
+            initScrollAnimations();
+            ScrollTrigger.refresh();
         });
     </script>
 </body>
