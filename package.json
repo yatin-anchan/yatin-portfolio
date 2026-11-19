@@ -1,0 +1,15 @@
+{
+  "name": "yatin-portfolio",
+  "version": "1.0.0",
+  "description": "Portfolio website for Yatin",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
+  }
+}
