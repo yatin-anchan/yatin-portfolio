@@ -1,24 +1,31 @@
+
 {
-    "name": "@yatin-portfolio/database",
-    "version": "1.0.0",
-    "private": true,
-    "type": "module",
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "scripts": {
-        "db:generate": "drizzle-kit generate",
-        "db:migrate": "drizzle-kit migrate",
-        "db:check": "drizzle-kit check"
-    },
-    "dependencies": {
-        "dotenv": "^18.0.10",
-        "drizzle-orm": "^0.45.4",
-        "pg": "^8.23.1"
-    },
-    "devDependencies": {
-        "@types/pg": "^8.23.1",
-        "drizzle-kit": "^0.31.11",
-        "tsx": "^4.23.15"
+  "name": "@yatin-portfolio/database",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:check": "drizzle-kit check"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.10",
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
 }

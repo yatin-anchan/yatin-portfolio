@@ -43,6 +43,11 @@ export const adminEmails = pgTable(
       mode: 'date',
     }),
 
+    removedAt: timestamp('removed_at', {
+  withTimezone: true,
+  mode: 'date',
+}),
+
     createdAt: timestamp('created_at', {
       withTimezone: true,
       mode: 'date',
@@ -54,17 +59,29 @@ export const adminEmails = pgTable(
     uniqueIndex('admin_emails_email_unique')
       .on(sql`lower(${table.email})`),
 
+      uniqueIndex('admin_emails_id_user_id_unique')
+  .on(table.id, table.adminUserId),
+
     uniqueIndex('admin_emails_one_primary')
-      .on(table.adminUserId)
-      .where(sql`${table.isPrimary} = true`),
+  .on(table.adminUserId)
+  .where(
+    sql`${table.isPrimary} = true AND ${table.removedAt} IS NULL`,
+  ),
 
     index('admin_emails_admin_user_id_idx')
       .on(table.adminUserId),
+
+
 
     check(
       'admin_emails_primary_must_be_verified',
       sql`${table.isPrimary} = false OR ${table.isVerified} = true`,
     ),
+
+    check(
+  'admin_emails_removed_cannot_be_primary',
+  sql`${table.removedAt} IS NULL OR ${table.isPrimary} = false`,
+),
 
     check(
       'admin_emails_verification_timestamp_consistency',
