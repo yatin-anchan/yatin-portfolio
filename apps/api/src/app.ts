@@ -7,6 +7,7 @@ import { requestLogger } from './middleware/request-logger.js';
 import helmet from 'helmet';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
+import apiRouter from './routes/index.js';  
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(
 
 app.use(requestIdMiddleware);
 app.use(requestLogger);
+app.use('/api', apiRouter);
 
 app.use(express.json({ limit: '100kb' }));
 
