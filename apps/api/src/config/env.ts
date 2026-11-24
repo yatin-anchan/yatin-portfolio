@@ -22,6 +22,8 @@ const envSchema = z.object({
   OTP_HMAC_SECRET: z
     .string()
     .min(1),
+
+    FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -35,5 +37,7 @@ if (!result.success) {
 
   throw new Error('Environment validation failed');
 }
+
+
 
 export const env = Object.freeze(result.data);

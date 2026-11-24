@@ -1,19 +1,45 @@
 
 import type { ErrorRequestHandler } from 'express';
+import { ApiError } from '../errors/api-error.js';
+import { logger } from '../lib/logger.js';
 
 export const errorHandler: ErrorRequestHandler = (
-  error,
+  error: unknown,
   _req,
   res,
-  _next,
+  next,
 ) => {
   if (res.headersSent) {
-    return;
+    return next(error);
   }
 
-  console.error('API error:', error);
+  if (error instanceof ApiError) {
+    return res.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  }
 
-  res.status(500).json({
+    if (error instanceof Error) {
+    logger.error(
+      {
+        err: error,
+        requestId: res.locals.requestId,
+      },
+      'Unhandled API error',
+    );
+  } else {
+    logger.error(
+      {
+        requestId: res.locals.requestId,
+      },
+      'Unknown API error',
+    );
+  }
+
+  return res.status(500).json({
     error: {
       code: 'INTERNAL_SERVER_ERROR',
       message: 'An unexpected error occurred.',
