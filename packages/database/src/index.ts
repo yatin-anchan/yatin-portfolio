@@ -12,6 +12,7 @@ export { adminRecoveryCodes } from './schema/admin-recovery-codes.js';
 export { adminAuditLogs } from './schema/admin-audit-logs.js';
 
 // Portfolio schemas
+export * from './schema/skills.js';
 export * from './schema/projects.js';
 export * from './schema/experience.js';
 export * from './schema/education.js';

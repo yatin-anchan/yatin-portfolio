@@ -1,30 +1,61 @@
 
 import { z } from 'zod';
 
-const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+const envSchema = z
+  .object({
+    NODE_ENV: z
+      .enum(['development', 'production', 'test'])
+      .default('development'),
 
-  PORT: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(65535)
-    .default(3000),
+    PORT: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(65535)
+      .default(3000),
 
-  DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.string().url(),
 
-  BACKUP_EMAIL_ENCRYPTION_KEY: z
-    .string()
-    .min(1),
+    BACKUP_EMAIL_ENCRYPTION_KEY: z.string().min(1),
 
-  OTP_HMAC_SECRET: z
-    .string()
-    .min(1),
+    OTP_HMAC_SECRET: z.string().min(1),
 
     FRONTEND_URL: z.string().url().default('http://localhost:5173'),
-});
+
+    PASSWORD_RESET_URL: z
+  .string()
+  .url()
+  .default('http://localhost:5173/admin/reset-password'),
+
+    SMTP_HOST: z.string().trim().min(1).optional(),
+
+    SMTP_PORT: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(65535)
+      .default(587),
+
+    SMTP_SECURE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+
+    SMTP_USER: z.string().optional(),
+
+    SMTP_PASS: z.string().optional(),
+
+    SMTP_FROM: z.string().trim().email().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (Boolean(data.SMTP_USER) !== Boolean(data.SMTP_PASS)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'SMTP_USER and SMTP_PASS must be provided together.',
+        path: ['SMTP_USER'],
+      });
+    }
+  });
 
 const result = envSchema.safeParse(process.env);
 
@@ -37,7 +68,5 @@ if (!result.success) {
 
   throw new Error('Environment validation failed');
 }
-
-
 
 export const env = Object.freeze(result.data);
