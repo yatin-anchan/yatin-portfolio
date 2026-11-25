@@ -7,6 +7,14 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "build:database": "npm run build --workspace @yatin-portfolio/database",
+    "build:api": "npm run build --workspace @yatin-portfolio/api",
+    "build": "npm run build:api",
+    "typecheck:database": "npm run typecheck --workspace @yatin-portfolio/database",
+    "typecheck:api": "npm run typecheck --workspace @yatin-portfolio/api",
+    "typecheck": "npm run typecheck:database && npm run typecheck:api"
+  },
   "overrides": {
     "@esbuild-kit/core-utils": {
       "esbuild": "0.25.12"

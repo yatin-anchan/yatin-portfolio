@@ -8,6 +8,7 @@ import {
 
 import {
   db,
+  adminUsers,
   projects,
   projectImages,
   skills,
@@ -20,7 +21,9 @@ import {
 } from '@yatin-portfolio/database';
 
 import { ApiError } from '../lib/errors/api-error.js';
+import { normalizeProfileExperience } from '../lib/profile-values.js';
 import { logAdminAudit } from './admin-audit.service.js';
+import { deleteMediaMappingsForOwner } from './media-mapping.service.js';
 
 interface AuditMetadata {
   ipAddress: string | null;
@@ -30,6 +33,11 @@ interface AuditMetadata {
 interface AdminContext extends AuditMetadata {
   adminId: string;
 }
+
+type CompleteRecordValidator = (
+  existing: object,
+  updates: Record<string, unknown>,
+) => Record<string, unknown>;
 
 type ResourceName =
   | 'project'
@@ -52,9 +60,10 @@ const resourceTables = {
 } as const;
 
 type CollectionName = keyof typeof resourceTables;
+type PortfolioTable = (typeof resourceTables)[CollectionName];
 
-function tableFor(resource: CollectionName): any {
-  return resourceTables[resource] as any;
+function tableFor(resource: CollectionName): PortfolioTable {
+  return resourceTables[resource];
 }
 
 function auditInput(
@@ -62,8 +71,9 @@ function auditInput(
   resource: ResourceName,
   action: string,
   entityId: string | null,
-  oldValues?: unknown,
-  newValues?: unknown,
+  oldValues?: Record<string, unknown> | null,
+  newValues?: Record<string, unknown> | null,
+  tx?: Parameters<Parameters<typeof db.transaction>[0]>[0],
 ) {
   return logAdminAudit({
     adminId: admin.adminId,
@@ -75,7 +85,7 @@ function auditInput(
     newValues,
     ipAddress: admin.ipAddress,
     userAgent: admin.userAgent,
-  });
+  }, tx);
 }
 
 function notFound(resource: string): never {
@@ -161,30 +171,36 @@ export async function createPortfolioResource(
 ) {
   const table = tableFor(resource);
 
-  const [created] = await db
-    .insert(table)
-    .values({
-      ...values,
-      updatedAt: new Date(),
-    })
-    .returning();
+  const created = await db.transaction(async (tx) => {
+    const inserted = await tx
+      .insert(table)
+      .values({
+        ...values,
+        updatedAt: new Date(),
+      })
+      .returning();
+    const result = Array.isArray(inserted) ? inserted[0] : undefined;
 
-  if (!created) {
-    throw new ApiError(
-      500,
-      'PORTFOLIO_CREATE_FAILED',
-      'Unable to create the portfolio resource.',
+    if (!result) {
+      throw new ApiError(
+        500,
+        'PORTFOLIO_CREATE_FAILED',
+        'Unable to create the portfolio resource.',
+      );
+    }
+
+    await auditInput(
+      admin,
+      resource as ResourceName,
+      'create',
+      result.id,
+      undefined,
+      result,
+      tx,
     );
-  }
 
-  await auditInput(
-    admin,
-    resource as ResourceName,
-    'create',
-    created.id,
-    undefined,
-    created,
-  );
+    return result;
+  });
 
   return created;
 }
@@ -194,46 +210,56 @@ export async function updatePortfolioResource(
   id: string,
   values: Record<string, unknown>,
   admin: AdminContext,
+  validateCompleteRecord: CompleteRecordValidator,
 ) {
   validateId(id);
 
   const table = tableFor(resource);
 
-  const [existing] = await db
-    .select()
-    .from(table)
-    .where(eq(table.id, id))
-    .limit(1);
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(table)
+      .where(eq(table.id, id))
+      .for('update')
+      .limit(1);
 
-  if (!existing) notFound(resource);
+    if (!existing) notFound(resource);
 
-  const [updated] = await db
-    .update(table)
-    .set({
-      ...values,
-      updatedAt: new Date(),
-    })
-    .where(eq(table.id, id))
-    .returning();
-
-  if (!updated) {
-    throw new ApiError(
-      500,
-      'PORTFOLIO_UPDATE_FAILED',
-      'Unable to update the portfolio resource.',
+    const completeValues = validateCompleteRecord(
+      existing,
+      values,
     );
-  }
 
-  await auditInput(
-    admin,
-    resource as ResourceName,
-    'update',
-    id,
-    existing,
-    updated,
-  );
+    const [updated] = await tx
+      .update(table)
+      .set({
+        ...completeValues,
+        updatedAt: new Date(),
+      })
+      .where(eq(table.id, id))
+      .returning();
 
-  return updated;
+    if (!updated) {
+      throw new ApiError(
+        500,
+        'PORTFOLIO_UPDATE_FAILED',
+        'Unable to update the portfolio resource.',
+      );
+    }
+
+    await auditInput(
+      admin,
+      resource as ResourceName,
+      'update',
+      id,
+      existing,
+      updated,
+      tx,
+    );
+
+    return updated;
+  });
 }
 
 export async function deletePortfolioResource(
@@ -245,23 +271,42 @@ export async function deletePortfolioResource(
 
   const table = tableFor(resource);
 
-  const [existing] = await db
-    .select()
-    .from(table)
-    .where(eq(table.id, id))
-    .limit(1);
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(table)
+      .where(eq(table.id, id))
+      .for('update')
+      .limit(1);
 
-  if (!existing) notFound(resource);
+    if (!existing) notFound(resource);
 
-  await db.delete(table).where(eq(table.id, id));
+    const mediaOwnerType: Partial<Record<CollectionName, 'project' | 'skill' | 'experience' | 'education' | 'certification' | 'achievement'>> = {
+      projects: 'project',
+      skills: 'skill',
+      experience: 'experience',
+      education: 'education',
+      certifications: 'certification',
+      achievements: 'achievement',
+    };
+    const ownerType = mediaOwnerType[resource];
 
-  await auditInput(
-    admin,
-    resource as ResourceName,
-    'delete',
-    id,
-    existing,
-  );
+    if (ownerType) {
+      await deleteMediaMappingsForOwner(tx, ownerType, id);
+    }
+
+    await tx.delete(table).where(eq(table.id, id));
+
+    await auditInput(
+      admin,
+      resource as ResourceName,
+      'delete',
+      id,
+      existing,
+      undefined,
+      tx,
+    );
+  });
 }
 
 export async function replaceProjectImages(
@@ -276,50 +321,52 @@ export async function replaceProjectImages(
 ) {
   validateId(projectId);
 
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
+  return db.transaction(async (tx) => {
+    const [project] = await tx
+      .select({ id: projects.id })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .for('update')
+      .limit(1);
 
-  if (!project) notFound('Project');
+    if (!project) notFound('Project');
 
-  const previousImages = await db
-    .select()
-    .from(projectImages)
-    .where(eq(projectImages.projectId, projectId));
+    const previousImages = await tx
+      .select()
+      .from(projectImages)
+      .where(eq(projectImages.projectId, projectId));
 
-  const insertedImages = await db.transaction(async (tx) => {
     await tx
       .delete(projectImages)
       .where(eq(projectImages.projectId, projectId));
 
-    if (images.length === 0) return [];
+    const insertedImages = images.length === 0
+      ? []
+      : await tx
+        .insert(projectImages)
+        .values(
+          images.map((image) => ({
+            projectId,
+            imageUrl: image.imageUrl,
+            altText: image.altText,
+            caption: image.caption ?? null,
+            displayOrder: image.displayOrder,
+          })),
+        )
+        .returning();
 
-    return tx
-      .insert(projectImages)
-      .values(
-        images.map((image) => ({
-          projectId,
-          imageUrl: image.imageUrl,
-          altText: image.altText,
-          caption: image.caption ?? null,
-          displayOrder: image.displayOrder,
-        })),
-      )
-      .returning();
+    await auditInput(
+      admin,
+      'project',
+      'images_update',
+      projectId,
+      { images: previousImages },
+      { images: insertedImages },
+      tx,
+    );
+
+    return insertedImages;
   });
-
-  await auditInput(
-    admin,
-    'project',
-    'images_update',
-    projectId,
-    { images: previousImages },
-    { images: insertedImages },
-  );
-
-  return insertedImages;
 }
 
 export async function getAdminProfile() {
@@ -328,68 +375,91 @@ export async function getAdminProfile() {
     .from(profiles)
     .limit(1);
 
-  return profile ?? null;
+  return profile ? normalizeProfileExperience(profile) : null;
 }
 
 export async function saveAdminProfile(
   values: Record<string, unknown>,
   admin: AdminContext,
 ) {
-  const existing = await getAdminProfile();
+  return db.transaction(async (tx) => {
+    const [adminUser] = await tx
+      .select({ id: adminUsers.id })
+      .from(adminUsers)
+      .where(eq(adminUsers.id, admin.adminId))
+      .for('update')
+      .limit(1);
 
-  if (!existing) {
-    const [created] = await db
-      .insert(profiles)
-      .values(values as typeof profiles.$inferInsert)
+    if (!adminUser) {
+      throw new ApiError(
+        404,
+        'ADMIN_NOT_FOUND',
+        'The administrator account was not found.',
+      );
+    }
+
+    const [existing] = await tx
+      .select()
+      .from(profiles)
+      .for('update')
+      .limit(1);
+
+    if (!existing) {
+      const [created] = await tx
+        .insert(profiles)
+        .values(values as typeof profiles.$inferInsert)
+        .returning();
+
+      if (!created) {
+        throw new ApiError(
+          500,
+          'PROFILE_CREATE_FAILED',
+          'Unable to create the profile.',
+        );
+      }
+
+      await auditInput(
+        admin,
+        'profile',
+        'create',
+        created.id,
+        undefined,
+        created,
+        tx,
+      );
+
+      return normalizeProfileExperience(created);
+    }
+
+    const [updated] = await tx
+      .update(profiles)
+      .set({
+        ...values,
+        updatedAt: new Date(),
+      } as Partial<typeof profiles.$inferInsert>)
+      .where(eq(profiles.id, existing.id))
       .returning();
 
-    if (!created) {
+    if (!updated) {
       throw new ApiError(
         500,
-        'PROFILE_CREATE_FAILED',
-        'Unable to create the profile.',
+        'PROFILE_UPDATE_FAILED',
+        'Unable to update the profile.',
       );
     }
 
     await auditInput(
       admin,
       'profile',
-      'create',
-      created.id,
-      undefined,
-      created,
+      'update',
+      updated.id,
+      existing,
+      updated,
+      tx,
     );
 
-    return created;
-  }
-
-  const [updated] = await db
-    .update(profiles)
-    .set({
-      ...values,
-      updatedAt: new Date(),
-    } as Partial<typeof profiles.$inferInsert>)
-    .where(eq(profiles.id, existing.id))
-    .returning();
-
-  if (!updated) {
-    throw new ApiError(
-      500,
-      'PROFILE_UPDATE_FAILED',
-      'Unable to update the profile.',
-    );
-  }
-
-  await auditInput(
-    admin,
-    'profile',
-    'update',
-    updated.id,
-    existing,
-    updated,
-  );
-
-  return updated;
+    return normalizeProfileExperience(updated);
+  });
 }
 
 export async function getSocialLinksForAdmin() {

@@ -127,11 +127,31 @@ export async function deleteCloudinaryMedia(
 ) {
   const config = getCloudinaryConfig();
 
-  if (!publicId.startsWith('portfolio/')) {
+  const publicIdParts = publicId.split('/');
+  const validPublicId =
+    publicId.length <= 255 &&
+    publicIdParts.length >= 3 &&
+    publicIdParts[0] === 'portfolio' &&
+    ([
+      'projects',
+      'profile',
+      'experience',
+      'education',
+      'certifications',
+      'achievements',
+      'resume',
+    ] as string[]).includes(publicIdParts[1] ?? '') &&
+    publicIdParts.every(
+      (part) =>
+        part.length <= 255 &&
+        /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(part),
+    );
+
+  if (!validPublicId) {
     throw new ApiError(
       400,
       'INVALID_MEDIA_PUBLIC_ID',
-      'Only assets inside the portfolio folder can be deleted.',
+      'The media public ID is malformed or outside an allowed portfolio folder.',
     );
   }
 
@@ -170,11 +190,14 @@ export async function deleteCloudinaryMedia(
     error?: { message?: string };
   } | null;
 
-  if (!response.ok || result?.result !== 'ok') {
+  if (
+    !response.ok ||
+    (result?.result !== 'ok' && result?.result !== 'not found')
+  ) {
     throw new ApiError(
       502,
       'MEDIA_DELETE_FAILED',
-      result?.error?.message ?? 'Cloudinary could not delete the media asset.',
+      'Cloudinary could not delete the media asset.',
     );
   }
 

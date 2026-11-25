@@ -5,6 +5,12 @@ import { env } from '../config/env.js';
 import { findAdminLoginCredential } from '../services/admin-auth.service.js';
 import { verifyPassword } from '../services/password.service.js';
 import { recoverAdminAccess } from '../services/admin-recovery-auth.service.js';
+import { createAndSendOtp } from '../services/otp.service.js';
+import { reauthenticateAdmin } from '../services/admin-reauth.service.js';
+import {
+  getTrustedPrimaryAdminEmail,
+  notifyAdminLogin,
+} from '../services/admin-security-settings.service.js';
 
 import {
   createAdminSession,
@@ -21,6 +27,12 @@ import { ADMIN_SESSION_COOKIE } from '../middleware/admin-auth.js';
 interface LoginInput {
   email: string;
   password: string;
+}
+
+interface AuthenticatedAdmin {
+  id: string;
+  emailId: string;
+  email: string;
 }
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -76,6 +88,8 @@ export async function login(
     throw new Error('Failed to create admin session.');
   }
 
+  void notifyAdminLogin(admin.adminUserId, admin.email);
+
   res.cookie(ADMIN_SESSION_COOKIE, token, {
     ...cookieOptions,
     maxAge: SESSION_DURATION_MS,
@@ -93,6 +107,46 @@ export async function login(
         expiresAt: session.expiresAt,
       },
     },
+  });
+}
+
+export async function requestSensitiveActionVerification(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const admin = res.locals.admin as AuthenticatedAdmin;
+  const input = res.locals.validated?.body as {
+    currentPassword: string;
+  };
+
+  const passwordHash = await reauthenticateAdmin(
+    admin.id,
+    admin.emailId,
+    input.currentPassword,
+  );
+
+  if (!passwordHash) {
+    res.status(401).json({
+      error: {
+        code: 'REAUTHENTICATION_FAILED',
+        message: 'The current password is incorrect or the login email is unavailable.',
+      },
+    });
+    return;
+  }
+
+  const trustedEmail = await getTrustedPrimaryAdminEmail(admin.id);
+
+  await createAndSendOtp({
+    adminUserId: admin.id,
+    adminEmailId: trustedEmail.id,
+    recipientType: 'login_email',
+    purpose: 'sensitive_action',
+    recipientEmail: trustedEmail.email,
+  });
+
+  res.status(202).json({
+    message: 'A verification code has been sent to the trusted primary login email.',
   });
 }
 
@@ -159,11 +213,13 @@ export async function resetPassword(
   const input = res.locals.validated?.body as {
     token: string;
     newPassword: string;
+    verificationCode?: string;
   };
 
   const success = await completePasswordReset(
     input.token,
     input.newPassword,
+    input.verificationCode,
   );
 
   if (!success) {
@@ -210,6 +266,8 @@ export async function recoverWithRecoveryCode(
     });
     return;
   }
+
+  void notifyAdminLogin(result.admin.id, result.admin.email);
 
   res.cookie(ADMIN_SESSION_COOKIE, result.token, {
     ...cookieOptions,

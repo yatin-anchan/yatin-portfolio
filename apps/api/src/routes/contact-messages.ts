@@ -1,10 +1,26 @@
 import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 
 import { createContactMessage } from '../controllers/contact-messages.controller.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
+
+// The default express-rate-limit store is process-local; use shared storage
+// before deploying multiple API instances.
+const contactSubmissionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'CONTACT_RATE_LIMITED',
+      message: 'Too many contact submissions. Please try again later.',
+    },
+  },
+});
 
 const contactMessageSchema = z
   .object({
@@ -32,6 +48,7 @@ const contactMessageSchema = z
 
 router.post(
   '/',
+  contactSubmissionLimiter,
   validate(contactMessageSchema, 'body'),
   createContactMessage,
 );

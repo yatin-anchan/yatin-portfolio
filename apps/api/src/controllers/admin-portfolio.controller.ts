@@ -5,6 +5,8 @@ import type {
   NextFunction,
   RequestHandler,
 } from 'express';
+import { z } from 'zod';
+import { ApiError } from '../lib/errors/api-error.js';
 
 import {
   listPortfolioResource,
@@ -131,8 +133,9 @@ export function createResource(
   });
 }
 
-export function updateResource(
+export function updateResource<Schema extends z.ZodObject>(
   resource: CollectionName,
+  schema: Schema,
 ): RequestHandler {
   return asyncHandler(async (req, res) => {
     const { id } = getValidatedParams(res);
@@ -143,6 +146,35 @@ export function updateResource(
       id,
       body,
       getContext(req, res),
+      (existing, updates) => {
+        const currentFields = Object.fromEntries(
+          Object.keys(schema.shape).map((key) => [
+            key,
+            Reflect.get(existing, key),
+          ]),
+        );
+        const parsed = schema.safeParse({
+          ...currentFields,
+          ...updates,
+        });
+
+        if (!parsed.success) {
+          throw new ApiError(
+            400,
+            'INVALID_PORTFOLIO_UPDATE',
+            parsed.error.issues[0]?.message ??
+              'The resulting portfolio record is invalid.',
+          );
+        }
+
+        const completeRecord: Record<string, unknown> = {};
+
+        for (const key of Object.keys(schema.shape)) {
+          completeRecord[key] = Reflect.get(parsed.data, key);
+        }
+
+        return completeRecord;
+      },
     );
 
     res.status(200).json({

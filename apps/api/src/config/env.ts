@@ -60,6 +60,14 @@ CLOUDINARY_API_SECRET: z.string().trim().min(1).optional(),
       });
     }
 
+    if (Boolean(data.SMTP_HOST) !== Boolean(data.SMTP_FROM)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'SMTP_HOST and SMTP_FROM must be provided together.',
+        path: ['SMTP_HOST'],
+      });
+    }
+
     const cloudinaryValues = [
   data.CLOUDINARY_CLOUD_NAME,
   data.CLOUDINARY_API_KEY,

@@ -15,6 +15,7 @@ import {
 
 import { reauthenticateAdmin } from './admin-reauth.service.js';
 import { logAdminAudit } from './admin-audit.service.js';
+import { verifySensitiveActionIfRequired } from './otp.service.js';
 import type { SessionMetadata } from './session.service.js';
 
 const RECOVERY_CODE_COUNT = 10;
@@ -46,6 +47,7 @@ export async function regenerateRecoveryCodesForAdmin(
   adminUserId: string,
   adminEmailId: string,
   currentPassword: string,
+  verificationCode: string | undefined,
   metadata: SessionMetadata,
 ): Promise<string[] | null> {
   const expectedPasswordHash = await reauthenticateAdmin(
@@ -69,6 +71,16 @@ export async function regenerateRecoveryCodesForAdmin(
   }));
 
   return db.transaction(async (tx) => {
+    const authorized = await verifySensitiveActionIfRequired(
+      tx,
+      adminUserId,
+      verificationCode,
+    );
+
+    if (!authorized) {
+      return null;
+    }
+
     // Lock the authenticated email and ensure its password
     // has not changed since reauthentication.
     const [emailRecord] = await tx

@@ -9,10 +9,12 @@ import {
 } from '../services/backup-email.service.js';
 
 import { reauthenticateAdmin } from '../services/admin-reauth.service.js';
+import { notifyAdminSecurityEvent } from '../services/admin-security-settings.service.js';
 
 interface AuthenticatedAdmin {
   id: string;
   emailId: string;
+  email: string;
 }
 
 function getAdmin(res: Response): AuthenticatedAdmin {
@@ -33,12 +35,46 @@ export async function getBackupEmail(
 }
 
 export async function addBackupEmailAddress(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
-  const input = getValidatedBody<{ email: string }>(res);
+  const input = getValidatedBody<{
+    email: string;
+    currentPassword: string;
+    verificationCode?: string;
+  }>(res);
+  const admin = getAdmin(res);
+  const passwordHash = await reauthenticateAdmin(
+    admin.id,
+    admin.emailId,
+    input.currentPassword,
+  );
 
-  await addBackupEmail(getAdmin(res).id, input.email);
+  if (!passwordHash) {
+    res.status(401).json({
+      error: {
+        code: 'REAUTHENTICATION_FAILED',
+        message: 'The current password is incorrect or the authenticated login email is unavailable.',
+      },
+    });
+    return;
+  }
+
+  await addBackupEmail(
+    admin.id,
+    admin.emailId,
+    passwordHash,
+    input.email,
+    input.verificationCode,
+    req.ip ?? null,
+    req.get('user-agent') ?? null,
+  );
+
+  void notifyAdminSecurityEvent(
+    admin.id,
+    admin.email,
+    'A backup email was added to your administrator account.',
+  );
 
   res.status(201).json({
     message: 'Backup email added. A verification code has been sent to the address.',
@@ -66,17 +102,27 @@ export async function verifyBackupEmailAddress(
     return;
   }
 
+  const admin = getAdmin(res);
+  void notifyAdminSecurityEvent(
+    admin.id,
+    admin.email,
+    'A backup email was verified for your administrator account.',
+  );
+
   res.status(200).json({
     message: 'Backup email verified successfully.',
   });
 }
 
 export async function deleteBackupEmail(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
   const admin = getAdmin(res);
-  const input = getValidatedBody<{ currentPassword: string }>(res);
+  const input = getValidatedBody<{
+    currentPassword: string;
+    verificationCode?: string;
+  }>(res);
 
   const passwordHash = await reauthenticateAdmin(
     admin.id,
@@ -98,17 +144,26 @@ export async function deleteBackupEmail(
     admin.id,
     admin.emailId,
     passwordHash,
+    input.verificationCode,
+    req.ip ?? null,
+    req.get('user-agent') ?? null,
   );
 
   if (!removed) {
-    res.status(404).json({
+    res.status(409).json({
       error: {
-        code: 'BACKUP_EMAIL_NOT_FOUND',
-        message: 'No backup email is configured, or the authenticated login email is unavailable.',
+        code: 'BACKUP_EMAIL_REMOVAL_FAILED',
+        message: 'No backup email is configured, reauthentication failed, or trusted verification was invalid.',
       },
     });
     return;
   }
+
+  void notifyAdminSecurityEvent(
+    admin.id,
+    admin.email,
+    'The backup email for your administrator account was removed.',
+  );
 
   res.status(200).json({
     message: 'Backup email removed successfully.',

@@ -154,7 +154,62 @@ const educationSchema = z.object({
 ).refine(
   (data) => !data.endDate || data.endDate >= data.startDate,
   { message: 'End date cannot be earlier than start date.', path: ['endDate'] },
-);
+).superRefine((data, ctx) => {
+  const gradeValue = data.gradeValue?.trim() ?? '';
+  const gradeScale = data.gradeScale?.trim() ?? '';
+
+  if ((gradeValue || gradeScale) && !data.gradeType) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'A grade type is required when a grade value or scale is provided.',
+      path: ['gradeType'],
+    });
+  }
+
+  if (data.gradeType && !gradeValue) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'A grade value is required when a grade type is provided.',
+      path: ['gradeValue'],
+    });
+  }
+
+  const numericValue = Number(gradeValue);
+  const numericScale = Number(gradeScale);
+
+  if (gradeValue && Number.isFinite(numericValue)) {
+    if (numericValue < 0) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'A numeric grade value cannot be negative.',
+        path: ['gradeValue'],
+      });
+    }
+
+    if (
+      ['percentage', 'percentile'].includes(data.gradeType ?? '') &&
+      numericValue > 100
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Percentage and percentile values cannot exceed 100.',
+        path: ['gradeValue'],
+      });
+    }
+
+    if (
+      gradeScale &&
+      Number.isFinite(numericScale) &&
+      (numericScale <= 0 || numericValue > numericScale)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'A numeric grade value must be within its positive grade scale.',
+        path: ['gradeScale'],
+      });
+    }
+  }
+});
 
 const certificationSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -223,7 +278,18 @@ const profileSchema = z.object({
   location: z.string().max(200).nullable().optional(),
   resumeUrl: optionalUrl,
   availabilityStatus: z.enum(['available', 'employed', 'unavailable']).default('available'),
-  yearsOfExperience: z.number().min(0).max(999.9).nullable().optional(),
+  yearsOfExperience: z.preprocess(
+    (value) =>
+      typeof value === 'string' && value.trim() === ''
+        ? Number.NaN
+        : value,
+    z.coerce.number()
+      .min(0)
+      .max(999.9)
+      .transform((value) => Math.round(value * 10) / 10)
+      .nullable()
+      .optional(),
+  ),
   seoTitle: z.string().max(200).nullable().optional(),
   seoDescription: z.string().max(10000).nullable().optional(),
 }).strict();
@@ -246,8 +312,8 @@ const projectImagesSchema = z.object({
   }).strict()).max(100),
 }).strict();
 
-function partialSchema<T extends z.ZodObject<any>>(schema: T) {
-  return schema.partial();
+function partialSchema<T extends z.ZodObject>(schema: T) {
+  return z.object(schema.shape).strict().partial();
 }
 
 router.use(requireAdmin);
@@ -263,7 +329,7 @@ function registerCollection(
     | 'certifications'
     | 'achievements'
     | 'socialLinks',
-  schema: z.ZodObject<any>,
+  schema: z.ZodObject,
 ) {
   const partial = partialSchema(schema);
 
@@ -289,7 +355,7 @@ function registerCollection(
     `/${path}/:id`,
     validate(paramsSchema, 'params'),
     validate(partial, 'body'),
-    updateResource(resource),
+    updateResource(resource, schema),
   );
 
   router.delete(

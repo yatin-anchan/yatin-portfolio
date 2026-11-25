@@ -1,0 +1,8 @@
+﻿"Test","Method","Endpoint","Expected","Actual","Result","Details"
+"Health endpoint","GET","/health","200","200","PASS",""
+"Unknown endpoint returns 404","GET","/__api_test_missing_route__","404","404","PASS",""
+"Admin me requires authentication","GET","/api/admin/auth/me","401","401","PASS",""
+"Admin sessions requires authentication","GET","/api/admin/sessions","401","401","PASS",""
+"Recovery codes requires authentication","GET","/api/admin/recovery-codes","401","401","PASS",""
+"Invalid credentials are rejected","POST","/api/admin/auth/login","400,401,422","403","FAIL",""
+"Admin login","POST","/api/admin/auth/login","200","403","FAIL",""

@@ -12,14 +12,19 @@ import {
   adminEmailVerifications,
 } from '@yatin-portfolio/database';
 
+import { ApiError } from '../lib/errors/api-error.js';
 import {
   encryptBackupEmail,
   decryptBackupEmail,
 } from './backup-email-crypto.service.js';
 
 import {
+  logAdminAudit,
+} from './admin-audit.service.js';
+import {
   createAndSendOtp,
   verifyOtpAndRun,
+  verifySensitiveActionIfRequired,
 } from './otp.service.js';
 
 function maskEmail(email: string): string {
@@ -71,12 +76,54 @@ export async function getBackupEmailStatus(adminUserId: string) {
 
 export async function addBackupEmail(
   adminUserId: string,
+  authenticatedEmailId: string,
+  expectedPasswordHash: string,
   email: string,
+  verificationCode: string | undefined,
+  ipAddress: string | null,
+  userAgent: string | null,
 ): Promise<void> {
   const normalizedEmail = email.trim().toLowerCase();
   const encryptedEmail = encryptBackupEmail(normalizedEmail);
 
   await db.transaction(async (tx) => {
+    const authorized = await verifySensitiveActionIfRequired(
+      tx,
+      adminUserId,
+      verificationCode,
+    );
+
+    if (!authorized) {
+      throw new ApiError(
+        401,
+        'TRUSTED_VERIFICATION_FAILED',
+        'The trusted verification code is invalid, expired, or required.',
+      );
+    }
+
+    const [authenticatedEmail] = await tx
+      .select({ id: adminEmails.id })
+      .from(adminEmails)
+      .where(
+        and(
+          eq(adminEmails.id, authenticatedEmailId),
+          eq(adminEmails.adminUserId, adminUserId),
+          eq(adminEmails.passwordHash, expectedPasswordHash),
+          eq(adminEmails.isVerified, true),
+          isNull(adminEmails.removedAt),
+        ),
+      )
+      .for('update')
+      .limit(1);
+
+    if (!authenticatedEmail) {
+      throw new ApiError(
+        401,
+        'REAUTHENTICATION_FAILED',
+        'The authenticated login email is unavailable.',
+      );
+    }
+
     const [settings] = await tx
       .select({
         id: adminSecuritySettings.id,
@@ -91,11 +138,17 @@ export async function addBackupEmail(
       .limit(1);
 
     if (!settings) {
-      throw new Error('Admin security settings not found.');
+      throw new ApiError(
+        404,
+        'SECURITY_SETTINGS_NOT_FOUND',
+        'Administrator security settings were not found.',
+      );
     }
 
     if (settings.backupEmailEncrypted) {
-      throw new Error(
+      throw new ApiError(
+        409,
+        'BACKUP_EMAIL_ALREADY_CONFIGURED',
         'A backup email is already configured. Remove it before adding another.',
       );
     }
@@ -110,6 +163,16 @@ export async function addBackupEmail(
       .where(
         eq(adminSecuritySettings.id, settings.id),
       );
+
+    await logAdminAudit({
+      adminId: adminUserId,
+      action: 'admin.backup_email.added',
+      entityType: 'admin_security_settings',
+      entityId: settings.id,
+      description: 'Administrator configured a pending backup email.',
+      ipAddress,
+      userAgent,
+    }, tx);
   });
 
   try {
@@ -121,28 +184,41 @@ export async function addBackupEmail(
       recipientEmail: normalizedEmail,
     });
   } catch (error) {
-    await db
-      .update(adminSecuritySettings)
-      .set({
-        backupEmailEncrypted: null,
-        backupEmailVerifiedAt: null,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(
-            adminSecuritySettings.adminUserId,
-            adminUserId,
+    await db.transaction(async (tx) => {
+      const [settings] = await tx
+        .select({ id: adminSecuritySettings.id })
+        .from(adminSecuritySettings)
+        .where(
+          and(
+            eq(adminSecuritySettings.adminUserId, adminUserId),
+            eq(adminSecuritySettings.backupEmailEncrypted, encryptedEmail),
+            isNull(adminSecuritySettings.backupEmailVerifiedAt),
           ),
-          eq(
-            adminSecuritySettings.backupEmailEncrypted,
-            encryptedEmail,
-          ),
-          isNull(
-            adminSecuritySettings.backupEmailVerifiedAt,
-          ),
-        ),
-      );
+        )
+        .for('update')
+        .limit(1);
+
+      if (!settings) return;
+
+      await tx
+        .update(adminSecuritySettings)
+        .set({
+          backupEmailEncrypted: null,
+          backupEmailVerifiedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(adminSecuritySettings.id, settings.id));
+
+      await logAdminAudit({
+        adminId: adminUserId,
+        action: 'admin.backup_email.add_failed',
+        entityType: 'admin_security_settings',
+        entityId: settings.id,
+        description: 'Pending backup email was removed after verification delivery failed.',
+        ipAddress,
+        userAgent,
+      }, tx);
+    });
 
     throw error;
   }
@@ -205,6 +281,16 @@ export async function verifyBackupEmail(
         )
         .returning({ id: adminSecuritySettings.id });
 
+      if (updated) {
+        await logAdminAudit({
+          adminId: adminUserId,
+          action: 'admin.backup_email.verified',
+          entityType: 'admin_security_settings',
+          entityId: settings.id,
+          description: 'Administrator verified a backup email.',
+        }, tx);
+      }
+
       return Boolean(updated);
     },
   );
@@ -214,8 +300,19 @@ export async function removeBackupEmail(
   adminUserId: string,
   authenticatedEmailId: string,
   expectedPasswordHash: string,
+  verificationCode: string | undefined,
+  ipAddress: string | null,
+  userAgent: string | null,
 ): Promise<boolean> {
   return db.transaction(async (tx) => {
+    const authorized = await verifySensitiveActionIfRequired(
+      tx,
+      adminUserId,
+      verificationCode,
+    );
+
+    if (!authorized) return false;
+
     const [authenticatedEmail] = await tx
       .select({ id: adminEmails.id })
       .from(adminEmails)
@@ -286,6 +383,16 @@ export async function removeBackupEmail(
       .where(
         eq(adminSecuritySettings.id, settings.id),
       );
+
+    await logAdminAudit({
+      adminId: adminUserId,
+      action: 'admin.backup_email.removed',
+      entityType: 'admin_security_settings',
+      entityId: settings.id,
+      description: 'Administrator removed the configured backup email.',
+      ipAddress,
+      userAgent,
+    }, tx);
 
     return true;
   });

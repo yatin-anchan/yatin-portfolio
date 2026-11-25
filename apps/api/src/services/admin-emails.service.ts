@@ -9,15 +9,28 @@ import {
 
 import {
   db,
+  adminUsers,
   adminEmails,
 } from '@yatin-portfolio/database';
 
+import { ApiError } from '../lib/errors/api-error.js';
 import { hashPassword } from './password.service.js';
+import { logAdminAudit } from './admin-audit.service.js';
 
 import {
   createAndSendOtp,
   verifyOtpAndRun,
+  verifySensitiveActionIfRequired,
 } from './otp.service.js';
+
+function hasDatabaseCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === code
+  );
+}
 
 export async function findAdminEmails(adminUserId: string) {
   return db
@@ -44,62 +57,172 @@ export async function findAdminEmails(adminUserId: string) {
 
 export async function addAdminEmail(
   adminUserId: string,
+  authenticatedEmailId: string,
+  expectedPasswordHash: string,
+  trustedEmailId: string,
   email: string,
   password: string,
+  trustedCode: string,
+  ipAddress: string | null,
+  userAgent: string | null,
 ): Promise<void> {
   const normalizedEmail = email.trim().toLowerCase();
   const passwordHash = await hashPassword(password);
+  let createdEmailId: string | null = null;
 
-  const created = await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({ id: adminEmails.id })
-      .from(adminEmails)
-      .where(
-        sql`lower(${adminEmails.email}) = ${normalizedEmail}`,
-      )
-      .limit(1);
+  let authorized: boolean;
 
-    if (existing) {
-      throw new Error('This email address is already registered.');
+  try {
+    authorized = await verifyOtpAndRun(
+      adminUserId,
+      'sensitive_action',
+      trustedCode,
+      'login_email',
+      trustedEmailId,
+      async (tx) => {
+        await tx
+          .select({ id: adminUsers.id })
+          .from(adminUsers)
+          .where(eq(adminUsers.id, adminUserId))
+          .for('update');
+
+        const [authenticatedEmail] = await tx
+          .select({ id: adminEmails.id })
+          .from(adminEmails)
+          .where(
+            and(
+              eq(adminEmails.id, authenticatedEmailId),
+              eq(adminEmails.adminUserId, adminUserId),
+              eq(adminEmails.passwordHash, expectedPasswordHash),
+              eq(adminEmails.isVerified, true),
+              isNull(adminEmails.removedAt),
+            ),
+          )
+          .for('update')
+          .limit(1);
+
+        const [trustedEmail] = await tx
+          .select({ id: adminEmails.id })
+          .from(adminEmails)
+          .where(
+            and(
+              eq(adminEmails.id, trustedEmailId),
+              eq(adminEmails.adminUserId, adminUserId),
+              eq(adminEmails.isPrimary, true),
+              eq(adminEmails.isVerified, true),
+              isNull(adminEmails.removedAt),
+            ),
+          )
+          .for('update')
+          .limit(1);
+
+        if (!authenticatedEmail || !trustedEmail) {
+          return false;
+        }
+
+        const [existing] = await tx
+          .select({ id: adminEmails.id })
+          .from(adminEmails)
+          .where(
+            sql`lower(${adminEmails.email}) = ${normalizedEmail}`,
+          )
+          .limit(1);
+
+        if (existing) {
+          throw new ApiError(
+            409,
+            'EMAIL_ALREADY_REGISTERED',
+            'This email address is already registered.',
+          );
+        }
+
+        const [created] = await tx
+          .insert(adminEmails)
+          .values({
+            adminUserId,
+            email: normalizedEmail,
+            passwordHash,
+            isPrimary: false,
+            isVerified: false,
+          })
+          .returning({ id: adminEmails.id });
+
+        if (!created) {
+          throw new ApiError(
+            500,
+            'EMAIL_ADD_FAILED',
+            'Unable to add the login email.',
+          );
+        }
+
+        createdEmailId = created.id;
+
+        await logAdminAudit({
+          adminId: adminUserId,
+          action: 'admin.login_email.added',
+          entityType: 'admin_email',
+          entityId: created.id,
+          description: 'Administrator added a pending login email.',
+          ipAddress,
+          userAgent,
+        }, tx);
+
+        return true;
+      },
+    );
+  } catch (error) {
+    if (hasDatabaseCode(error, '23505')) {
+      throw new ApiError(
+        409,
+        'EMAIL_ALREADY_REGISTERED',
+        'This email address is already registered.',
+      );
     }
 
-    const [result] = await tx
-      .insert(adminEmails)
-      .values({
-        adminUserId,
-        email: normalizedEmail,
-        passwordHash,
-        isPrimary: false,
-        isVerified: false,
-      })
-      .returning({ id: adminEmails.id });
+    throw error;
+  }
 
-    if (!result) {
-      throw new Error('Failed to add login email.');
-    }
+  if (!authorized || !createdEmailId) {
+    throw new ApiError(
+      401,
+      'TRUSTED_VERIFICATION_FAILED',
+      'The trusted verification code is invalid, expired, or no longer authorized.',
+    );
+  }
 
-    return result;
-  });
+  const pendingEmailId = createdEmailId;
 
   try {
     await createAndSendOtp({
       adminUserId,
-      adminEmailId: created.id,
+      adminEmailId: pendingEmailId,
       recipientType: 'login_email',
       purpose: 'add_login_email',
       recipientEmail: normalizedEmail,
     });
   } catch (error) {
-    await db
-      .delete(adminEmails)
-      .where(
-        and(
-          eq(adminEmails.id, created.id),
-          eq(adminEmails.adminUserId, adminUserId),
-          eq(adminEmails.isVerified, false),
-          eq(adminEmails.isPrimary, false),
-        ),
-      );
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(adminEmails)
+        .where(
+          and(
+            eq(adminEmails.id, pendingEmailId),
+            eq(adminEmails.adminUserId, adminUserId),
+            eq(adminEmails.isVerified, false),
+            eq(adminEmails.isPrimary, false),
+          ),
+        );
+
+      await logAdminAudit({
+        adminId: adminUserId,
+        action: 'admin.login_email.add_failed',
+        entityType: 'admin_email',
+        entityId: pendingEmailId,
+        description: 'Pending login email was removed after verification delivery failed.',
+        ipAddress,
+        userAgent,
+      }, tx);
+    });
 
     throw error;
   }
@@ -112,6 +235,8 @@ export async function verifyAdminEmail(
   adminUserId: string,
   adminEmailId: string,
   code: string,
+  ipAddress: string | null,
+  userAgent: string | null,
 ): Promise<boolean> {
   return verifyOtpAndRun(
     adminUserId,
@@ -157,6 +282,18 @@ export async function verifyAdminEmail(
         )
         .returning({ id: adminEmails.id });
 
+      if (updated) {
+        await logAdminAudit({
+          adminId: adminUserId,
+          action: 'admin.login_email.verified',
+          entityType: 'admin_email',
+          entityId: adminEmailId,
+          description: 'Administrator verified a login email.',
+          ipAddress,
+          userAgent,
+        }, tx);
+      }
+
       return Boolean(updated);
     },
   );
@@ -167,16 +304,40 @@ export async function verifyAdminEmail(
  */
 export async function verifyPrimaryAdminEmail(
   adminUserId: string,
-  adminEmailId: string,
+  targetEmailId: string,
+  trustedEmailId: string,
   code: string,
+  ipAddress: string | null,
+  userAgent: string | null,
 ): Promise<boolean> {
   return verifyOtpAndRun(
     adminUserId,
-    'change_primary_email',
+    'sensitive_action',
     code,
     'login_email',
-    adminEmailId,
+    trustedEmailId,
     async (tx) => {
+      await tx
+        .select({ id: adminUsers.id })
+        .from(adminUsers)
+        .where(eq(adminUsers.id, adminUserId))
+        .for('update');
+
+      const [trustedEmail] = await tx
+        .select({ id: adminEmails.id })
+        .from(adminEmails)
+        .where(
+          and(
+            eq(adminEmails.id, trustedEmailId),
+            eq(adminEmails.adminUserId, adminUserId),
+            eq(adminEmails.isPrimary, true),
+            eq(adminEmails.isVerified, true),
+            isNull(adminEmails.removedAt),
+          ),
+        )
+        .for('update')
+        .limit(1);
+
       const [target] = await tx
         .select({
           id: adminEmails.id,
@@ -185,7 +346,7 @@ export async function verifyPrimaryAdminEmail(
         .from(adminEmails)
         .where(
           and(
-            eq(adminEmails.id, adminEmailId),
+            eq(adminEmails.id, targetEmailId),
             eq(adminEmails.adminUserId, adminUserId),
             eq(adminEmails.isVerified, true),
             isNull(adminEmails.removedAt),
@@ -194,7 +355,7 @@ export async function verifyPrimaryAdminEmail(
         .for('update')
         .limit(1);
 
-      if (!target) {
+      if (!trustedEmail || !target) {
         return false;
       }
 
@@ -218,13 +379,25 @@ export async function verifyPrimaryAdminEmail(
         .set({ isPrimary: true })
         .where(
           and(
-            eq(adminEmails.id, adminEmailId),
+            eq(adminEmails.id, targetEmailId),
             eq(adminEmails.adminUserId, adminUserId),
             eq(adminEmails.isVerified, true),
             isNull(adminEmails.removedAt),
           ),
         )
         .returning({ id: adminEmails.id });
+
+      if (updated) {
+        await logAdminAudit({
+          adminId: adminUserId,
+          action: 'admin.login_email.primary_changed',
+          entityType: 'admin_email',
+          entityId: targetEmailId,
+          description: 'Administrator changed the primary login email.',
+          ipAddress,
+          userAgent,
+        }, tx);
+      }
 
       return Boolean(updated);
     },
@@ -236,8 +409,21 @@ export async function removeAdminEmail(
   adminEmailId: string,
   authenticatedEmailId: string,
   expectedPasswordHash: string,
+  verificationCode: string | undefined,
+  ipAddress: string | null,
+  userAgent: string | null,
 ): Promise<boolean> {
   return db.transaction(async (tx) => {
+    const authorized = await verifySensitiveActionIfRequired(
+      tx,
+      adminUserId,
+      verificationCode,
+    );
+
+    if (!authorized) {
+      return false;
+    }
+
     const [authenticatedEmail] = await tx
       .select({ id: adminEmails.id })
       .from(adminEmails)
@@ -296,6 +482,20 @@ export async function removeAdminEmail(
       )
       .returning({ id: adminEmails.id });
 
-    return Boolean(removed);
+    if (!removed) {
+      return false;
+    }
+
+    await logAdminAudit({
+      adminId: adminUserId,
+      action: 'admin.login_email.removed',
+      entityType: 'admin_email',
+      entityId: adminEmailId,
+      description: 'Administrator removed a login email.',
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return true;
   });
 }

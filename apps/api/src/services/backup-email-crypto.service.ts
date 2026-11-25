@@ -70,10 +70,14 @@ export function decryptBackupEmail(
   const [, saltHex, ivHex, authTagHex, ciphertextHex] = parts;
 
   if (
+    typeof saltHex !== 'string' ||
+    typeof ivHex !== 'string' ||
+    typeof authTagHex !== 'string' ||
+    typeof ciphertextHex !== 'string' ||
     !/^[a-f0-9]{32}$/i.test(saltHex) ||
     !/^[a-f0-9]{24}$/i.test(ivHex) ||
     !/^[a-f0-9]{32}$/i.test(authTagHex) ||
-    !/^(?:[a-f0-9]{2})*$/i.test(ciphertextHex)
+    !/^(?:[a-f0-9]{2})+$/i.test(ciphertextHex)
   ) {
     throw new Error('Invalid encrypted backup email data.');
   }
@@ -94,5 +98,14 @@ export function decryptBackupEmail(
     decipher.final(),
   ]);
 
-  return decrypted.toString('utf8');
+  const email = decrypted.toString('utf8').trim().toLowerCase();
+
+  if (
+    email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    throw new Error('Decrypted backup email is invalid.');
+  }
+
+  return email;
 }

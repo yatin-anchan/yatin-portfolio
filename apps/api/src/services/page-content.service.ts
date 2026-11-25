@@ -18,7 +18,10 @@ export interface PageContentInput {
   subtitle?: string | null;
   content?: {
     version: 1;
-    blocks: Array<Record<string, unknown>>;
+    blocks: Array<{
+      type: 'heading' | 'paragraph' | 'image' | 'list' | 'code';
+      [key: string]: unknown;
+    }>;
   } | null;
   status?: 'draft' | 'published';
   isVisible?: boolean;
@@ -81,8 +84,6 @@ export async function upsertPageSection(
   ipAddress: string | null,
   userAgent: string | null,
 ) {
-  const existing = await findAdminPageSection(page, section);
-
   const values = {
     title: input.title ?? null,
     subtitle: input.subtitle ?? null,
@@ -94,46 +95,64 @@ export async function upsertPageSection(
     updatedBy: adminId,
   };
 
-  const [result] = await db
-    .insert(pageContent)
-    .values({
-      page,
-      section,
-      ...values,
-    })
-    .onConflictDoUpdate({
-      target: [pageContent.page, pageContent.section],
-      set: values,
-    })
-    .returning();
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(pageContent)
+      .where(
+        and(
+          eq(pageContent.page, page),
+          eq(pageContent.section, section),
+        ),
+      )
+      .for('update')
+      .limit(1);
 
-  await logAdminAudit({
-    adminId,
-    action: existing
-      ? 'page_content.updated'
-      : 'page_content.created',
-    entityType: 'page_content',
-    entityId: result.id,
-    description: `Page section "${page}/${section}" was ${existing ? 'updated' : 'created'}.`,
-    oldValues: existing
-      ? {
-          status: existing.status,
-          isVisible: existing.isVisible,
-          displayOrder: existing.displayOrder,
-        }
-      : null,
-    newValues: {
-      page,
-      section,
-      status: result.status,
-      isVisible: result.isVisible,
-      displayOrder: result.displayOrder,
-    },
-    ipAddress,
-    userAgent,
+    const [result] = await tx
+      .insert(pageContent)
+      .values({
+        page,
+        section,
+        ...values,
+      })
+      .onConflictDoUpdate({
+        target: [pageContent.page, pageContent.section],
+        set: values,
+      })
+      .returning();
+
+    if (!result) {
+      throw new Error('Unable to save page content.');
+    }
+
+    await logAdminAudit({
+      adminId,
+      action: existing
+        ? 'page_content.updated'
+        : 'page_content.created',
+      entityType: 'page_content',
+      entityId: result.id,
+      description: `Page section "${page}/${section}" was ${existing ? 'updated' : 'created'}.`,
+      oldValues: existing
+        ? {
+            status: existing.status,
+            isVisible: existing.isVisible,
+            displayOrder: existing.displayOrder,
+          }
+        : null,
+      newValues: {
+        page,
+        section,
+        status: result.status,
+        isVisible: result.isVisible,
+        displayOrder: result.displayOrder,
+      },
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return result;
   });
-
-  return result;
 }
 
 export async function deletePageSection(
@@ -143,36 +162,41 @@ export async function deletePageSection(
   ipAddress: string | null,
   userAgent: string | null,
 ) {
-  const existing = await findAdminPageSection(page, section);
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(pageContent)
+      .where(
+        and(
+          eq(pageContent.page, page),
+          eq(pageContent.section, section),
+        ),
+      )
+      .for('update')
+      .limit(1);
 
-  if (!existing) {
-    return null;
-  }
+    if (!existing) return null;
 
-  await db
-    .delete(pageContent)
-    .where(
-      and(
-        eq(pageContent.page, page),
-        eq(pageContent.section, section),
-      ),
-    );
+    await tx
+      .delete(pageContent)
+      .where(eq(pageContent.id, existing.id));
 
-  await logAdminAudit({
-    adminId,
-    action: 'page_content.deleted',
-    entityType: 'page_content',
-    entityId: existing.id,
-    description: `Page section "${page}/${section}" was deleted.`,
-    oldValues: {
-      page,
-      section,
-      status: existing.status,
-      isVisible: existing.isVisible,
-    },
-    ipAddress,
-    userAgent,
+    await logAdminAudit({
+      adminId,
+      action: 'page_content.deleted',
+      entityType: 'page_content',
+      entityId: existing.id,
+      description: `Page section "${page}/${section}" was deleted.`,
+      oldValues: {
+        page,
+        section,
+        status: existing.status,
+        isVisible: existing.isVisible,
+      },
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return existing;
   });
-
-  return existing;
 }

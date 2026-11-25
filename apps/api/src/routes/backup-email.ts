@@ -18,8 +18,9 @@ const router = Router();
 const deleteBackupEmailSchema = z
   .object({
     currentPassword: z.string().min(1).max(128),
+    verificationCode: z.string().regex(/^\d{6}$/).optional(),
   })
-  .strict();  
+  .strict();
 
 const managementLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -50,6 +51,8 @@ const verificationLimiter = rateLimit({
 const addBackupEmailSchema = z
   .object({
     email: z.string().trim().email().max(254),
+    currentPassword: z.string().min(1).max(128),
+    verificationCode: z.string().regex(/^\d{6}$/).optional(),
   })
   .strict();
 

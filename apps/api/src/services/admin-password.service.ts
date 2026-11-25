@@ -19,6 +19,7 @@ import {
 } from './password.service.js';
 
 import { logAdminAudit } from './admin-audit.service.js';
+import { verifySensitiveActionIfRequired } from './otp.service.js';
 
 interface ChangePasswordInput {
   adminId: string;
@@ -26,6 +27,7 @@ interface ChangePasswordInput {
   currentSessionId: string;
   currentPassword: string;
   newPassword: string;
+  verificationCode?: string;
   ipAddress: string | null;
   userAgent: string | null;
 }
@@ -71,6 +73,16 @@ export async function changeAdminPassword(
   );
 
   return db.transaction(async (tx) => {
+    const authorized = await verifySensitiveActionIfRequired(
+      tx,
+      input.adminId,
+      input.verificationCode,
+    );
+
+    if (!authorized) {
+      return false;
+    }
+
     const [updatedEmail] = await tx
       .update(adminEmails)
       .set({

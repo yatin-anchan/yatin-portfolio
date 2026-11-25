@@ -162,52 +162,55 @@ export async function updateContactMessageStatus(
   status: ContactMessageStatus,
   metadata: RequestMetadata,
 ) {
-  const [existing] = await db
-    .select({
-      id: contactMessages.id,
-      status: contactMessages.status,
-    })
-    .from(contactMessages)
-    .where(eq(contactMessages.id, id))
-    .limit(1);
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        id: contactMessages.id,
+        status: contactMessages.status,
+      })
+      .from(contactMessages)
+      .where(eq(contactMessages.id, id))
+      .for('update')
+      .limit(1);
 
-  if (!existing) {
-    throw new ApiError(
-      404,
-      'CONTACT_MESSAGE_NOT_FOUND',
-      'Contact message not found.',
-    );
-  }
+    if (!existing) {
+      throw new ApiError(
+        404,
+        'CONTACT_MESSAGE_NOT_FOUND',
+        'Contact message not found.',
+      );
+    }
 
-  const [updated] = await db
-    .update(contactMessages)
-    .set({
-      status,
-      updatedAt: new Date(),
-    })
-    .where(eq(contactMessages.id, id))
-    .returning();
+    const [updated] = await tx
+      .update(contactMessages)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(contactMessages.id, id))
+      .returning();
 
-  if (!updated) {
-    throw new ApiError(
-      500,
-      'CONTACT_MESSAGE_UPDATE_FAILED',
-      'Unable to update contact message.',
-    );
-  }
+    if (!updated) {
+      throw new ApiError(
+        500,
+        'CONTACT_MESSAGE_UPDATE_FAILED',
+        'Unable to update contact message.',
+      );
+    }
 
-  await logAdminAudit({
-    adminId,
-    action: 'admin.contact_message_status_updated',
-    entityType: 'contact_message',
-    entityId: id,
-    description: 'Administrator updated a contact message status.',
-    oldValues: { status: existing.status },
-    newValues: { status },
-    ...auditMetadata(metadata),
+    await logAdminAudit({
+      adminId,
+      action: 'admin.contact_message_status_updated',
+      entityType: 'contact_message',
+      entityId: id,
+      description: 'Administrator updated a contact message status.',
+      oldValues: { status: existing.status },
+      newValues: { status },
+      ...auditMetadata(metadata),
+    }, tx);
+
+    return updated;
   });
-
-  return updated;
 }
 
 /**
@@ -220,50 +223,52 @@ export async function updateContactMessageNotes(
   notes: string,
   metadata: RequestMetadata,
 ) {
-  const [existing] = await db
-    .select({
-      id: contactMessages.id,
-      adminNotes: contactMessages.adminNotes,
-    })
-    .from(contactMessages)
-    .where(eq(contactMessages.id, id))
-    .limit(1);
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        id: contactMessages.id,
+      })
+      .from(contactMessages)
+      .where(eq(contactMessages.id, id))
+      .for('update')
+      .limit(1);
 
-  if (!existing) {
-    throw new ApiError(
-      404,
-      'CONTACT_MESSAGE_NOT_FOUND',
-      'Contact message not found.',
-    );
-  }
+    if (!existing) {
+      throw new ApiError(
+        404,
+        'CONTACT_MESSAGE_NOT_FOUND',
+        'Contact message not found.',
+      );
+    }
 
-  const [updated] = await db
-    .update(contactMessages)
-    .set({
-      adminNotes: notes || null,
-      updatedAt: new Date(),
-    })
-    .where(eq(contactMessages.id, id))
-    .returning();
+    const [updated] = await tx
+      .update(contactMessages)
+      .set({
+        adminNotes: notes || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(contactMessages.id, id))
+      .returning();
 
-  if (!updated) {
-    throw new ApiError(
-      500,
-      'CONTACT_MESSAGE_UPDATE_FAILED',
-      'Unable to update contact message notes.',
-    );
-  }
+    if (!updated) {
+      throw new ApiError(
+        500,
+        'CONTACT_MESSAGE_UPDATE_FAILED',
+        'Unable to update contact message notes.',
+      );
+    }
 
-  await logAdminAudit({
-    adminId,
-    action: 'admin.contact_message_notes_updated',
-    entityType: 'contact_message',
-    entityId: id,
-    description: 'Administrator updated internal contact message notes.',
-    ...auditMetadata(metadata),
+    await logAdminAudit({
+      adminId,
+      action: 'admin.contact_message_notes_updated',
+      entityType: 'contact_message',
+      entityId: id,
+      description: 'Administrator updated internal contact message notes.',
+      ...auditMetadata(metadata),
+    }, tx);
+
+    return updated;
   });
-
-  return updated;
 }
 
 function escapeHtml(value: string): string {
@@ -307,34 +312,36 @@ export async function replyToContactMessage(
 
   const now = new Date();
 
-  const [updated] = await db
-    .update(contactMessages)
-    .set({
-      status: 'replied',
-      repliedAt: now,
-      updatedAt: now,
-    })
-    .where(eq(contactMessages.id, id))
-    .returning();
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(contactMessages)
+      .set({
+        status: 'replied',
+        repliedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(contactMessages.id, id))
+      .returning();
 
-  if (!updated) {
-    throw new ApiError(
-      500,
-      'CONTACT_MESSAGE_REPLY_UPDATE_FAILED',
-      'The email was sent, but the message status could not be updated. Check the message before retrying.',
-    );
-  }
+    if (!updated) {
+      throw new ApiError(
+        500,
+        'CONTACT_MESSAGE_REPLY_UPDATE_FAILED',
+        'The email was sent, but the message status could not be updated. Check the message before retrying.',
+      );
+    }
 
-  await logAdminAudit({
-    adminId,
-    action: 'admin.contact_message_replied',
-    entityType: 'contact_message',
-    entityId: id,
-    description: 'Administrator sent an email reply to a contact message.',
-    ...auditMetadata(metadata),
+    await logAdminAudit({
+      adminId,
+      action: 'admin.contact_message_replied',
+      entityType: 'contact_message',
+      entityId: id,
+      description: 'Administrator sent an email reply to a contact message.',
+      ...auditMetadata(metadata),
+    }, tx);
+
+    return updated;
   });
-
-  return updated;
 }
 
 /**
@@ -345,27 +352,29 @@ export async function deleteContactMessage(
   id: string,
   metadata: RequestMetadata,
 ): Promise<void> {
-  const [deleted] = await db
-    .delete(contactMessages)
-    .where(eq(contactMessages.id, id))
-    .returning({
-      id: contactMessages.id,
-    });
+  await db.transaction(async (tx) => {
+    const [deleted] = await tx
+      .delete(contactMessages)
+      .where(eq(contactMessages.id, id))
+      .returning({
+        id: contactMessages.id,
+      });
 
-  if (!deleted) {
-    throw new ApiError(
-      404,
-      'CONTACT_MESSAGE_NOT_FOUND',
-      'Contact message not found.',
-    );
-  }
+    if (!deleted) {
+      throw new ApiError(
+        404,
+        'CONTACT_MESSAGE_NOT_FOUND',
+        'Contact message not found.',
+      );
+    }
 
-  await logAdminAudit({
-    adminId,
-    action: 'admin.contact_message_deleted',
-    entityType: 'contact_message',
-    entityId: id,
-    description: 'Administrator permanently deleted a contact message.',
-    ...auditMetadata(metadata),
+    await logAdminAudit({
+      adminId,
+      action: 'admin.contact_message_deleted',
+      entityType: 'contact_message',
+      entityId: id,
+      description: 'Administrator permanently deleted a contact message.',
+      ...auditMetadata(metadata),
+    }, tx);
   });
 }

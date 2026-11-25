@@ -28,6 +28,7 @@ const recoveryCodeLimiter = rateLimit({
 
 const regenerateSchema = z.object({
   currentPassword: z.string().min(1).max(128),
+  verificationCode: z.string().regex(/^\d{6}$/).optional(),
 }).strict();
 
 router.use(requireAdmin);

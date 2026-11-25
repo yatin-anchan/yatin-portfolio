@@ -25,6 +25,7 @@ const passwordChangeLimiter = rateLimit({
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1).max(128),
+    verificationCode: z.string().regex(/^\d{6}$/).optional(),
     newPassword: z
       .string()
       .min(12)

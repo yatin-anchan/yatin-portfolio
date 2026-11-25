@@ -10,6 +10,7 @@ import {
   forgotPassword,
   resetPassword,
   recoverWithRecoveryCode,
+  requestSensitiveActionVerification,
 } from '../controllers/admin-auth.controller.js';
 
 import { validate } from '../middleware/validate.js';
@@ -56,6 +57,13 @@ const recoveryLimiter = rateLimit({
   },
 });
 
+const sensitiveActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+});
+
 const loginSchema = z
   .object({
     email: z.string().trim().email().max(254),
@@ -86,8 +94,23 @@ const resetPasswordSchema = z
   .object({
     token: z.string().regex(/^[a-f0-9]{64}$/),
     newPassword: z.string().min(12).max(128),
+    verificationCode: z.string().regex(/^\d{6}$/).optional(),
   })
   .strict();
+
+const sensitiveActionSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(128),
+  })
+  .strict();
+
+router.post(
+  '/sensitive-action/request',
+  requireAdmin,
+  sensitiveActionLimiter,
+  validate(sensitiveActionSchema, 'body'),
+  requestSensitiveActionVerification,
+);
 
 router.post(
   '/login',

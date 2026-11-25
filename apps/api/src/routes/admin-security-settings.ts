@@ -28,6 +28,8 @@ const settingsLimiter = rateLimit({
 
 const updateSettingsSchema = z
   .object({
+    currentPassword: z.string().min(1).max(128),
+    verificationCode: z.string().regex(/^\d{6}$/),
     requireDualVerification: z.boolean().optional(),
     loginNotificationEnabled: z.boolean().optional(),
     securityNotificationEnabled: z.boolean().optional(),

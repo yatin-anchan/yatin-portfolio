@@ -12,10 +12,24 @@ import {
 import { createAndSendOtp } from '../services/otp.service.js';
 
 import { reauthenticateAdmin } from '../services/admin-reauth.service.js';
+import {
+  getTrustedPrimaryAdminEmail,
+  notifyAdminSecurityEvent,
+} from '../services/admin-security-settings.service.js';
+
+function requestMetadata(req: Request) {
+  const userAgent = req.get('user-agent');
+
+  return {
+    ipAddress: req.ip ?? null,
+    userAgent: userAgent ?? null,
+  };
+}
 
 interface AuthenticatedAdmin {
   id: string;
   emailId: string;
+  email: string;
 }
 
 function getAdmin(res: Response): AuthenticatedAdmin {
@@ -43,18 +57,52 @@ export async function listAdminEmails(
 }
 
 export async function addEmail(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
   const input = getValidatedBody<{
     email: string;
     password: string;
+    currentPassword: string;
+    trustedCode: string;
   }>(res);
 
+  const admin = getAdmin(res);
+  const passwordHash = await reauthenticateAdmin(
+    admin.id,
+    admin.emailId,
+    input.currentPassword,
+  );
+
+  if (!passwordHash) {
+    res.status(401).json({
+      error: {
+        code: 'REAUTHENTICATION_FAILED',
+        message: 'The current password is incorrect or the authenticated login email is unavailable.',
+      },
+    });
+    return;
+  }
+
+  const trustedEmail = await getTrustedPrimaryAdminEmail(admin.id);
+  const metadata = requestMetadata(req);
+
   await addAdminEmail(
-    getAdmin(res).id,
+    admin.id,
+    admin.emailId,
+    passwordHash,
+    trustedEmail.id,
     input.email,
     input.password,
+    input.trustedCode,
+    metadata.ipAddress,
+    metadata.userAgent,
+  );
+
+  void notifyAdminSecurityEvent(
+    admin.id,
+    admin.email,
+    'A new login email was added to your administrator account.',
   );
 
   res.status(201).json({
@@ -63,16 +111,19 @@ export async function addEmail(
 }
 
 export async function verifyEmail(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
   const { id } = getValidatedParams<{ id: string }>(res);
   const { code } = getValidatedBody<{ code: string }>(res);
 
+  const metadata = requestMetadata(req);
   const verified = await verifyAdminEmail(
     getAdmin(res).id,
     id,
     code,
+    metadata.ipAddress,
+    metadata.userAgent,
   );
 
   if (!verified) {
@@ -85,17 +136,43 @@ export async function verifyEmail(
     return;
   }
 
+  void notifyAdminSecurityEvent(
+    getAdmin(res).id,
+    getAdmin(res).email,
+    'A login email was verified for your administrator account.',
+  );
+
   res.status(200).json({
     message: 'Login email verified successfully.',
   });
 }
 
 export async function requestPrimaryEmailChange(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
   const { id } = getValidatedParams<{ id: string }>(res);
   const adminUserId = getAdmin(res).id;
+  const admin = getAdmin(res);
+  const { currentPassword } = getValidatedBody<{
+    currentPassword: string;
+  }>(res);
+
+  const passwordHash = await reauthenticateAdmin(
+    admin.id,
+    admin.emailId,
+    currentPassword,
+  );
+
+  if (!passwordHash) {
+    res.status(401).json({
+      error: {
+        code: 'REAUTHENTICATION_FAILED',
+        message: 'The current password is incorrect or the authenticated login email is unavailable.',
+      },
+    });
+    return;
+  }
 
   const emails = await findAdminEmails(adminUserId);
   const target = emails.find((email) => email.id === id);
@@ -127,30 +204,39 @@ export async function requestPrimaryEmailChange(
     return;
   }
 
+  const trustedEmail = await getTrustedPrimaryAdminEmail(adminUserId);
+
   await createAndSendOtp({
     adminUserId,
-    adminEmailId: id,
+    adminEmailId: trustedEmail.id,
     recipientType: 'login_email',
-    purpose: 'change_primary_email',
-    recipientEmail: target.email,
+    purpose: 'sensitive_action',
+    recipientEmail: trustedEmail.email,
   });
 
   res.status(202).json({
-    message: 'A verification code has been sent to the target email address.',
+    message: 'A verification code has been sent to the trusted primary login email.',
   });
 }
 
 export async function verifyPrimaryEmailChange(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
   const { id } = getValidatedParams<{ id: string }>(res);
   const { code } = getValidatedBody<{ code: string }>(res);
 
+  const admin = getAdmin(res);
+  const trustedEmail = await getTrustedPrimaryAdminEmail(admin.id);
+  const metadata = requestMetadata(req);
+
   const changed = await verifyPrimaryAdminEmail(
-    getAdmin(res).id,
+    admin.id,
     id,
+    trustedEmail.id,
     code,
+    metadata.ipAddress,
+    metadata.userAgent,
   );
 
   if (!changed) {
@@ -163,19 +249,26 @@ export async function verifyPrimaryEmailChange(
     return;
   }
 
+  void notifyAdminSecurityEvent(
+    admin.id,
+    admin.email,
+    'The primary login email for your administrator account was changed.',
+  );
+
   res.status(200).json({
     message: 'Primary login email changed successfully.',
   });
 }
 
 export async function deleteEmail(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
   const admin = getAdmin(res);
   const { id } = getValidatedParams<{ id: string }>(res);
-  const { currentPassword } = getValidatedBody<{
+  const { currentPassword, verificationCode } = getValidatedBody<{
     currentPassword: string;
+    verificationCode?: string;
   }>(res);
 
   const passwordHash = await reauthenticateAdmin(
@@ -194,22 +287,32 @@ export async function deleteEmail(
     return;
   }
 
+  const metadata = requestMetadata(req);
   const removed = await removeAdminEmail(
     admin.id,
     id,
     admin.emailId,
     passwordHash,
+    verificationCode,
+    metadata.ipAddress,
+    metadata.userAgent,
   );
 
   if (!removed) {
     res.status(409).json({
       error: {
         code: 'EMAIL_REMOVAL_FAILED',
-        message: 'Email not found, already removed, it is the primary email, or it is the current login email.',
+        message: 'The email cannot be removed, reauthentication failed, or required trusted verification was invalid.',
       },
     });
     return;
   }
+
+  void notifyAdminSecurityEvent(
+    admin.id,
+    admin.email,
+    'A login email was removed from your administrator account.',
+  );
 
   res.status(200).json({
     message: 'Login email removed successfully.',

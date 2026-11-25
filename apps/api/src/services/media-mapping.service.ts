@@ -20,6 +20,10 @@ import {
 import { ApiError } from '../lib/errors/api-error.js';
 import { logAdminAudit } from './admin-audit.service.js';
 
+type MappingTransaction = Parameters<
+  Parameters<typeof db.transaction>[0]
+>[0];
+
 export type MediaOwnerType =
   | 'project'
   | 'skill'
@@ -28,6 +32,20 @@ export type MediaOwnerType =
   | 'certification'
   | 'achievement'
   | 'profile';
+
+const MEDIA_OWNER_TYPES: readonly MediaOwnerType[] = [
+  'project',
+  'skill',
+  'experience',
+  'education',
+  'certification',
+  'achievement',
+  'profile',
+];
+
+function isMediaOwnerType(value: string): value is MediaOwnerType {
+  return MEDIA_OWNER_TYPES.some((type) => type === value);
+}
 
 export interface CreateMediaMappingInput {
   fid: string;
@@ -171,6 +189,88 @@ async function requireOwner(
   }
 }
 
+async function lockMediaOwner(
+  tx: MappingTransaction,
+  type: MediaOwnerType,
+  fid: string,
+): Promise<boolean> {
+  switch (type) {
+    case 'project': {
+      const [owner] = await tx
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+    case 'skill': {
+      const [owner] = await tx
+        .select({ id: skills.id })
+        .from(skills)
+        .where(eq(skills.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+    case 'experience': {
+      const [owner] = await tx
+        .select({ id: experience.id })
+        .from(experience)
+        .where(eq(experience.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+    case 'education': {
+      const [owner] = await tx
+        .select({ id: education.id })
+        .from(education)
+        .where(eq(education.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+    case 'certification': {
+      const [owner] = await tx
+        .select({ id: certifications.id })
+        .from(certifications)
+        .where(eq(certifications.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+    case 'achievement': {
+      const [owner] = await tx
+        .select({ id: achievements.id })
+        .from(achievements)
+        .where(eq(achievements.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+    case 'profile': {
+      const [owner] = await tx
+        .select({ id: profiles.id })
+        .from(profiles)
+        .where(eq(profiles.id, fid))
+        .for('update')
+        .limit(1);
+      return Boolean(owner);
+    }
+  }
+}
+
+export async function deleteMediaMappingsForOwner(
+  tx: MappingTransaction,
+  type: MediaOwnerType,
+  fid: string,
+): Promise<void> {
+  await tx
+    .delete(mapping)
+    .where(and(eq(mapping.type, type), eq(mapping.fid, fid)));
+}
+
 export async function findPublicMediaMappings(
   type: MediaOwnerType,
   fid: string,
@@ -230,11 +330,17 @@ export async function createMediaMapping(
   ipAddress: string | null,
   userAgent: string | null,
 ) {
-  await requireOwner(input.type, input.fid);
-
   const isPrimary = input.isPrimary ?? false;
 
-  const [created] = await db.transaction(async (tx) => {
+  const created = await db.transaction(async (tx) => {
+    if (!(await lockMediaOwner(tx, input.type, input.fid))) {
+      throw new ApiError(
+        404,
+        'MEDIA_OWNER_NOT_FOUND',
+        'The portfolio record associated with this media was not found.',
+      );
+    }
+
     if (isPrimary) {
       await tx
         .update(mapping)
@@ -252,7 +358,7 @@ export async function createMediaMapping(
         );
     }
 
-    return tx
+    const [result] = await tx
       .insert(mapping)
       .values({
         ...input,
@@ -270,23 +376,33 @@ export async function createMediaMapping(
         updatedBy: adminId,
       })
       .returning();
-  });
 
-  await logAdminAudit({
-    adminId,
-    action: 'media_mapping.created',
-    entityType: 'media_mapping',
-    entityId: created.id,
-    description: `Media mapping created for ${input.type}/${input.fid}.`,
-    newValues: {
-      type: created.type,
-      fid: created.fid,
-      mediaType: created.mediaType,
-      isPrimary: created.isPrimary,
-      isVisible: created.isVisible,
-    },
-    ipAddress,
-    userAgent,
+    if (!result) {
+      throw new ApiError(
+        500,
+        'MEDIA_MAPPING_CREATE_FAILED',
+        'Unable to create the media mapping.',
+      );
+    }
+
+    await logAdminAudit({
+      adminId,
+      action: 'media_mapping.created',
+      entityType: 'media_mapping',
+      entityId: result.id,
+      description: `Media mapping created for ${input.type}/${input.fid}.`,
+      newValues: {
+        type: result.type,
+        fid: result.fid,
+        mediaType: result.mediaType,
+        isPrimary: result.isPrimary,
+        isVisible: result.isVisible,
+      },
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return result;
   });
 
   return created;
@@ -309,13 +425,37 @@ export async function updateMediaMapping(
     return null;
   }
 
+  if (!isMediaOwnerType(existing.type)) {
+    throw new ApiError(
+      409,
+      'INVALID_MEDIA_OWNER_TYPE',
+      'The media mapping has an unsupported owner type.',
+    );
+  }
+  const ownerType = existing.type;
+
   const updates = {
     ...input,
     updatedAt: new Date(),
     updatedBy: adminId,
   };
 
-  const [updated] = await db.transaction(async (tx) => {
+  const updated = await db.transaction(async (tx) => {
+    if (!(await lockMediaOwner(tx, ownerType, existing.fid))) {
+      return null;
+    }
+
+    const [lockedMapping] = await tx
+      .select()
+      .from(mapping)
+      .where(eq(mapping.id, id))
+      .for('update')
+      .limit(1);
+
+    if (!lockedMapping) {
+      return null;
+    }
+
     if (input.isPrimary === true) {
       await tx
         .update(mapping)
@@ -333,31 +473,35 @@ export async function updateMediaMapping(
         );
     }
 
-    return tx
+    const [result] = await tx
       .update(mapping)
       .set(updates)
       .where(eq(mapping.id, id))
       .returning();
-  });
 
-  await logAdminAudit({
-    adminId,
-    action: 'media_mapping.updated',
-    entityType: 'media_mapping',
-    entityId: updated.id,
-    description: 'Media mapping updated.',
-    oldValues: {
-      isPrimary: existing.isPrimary,
-      isVisible: existing.isVisible,
-      mediaType: existing.mediaType,
-    },
-    newValues: {
-      isPrimary: updated.isPrimary,
-      isVisible: updated.isVisible,
-      mediaType: updated.mediaType,
-    },
-    ipAddress,
-    userAgent,
+    if (!result) return null;
+
+    await logAdminAudit({
+      adminId,
+      action: 'media_mapping.updated',
+      entityType: 'media_mapping',
+      entityId: result.id,
+      description: 'Media mapping updated.',
+      oldValues: {
+        isPrimary: lockedMapping.isPrimary,
+        isVisible: lockedMapping.isVisible,
+        mediaType: lockedMapping.mediaType,
+      },
+      newValues: {
+        isPrimary: result.isPrimary,
+        isVisible: result.isVisible,
+        mediaType: result.mediaType,
+      },
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return result;
   });
 
   return updated;
@@ -369,35 +513,39 @@ export async function deleteMediaMapping(
   ipAddress: string | null,
   userAgent: string | null,
 ) {
-  const [existing] = await db
-    .select()
-    .from(mapping)
-    .where(eq(mapping.id, id))
-    .limit(1);
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(mapping)
+      .where(eq(mapping.id, id))
+      .for('update')
+      .limit(1);
 
-  if (!existing) {
-    return null;
-  }
+    if (!existing) return null;
 
-  await db
-    .delete(mapping)
-    .where(eq(mapping.id, id));
+    const [deleted] = await tx
+      .delete(mapping)
+      .where(eq(mapping.id, id))
+      .returning({ id: mapping.id });
 
-  await logAdminAudit({
-    adminId,
-    action: 'media_mapping.deleted',
-    entityType: 'media_mapping',
-    entityId: existing.id,
-    description: 'Media mapping deleted. The stored media asset was not deleted.',
-    oldValues: {
-      type: existing.type,
-      fid: existing.fid,
-      mediaType: existing.mediaType,
-      isPrimary: existing.isPrimary,
-    },
-    ipAddress,
-    userAgent,
+    if (!deleted) return null;
+
+    await logAdminAudit({
+      adminId,
+      action: 'media_mapping.deleted',
+      entityType: 'media_mapping',
+      entityId: existing.id,
+      description: 'Media mapping deleted. The stored media asset was not deleted.',
+      oldValues: {
+        type: existing.type,
+        fid: existing.fid,
+        mediaType: existing.mediaType,
+        isPrimary: existing.isPrimary,
+      },
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return existing;
   });
-
-  return existing;
 }

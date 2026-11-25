@@ -42,16 +42,6 @@ export async function upsertSiteSetting(
   ipAddress: string | null,
   userAgent: string | null,
 ) {
-  const [existing] = await db
-    .select({
-      id: siteSettings.id,
-      group: siteSettings.group,
-      isPublic: siteSettings.isPublic,
-    })
-    .from(siteSettings)
-    .where(eq(siteSettings.key, key))
-    .limit(1);
-
   const values = {
     value: input.value,
     description: input.description ?? null,
@@ -61,40 +51,57 @@ export async function upsertSiteSetting(
     updatedBy: adminId,
   };
 
-  const [setting] = await db
-    .insert(siteSettings)
-    .values({
-      key,
-      ...values,
-    })
-    .onConflictDoUpdate({
-      target: siteSettings.key,
-      set: values,
-    })
-    .returning();
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        id: siteSettings.id,
+        group: siteSettings.group,
+        isPublic: siteSettings.isPublic,
+      })
+      .from(siteSettings)
+      .where(eq(siteSettings.key, key))
+      .for('update')
+      .limit(1);
 
-  await logAdminAudit({
-    adminId,
-    action: existing
-      ? 'site_setting.updated'
-      : 'site_setting.created',
-    entityType: 'site_setting',
-    entityId: setting.id,
-    description: `Site setting "${key}" was ${existing ? 'updated' : 'created'}.`,
-    oldValues: existing
-      ? {
-          group: existing.group,
-          isPublic: existing.isPublic,
-        }
-      : null,
-    newValues: {
-      key,
-      group: setting.group,
-      isPublic: setting.isPublic,
-    },
-    ipAddress,
-    userAgent,
+    const [setting] = await tx
+      .insert(siteSettings)
+      .values({
+        key,
+        ...values,
+      })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: values,
+      })
+      .returning();
+
+    if (!setting) {
+      throw new Error('Unable to save site setting.');
+    }
+
+    await logAdminAudit({
+      adminId,
+      action: existing
+        ? 'site_setting.updated'
+        : 'site_setting.created',
+      entityType: 'site_setting',
+      entityId: setting.id,
+      description: `Site setting "${key}" was ${existing ? 'updated' : 'created'}.`,
+      oldValues: existing
+        ? {
+            group: existing.group,
+            isPublic: existing.isPublic,
+          }
+        : null,
+      newValues: {
+        key,
+        group: setting.group,
+        isPublic: setting.isPublic,
+      },
+      ipAddress,
+      userAgent,
+    }, tx);
+
+    return setting;
   });
-
-  return setting;
 }

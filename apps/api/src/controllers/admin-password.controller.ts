@@ -9,16 +9,19 @@ import { ApiError } from '../lib/errors/api-error.js';
 import {
   changeAdminPassword,
 } from '../services/admin-password.service.js';
+import { notifyAdminSecurityEvent } from '../services/admin-security-settings.service.js';
 
 interface AuthenticatedAdmin {
   id: string;
   emailId: string;
+  email: string;
   sessionId: string;
 }
 
 interface ChangePasswordInput {
   currentPassword: string;
   newPassword: string;
+  verificationCode?: string;
 }
 
 export async function changePassword(
@@ -52,6 +55,7 @@ export async function changePassword(
       currentSessionId: admin.sessionId,
       currentPassword: input.currentPassword,
       newPassword: input.newPassword,
+      verificationCode: input.verificationCode,
       ipAddress: req.ip ?? null,
       userAgent: req.get('user-agent') ?? null,
     });
@@ -60,9 +64,15 @@ export async function changePassword(
       throw new ApiError(
         400,
         'CURRENT_PASSWORD_INVALID',
-        'The current password is incorrect or the login email is unavailable.',
+        'The current password, login email, or required trusted verification is invalid.',
       );
     }
+
+    void notifyAdminSecurityEvent(
+      admin.id,
+      admin.email,
+      'The password for your administrator account was changed.',
+    );
 
     res.status(200).json({
       success: true,

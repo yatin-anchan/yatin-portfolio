@@ -53,6 +53,14 @@ const addEmailSchema = z
   .object({
     email: z.string().trim().email().max(254),
     password: z.string().min(12).max(128),
+    currentPassword: z.string().min(1).max(128),
+    trustedCode: z.string().regex(/^\d{6}$/),
+  })
+  .strict();
+
+const primaryChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(128),
   })
   .strict();
 
@@ -62,9 +70,10 @@ const verifyEmailSchema = z
   })
   .strict();
 
-  const deleteEmailSchema = z
+const deleteEmailSchema = z
   .object({
     currentPassword: z.string().min(1).max(128),
+    verificationCode: z.string().regex(/^\d{6}$/).optional(),
   })
   .strict();
 
@@ -99,6 +108,7 @@ router.post(
   '/:id/primary/request',
   emailManagementLimiter,
   validate(emailIdSchema, 'params'),
+  validate(primaryChangeSchema, 'body'),
   requestPrimaryEmailChange,
 );
 

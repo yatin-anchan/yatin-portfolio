@@ -17,7 +17,10 @@ import {
 
 import {
   db,
+  adminUsers,
+  adminEmails,
   adminEmailVerifications,
+  adminSecuritySettings,
 } from '@yatin-portfolio/database';
 
 import { env } from '../config/env.js';
@@ -273,6 +276,72 @@ export async function verifyOtpInTransaction(
   return Boolean(consumed);
 }
 
+export async function verifySensitiveActionIfRequired(
+  tx: OtpTransaction,
+  adminUserId: string,
+  code: string | undefined,
+): Promise<boolean> {
+  const [adminUser] = await tx
+    .select({ id: adminUsers.id })
+    .from(adminUsers)
+    .where(eq(adminUsers.id, adminUserId))
+    .for('update')
+    .limit(1);
+
+  if (!adminUser) {
+    return false;
+  }
+
+  const [settings] = await tx
+    .select({
+      requireDualVerification:
+        adminSecuritySettings.requireDualVerification,
+    })
+    .from(adminSecuritySettings)
+    .where(eq(adminSecuritySettings.adminUserId, adminUserId))
+    .for('update')
+    .limit(1);
+
+  if (!settings) {
+    return false;
+  }
+
+  if (!settings.requireDualVerification) {
+    return true;
+  }
+
+  if (!code) {
+    return false;
+  }
+
+  const [trustedEmail] = await tx
+    .select({ id: adminEmails.id })
+    .from(adminEmails)
+    .where(
+      and(
+        eq(adminEmails.adminUserId, adminUserId),
+        eq(adminEmails.isPrimary, true),
+        eq(adminEmails.isVerified, true),
+        isNull(adminEmails.removedAt),
+      ),
+    )
+    .limit(1)
+    .for('update');
+
+  if (!trustedEmail) {
+    return false;
+  }
+
+  return verifyOtpInTransaction(
+    tx,
+    adminUserId,
+    'sensitive_action',
+    code,
+    'login_email',
+    trustedEmail.id,
+  );
+}
+
 class OtpOperationRejected extends Error {
   constructor() {
     super('The operation authorized by the OTP was rejected.');
@@ -297,6 +366,17 @@ export async function verifyOtpAndRun(
 ): Promise<boolean> {
   try {
     return await db.transaction(async (tx) => {
+      const [adminUser] = await tx
+        .select({ id: adminUsers.id })
+        .from(adminUsers)
+        .where(eq(adminUsers.id, adminUserId))
+        .for('update')
+        .limit(1);
+
+      if (!adminUser) {
+        return false;
+      }
+
       const valid = await verifyOtpInTransaction(
         tx,
         adminUserId,
@@ -338,14 +418,25 @@ export async function verifyOtp(
   recipientType: OtpRecipientType,
   adminEmailId: string | null,
 ): Promise<boolean> {
-  return db.transaction((tx) =>
-    verifyOtpInTransaction(
+  return db.transaction(async (tx) => {
+    const [adminUser] = await tx
+      .select({ id: adminUsers.id })
+      .from(adminUsers)
+      .where(eq(adminUsers.id, adminUserId))
+      .for('update')
+      .limit(1);
+
+    if (!adminUser) {
+      return false;
+    }
+
+    return verifyOtpInTransaction(
       tx,
       adminUserId,
       purpose,
       code,
       recipientType,
       adminEmailId,
-    ),
-  );
+    );
+  });
 }

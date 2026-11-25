@@ -9,14 +9,17 @@ import {
   regenerateRecoveryCodesForAdmin,
   countUnusedRecoveryCodes,
 } from '../services/recovery-codes.service.js';
+import { notifyAdminSecurityEvent } from '../services/admin-security-settings.service.js';
 
 interface AuthenticatedAdmin {
   id: string;
   emailId: string;
+  email: string;
 }
 
 interface RegenerateInput {
   currentPassword: string;
+  verificationCode?: string;
 }
 
 export async function getRecoveryCodeStatus(
@@ -55,6 +58,7 @@ export async function regenerateRecoveryCodes(
       admin.id,
       admin.emailId,
       input.currentPassword,
+      input.verificationCode,
       {
         ipAddress: req.ip ?? null,
         userAgent: req.get('user-agent') ?? null,
@@ -65,11 +69,17 @@ export async function regenerateRecoveryCodes(
       res.status(401).json({
         error: {
           code: 'CURRENT_PASSWORD_INVALID',
-          message: 'The current password is incorrect or the login email is unavailable.',
+          message: 'The current password, login email, or required trusted verification is invalid.',
         },
       });
       return;
     }
+
+    void notifyAdminSecurityEvent(
+      admin.id,
+      admin.email,
+      'Administrator recovery codes were regenerated.',
+    );
 
     res.status(200).json({
       success: true,

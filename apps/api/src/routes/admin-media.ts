@@ -43,7 +43,7 @@ const deleteMediaSchema = z.object({
   publicId: z.string()
     .trim()
     .min(1)
-    .max(500)
+    .max(255)
     .regex(
       /^portfolio\/[a-zA-Z0-9_./-]+$/,
       'Invalid portfolio media public ID.',

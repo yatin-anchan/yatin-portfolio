@@ -105,15 +105,21 @@ export async function findActiveAdminSession(token: string) {
     return null;
   }
 
-  await db
+  const [activeSession] = await db
     .update(adminSessions)
     .set({ lastSeenAt: now })
     .where(
       and(
         eq(adminSessions.id, result.sessionId),
         isNull(adminSessions.revokedAt),
+        gt(adminSessions.expiresAt, now),
       ),
-    );
+    )
+    .returning({ id: adminSessions.id });
+
+  if (!activeSession) {
+    return null;
+  }
 
   return result;
 }
