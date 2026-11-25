@@ -9,6 +9,7 @@ import {
   getCurrentAdmin,
   forgotPassword,
   resetPassword,
+  recoverWithRecoveryCode,
 } from '../controllers/admin-auth.controller.js';
 
 import { validate } from '../middleware/validate.js';
@@ -42,10 +43,36 @@ const passwordResetLimiter = rateLimit({
   },
 });
 
+const recoveryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'RECOVERY_RATE_LIMITED',
+      message: 'Too many recovery attempts. Try again later.',
+    },
+  },
+});
+
 const loginSchema = z
   .object({
     email: z.string().trim().email().max(254),
     password: z.string().min(1).max(128),
+  })
+  .strict();
+
+  const recoverySchema = z
+  .object({
+    email: z.string().trim().email().max(254),
+    recoveryCode: z
+      .string()
+      .trim()
+      .regex(
+        /^[A-Fa-f0-9]{8}-?[A-Fa-f0-9]{8}$/,
+        'Invalid recovery code format.',
+      ),
   })
   .strict();
 
@@ -86,5 +113,12 @@ router.post(
 router.post('/logout', logout);
 
 router.get('/me', requireAdmin, getCurrentAdmin);
+
+router.post(
+  '/recover',
+  recoveryLimiter,
+  validate(recoverySchema, 'body'),
+  recoverWithRecoveryCode,
+);
 
 export default router;

@@ -27,6 +27,10 @@ const envSchema = z
   .url()
   .default('http://localhost:5173/admin/reset-password'),
 
+  CLOUDINARY_CLOUD_NAME: z.string().trim().min(1).optional(),
+CLOUDINARY_API_KEY: z.string().trim().min(1).optional(),
+CLOUDINARY_API_SECRET: z.string().trim().min(1).optional(),
+
     SMTP_HOST: z.string().trim().min(1).optional(),
 
     SMTP_PORT: z.coerce
@@ -55,6 +59,25 @@ const envSchema = z
         path: ['SMTP_USER'],
       });
     }
+
+    const cloudinaryValues = [
+  data.CLOUDINARY_CLOUD_NAME,
+  data.CLOUDINARY_API_KEY,
+  data.CLOUDINARY_API_SECRET,
+];
+
+const configuredCloudinaryValues = cloudinaryValues.filter(Boolean).length;
+
+if (
+  configuredCloudinaryValues !== 0 &&
+  configuredCloudinaryValues !== 3
+) {
+  ctx.addIssue({
+    code: 'custom',
+    message: 'CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET must be provided together.',
+    path: ['CLOUDINARY_CLOUD_NAME'],
+  });
+}
   });
 
 const result = envSchema.safeParse(process.env);

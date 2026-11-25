@@ -2,9 +2,9 @@
 import type { Request, Response } from 'express';
 
 import { env } from '../config/env.js';
-
-import { verifyPassword } from '../services/password.service.js';
 import { findAdminLoginCredential } from '../services/admin-auth.service.js';
+import { verifyPassword } from '../services/password.service.js';
+import { recoverAdminAccess } from '../services/admin-recovery-auth.service.js';
 
 import {
   createAdminSession,
@@ -178,5 +178,53 @@ export async function resetPassword(
 
   res.status(200).json({
     message: 'Password reset successfully. Please log in again.',
+  });
+}
+
+
+
+export async function recoverWithRecoveryCode(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const input = res.locals.validated?.body as {
+    email: string;
+    recoveryCode: string;
+  };
+
+  const result = await recoverAdminAccess({
+    email: input.email,
+    code: input.recoveryCode,
+    metadata: {
+      ipAddress: req.ip ?? null,
+      userAgent: req.get('user-agent') ?? null,
+    },
+  });
+
+  if (!result) {
+    res.status(401).json({
+      error: {
+        code: 'INVALID_RECOVERY_CREDENTIALS',
+        message: 'The email or recovery code is invalid.',
+      },
+    });
+    return;
+  }
+
+  res.cookie(ADMIN_SESSION_COOKIE, result.token, {
+    ...cookieOptions,
+    maxAge: SESSION_DURATION_MS,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Account recovery successful.',
+    data: {
+      admin: result.admin,
+      session: {
+        id: result.session.id,
+        expiresAt: result.session.expiresAt,
+      },
+    },
   });
 }

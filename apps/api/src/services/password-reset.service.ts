@@ -9,6 +9,7 @@ import {
   eq,
   gt,
   isNull,
+  sql,
 } from 'drizzle-orm';
 
 import {
@@ -34,20 +35,24 @@ export async function requestPasswordReset(
   email: string,
   requestedIp: string | null,
 ): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase();
+
   const [adminEmail] = await db
     .select({
       id: adminEmails.id,
+      email: adminEmails.email,
     })
     .from(adminEmails)
     .where(
       and(
-        eq(adminEmails.email, email.toLowerCase()),
+        sql`lower(${adminEmails.email}) = ${normalizedEmail}`,
         eq(adminEmails.isVerified, true),
         isNull(adminEmails.removedAt),
       ),
     )
     .limit(1);
 
+  // Keep the public response generic to avoid account enumeration.
   if (!adminEmail) return;
 
   const token = randomBytes(32).toString('hex');
@@ -84,15 +89,15 @@ export async function requestPasswordReset(
   });
 
   if (!reset) {
-  throw new Error('Failed to create password reset record.');
-}
+    throw new Error('Failed to create password reset record.');
+  }
 
   try {
     const resetUrl = new URL(env.PASSWORD_RESET_URL);
     resetUrl.searchParams.set('token', token);
 
     await sendEmail({
-      to: email,
+      to: adminEmail.email,
       subject: 'Reset your admin password',
       text: [
         'A password reset was requested for your admin account.',
@@ -138,9 +143,13 @@ export async function completePasswordReset(
   const tokenHash = hashResetToken(token);
   const now = new Date();
 
+  // Hash outside the transaction to avoid holding database locks
+  // during the expensive password-hashing operation.
   const newPasswordHash = await hashPassword(newPassword);
 
   return db.transaction(async (tx) => {
+    // Lock the reset record so concurrent requests cannot
+    // consume the same reset token simultaneously.
     const [reset] = await tx
       .select({
         id: adminPasswordResets.id,
@@ -155,10 +164,35 @@ export async function completePasswordReset(
           isNull(adminPasswordResets.invalidatedAt),
         ),
       )
+      .for('update')
       .limit(1);
 
-    if (!reset) return false;
+    if (!reset) {
+      return false;
+    }
 
+    // Lock and revalidate the login email before allowing
+    // the password reset.
+    const [emailRecord] = await tx
+      .select({
+        id: adminEmails.id,
+      })
+      .from(adminEmails)
+      .where(
+        and(
+          eq(adminEmails.id, reset.adminEmailId),
+          eq(adminEmails.isVerified, true),
+          isNull(adminEmails.removedAt),
+        ),
+      )
+      .for('update')
+      .limit(1);
+
+    if (!emailRecord) {
+      return false;
+    }
+
+    // Consume the reset token.
     const [consumed] = await tx
       .update(adminPasswordResets)
       .set({ usedAt: now })
@@ -174,13 +208,33 @@ export async function completePasswordReset(
         id: adminPasswordResets.id,
       });
 
-    if (!consumed) return false;
+    if (!consumed) {
+      return false;
+    }
 
-    await tx
+    // Update only an email that is still active and verified.
+    const [updatedEmail] = await tx
       .update(adminEmails)
-      .set({ passwordHash: newPasswordHash })
-      .where(eq(adminEmails.id, reset.adminEmailId));
+      .set({
+        passwordHash: newPasswordHash,
+      })
+      .where(
+        and(
+          eq(adminEmails.id, reset.adminEmailId),
+          eq(adminEmails.isVerified, true),
+          isNull(adminEmails.removedAt),
+        ),
+      )
+      .returning({
+        id: adminEmails.id,
+      });
 
+    if (!updatedEmail) {
+      // Returning false rolls back token consumption too.
+      return false;
+    }
+
+    // Revoke sessions associated with this login email.
     await tx
       .update(adminSessions)
       .set({
@@ -194,6 +248,7 @@ export async function completePasswordReset(
         ),
       );
 
+    // Invalidate any other outstanding reset links.
     await tx
       .update(adminPasswordResets)
       .set({ invalidatedAt: now })

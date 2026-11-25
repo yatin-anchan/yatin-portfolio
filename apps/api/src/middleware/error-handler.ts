@@ -1,6 +1,6 @@
 
 import type { ErrorRequestHandler } from 'express';
-import { ApiError } from '../errors/api-error.js';
+import { ApiError } from '../lib/errors/api-error.js';
 import { logger } from '../lib/logger.js';
 
 export const errorHandler: ErrorRequestHandler = (
@@ -22,7 +22,7 @@ export const errorHandler: ErrorRequestHandler = (
     });
   }
 
-    if (error instanceof Error) {
+  if (error instanceof Error) {
     logger.error(
       {
         err: error,

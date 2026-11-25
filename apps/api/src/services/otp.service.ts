@@ -42,6 +42,10 @@ export interface CreateOtpInput {
   recipientEmail: string;
 }
 
+type OtpTransaction = Parameters<
+  Parameters<typeof db.transaction>[0]
+>[0];
+
 function generateOtp(): string {
   return randomInt(100000, 1000000).toString();
 }
@@ -56,18 +60,48 @@ function hashOtp(
     .digest('hex');
 }
 
-function safeCompare(
-  first: string,
-  second: string,
-): boolean {
+function safeCompare(first: string, second: string): boolean {
   const firstBuffer = Buffer.from(first, 'hex');
   const secondBuffer = Buffer.from(second, 'hex');
 
-  if (firstBuffer.length !== secondBuffer.length) {
+  if (
+    firstBuffer.length !== secondBuffer.length ||
+    firstBuffer.length === 0
+  ) {
     return false;
   }
 
   return timingSafeEqual(firstBuffer, secondBuffer);
+}
+
+function buildOtpConditions(
+  adminUserId: string,
+  purpose: OtpPurpose,
+  recipientType: OtpRecipientType,
+  adminEmailId: string | null,
+  now: Date,
+) {
+  const conditions = [
+    eq(adminEmailVerifications.adminUserId, adminUserId),
+    eq(adminEmailVerifications.purpose, purpose),
+    eq(adminEmailVerifications.recipientType, recipientType),
+    gt(adminEmailVerifications.expiresAt, now),
+    lt(adminEmailVerifications.attempts, OTP_MAX_ATTEMPTS),
+    isNull(adminEmailVerifications.consumedAt),
+    isNull(adminEmailVerifications.invalidatedAt),
+  ];
+
+  if (adminEmailId) {
+    conditions.push(
+      eq(adminEmailVerifications.adminEmailId, adminEmailId),
+    );
+  } else {
+    conditions.push(
+      isNull(adminEmailVerifications.adminEmailId),
+    );
+  }
+
+  return conditions;
 }
 
 export async function createAndSendOtp(
@@ -88,28 +122,16 @@ export async function createAndSendOtp(
 
   await db.transaction(async (tx) => {
     const conditions = [
-      eq(
-        adminEmailVerifications.adminUserId,
-        input.adminUserId,
-      ),
-      eq(
-        adminEmailVerifications.recipientType,
-        input.recipientType,
-      ),
-      eq(
-        adminEmailVerifications.purpose,
-        input.purpose,
-      ),
+      eq(adminEmailVerifications.adminUserId, input.adminUserId),
+      eq(adminEmailVerifications.recipientType, input.recipientType),
+      eq(adminEmailVerifications.purpose, input.purpose),
       isNull(adminEmailVerifications.consumedAt),
       isNull(adminEmailVerifications.invalidatedAt),
     ];
 
     if (input.adminEmailId) {
       conditions.push(
-        eq(
-          adminEmailVerifications.adminEmailId,
-          input.adminEmailId,
-        ),
+        eq(adminEmailVerifications.adminEmailId, input.adminEmailId),
       );
     } else {
       conditions.push(
@@ -155,86 +177,79 @@ export async function createAndSendOtp(
       `,
     });
   } catch (error) {
-    const conditions = [
-      eq(
-        adminEmailVerifications.adminUserId,
-        input.adminUserId,
-      ),
-      eq(
-        adminEmailVerifications.codeHash,
-        codeHash,
-      ),
-      isNull(adminEmailVerifications.consumedAt),
-      isNull(adminEmailVerifications.invalidatedAt),
-    ];
-
     await db
       .update(adminEmailVerifications)
       .set({ invalidatedAt: new Date() })
-      .where(and(...conditions));
+      .where(
+        and(
+          eq(adminEmailVerifications.adminUserId, input.adminUserId),
+          eq(adminEmailVerifications.codeHash, codeHash),
+          isNull(adminEmailVerifications.consumedAt),
+          isNull(adminEmailVerifications.invalidatedAt),
+        ),
+      );
 
     throw error;
   }
 }
 
-export async function verifyOtp(
+/**
+ * Verify and consume an OTP using an existing transaction.
+ * The row lock prevents concurrent use of the same code.
+ */
+export async function verifyOtpInTransaction(
+  tx: OtpTransaction,
   adminUserId: string,
   purpose: OtpPurpose,
   code: string,
   recipientType: OtpRecipientType,
   adminEmailId: string | null,
 ): Promise<boolean> {
-  const now = new Date();
-
-  const conditions = [
-    eq(adminEmailVerifications.adminUserId, adminUserId),
-    eq(adminEmailVerifications.purpose, purpose),
-    eq(adminEmailVerifications.recipientType, recipientType),
-    gt(adminEmailVerifications.expiresAt, now),
-    lt(adminEmailVerifications.attempts, OTP_MAX_ATTEMPTS),
-    isNull(adminEmailVerifications.consumedAt),
-    isNull(adminEmailVerifications.invalidatedAt),
-  ];
-
-  if (adminEmailId) {
-    conditions.push(
-      eq(adminEmailVerifications.adminEmailId, adminEmailId),
-    );
-  } else {
-    conditions.push(
-      isNull(adminEmailVerifications.adminEmailId),
-    );
+  if (!/^\d{6}$/.test(code)) {
+    return false;
   }
 
-  const [verification] = await db
+  const now = new Date();
+
+  const [verification] = await tx
     .select()
     .from(adminEmailVerifications)
-    .where(and(...conditions))
+    .where(
+      and(
+        ...buildOtpConditions(
+          adminUserId,
+          purpose,
+          recipientType,
+          adminEmailId,
+          now,
+        ),
+      ),
+    )
     .orderBy(desc(adminEmailVerifications.createdAt))
-    .limit(1);
+    .limit(1)
+    .for('update');
 
   if (!verification) {
     return false;
   }
 
-  const submittedHash = hashOtp(
-    code,
-    adminUserId,
-    purpose,
-  );
+  const submittedHash = hashOtp(code, adminUserId, purpose);
 
   if (!safeCompare(submittedHash, verification.codeHash)) {
-    await db
+    const nextAttempts = verification.attempts + 1;
+
+    await tx
       .update(adminEmailVerifications)
       .set({
         attempts: sql`${adminEmailVerifications.attempts} + 1`,
-        ...(verification.attempts + 1 >= OTP_MAX_ATTEMPTS
+        ...(nextAttempts >= OTP_MAX_ATTEMPTS
           ? { invalidatedAt: now }
           : {}),
       })
       .where(
         and(
           eq(adminEmailVerifications.id, verification.id),
+          lt(adminEmailVerifications.attempts, OTP_MAX_ATTEMPTS),
           isNull(adminEmailVerifications.consumedAt),
           isNull(adminEmailVerifications.invalidatedAt),
         ),
@@ -243,7 +258,7 @@ export async function verifyOtp(
     return false;
   }
 
-  const [consumed] = await db
+  const [consumed] = await tx
     .update(adminEmailVerifications)
     .set({ consumedAt: now })
     .where(
@@ -256,4 +271,81 @@ export async function verifyOtp(
     .returning({ id: adminEmailVerifications.id });
 
   return Boolean(consumed);
+}
+
+class OtpOperationRejected extends Error {
+  constructor() {
+    super('The operation authorized by the OTP was rejected.');
+    this.name = 'OtpOperationRejected';
+  }
+}
+
+/**
+ * Consume an OTP and perform its authorized database update
+ * in the same transaction.
+ *
+ * If operation returns false, the transaction rolls back,
+ * including the OTP consumption.
+ */
+export async function verifyOtpAndRun(
+  adminUserId: string,
+  purpose: OtpPurpose,
+  code: string,
+  recipientType: OtpRecipientType,
+  adminEmailId: string | null,
+  operation: (tx: OtpTransaction) => Promise<boolean>,
+): Promise<boolean> {
+  try {
+    return await db.transaction(async (tx) => {
+      const valid = await verifyOtpInTransaction(
+        tx,
+        adminUserId,
+        purpose,
+        code,
+        recipientType,
+        adminEmailId,
+      );
+
+      if (!valid) {
+        return false;
+      }
+
+      const completed = await operation(tx);
+
+      if (!completed) {
+        throw new OtpOperationRejected();
+      }
+
+      return true;
+    });
+  } catch (error) {
+    if (error instanceof OtpOperationRejected) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Standalone OTP verification for operations that do not
+ * need an additional database update.
+ */
+export async function verifyOtp(
+  adminUserId: string,
+  purpose: OtpPurpose,
+  code: string,
+  recipientType: OtpRecipientType,
+  adminEmailId: string | null,
+): Promise<boolean> {
+  return db.transaction((tx) =>
+    verifyOtpInTransaction(
+      tx,
+      adminUserId,
+      purpose,
+      code,
+      recipientType,
+      adminEmailId,
+    ),
+  );
 }
