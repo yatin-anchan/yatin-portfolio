@@ -290,6 +290,7 @@
 .hero__clouds { transition: opacity 1.8s ease; }
 
 :root[data-theme='dark'] .hero__clouds { opacity: 0.5; }
+
 .hero__stars {
   position: absolute;
   inset: 0;
