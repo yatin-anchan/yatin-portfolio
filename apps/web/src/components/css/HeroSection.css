@@ -1,0 +1,1224 @@
+/* ==========================================================================
+   HeroSection — everything is scoped under .hero
+   --u is "1% of a 16:9 viewport width": scene sizes stay proportional on
+   ultrawide screens instead of growing taller than the hero.
+   ========================================================================== */
+
+.hero {
+  --u: min(1vw, 1.78svh);
+  --progress: 0;
+
+  /* Shared wind (written by lib/windSystem.ts; these are the calm defaults) */
+  --wind-dir: 1;
+  --wind-strength: 0.34;
+  --wind-gust: 0;
+  --wind-force: 0.34;
+  --wind: 0.34;
+
+  --sky-blue: #c3d1d8;
+  --sky-cream: #efe6d2;
+  --forest: #25382f;
+  --moss: #6f7f3a;
+  --sandstone: #d8c299;
+  --earth: #5a4129;
+  --burnt-orange: #b4501f;
+  --cream: #f6eedc;
+
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --font-label: 'Gill Sans', 'Trebuchet MS', 'Segoe UI', Verdana, sans-serif;
+
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--sky-cream);
+  color: var(--forest);
+  font-family: var(--font-display);
+  transition: background-color 1.6s ease, color 1.6s ease;
+}
+
+.hero *,
+.hero *::before,
+.hero *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Dark mode palette ----------
+   The camera faces east, so in dark mode the sun has already set behind the
+   viewer — it doesn't animate down, it simply isn't there. The variables
+   below recolor the whole scene toward night; the veil, stars and fireflies
+   further down do the rest. */
+
+:root[data-theme='dark'] .hero {
+  --sky-blue: #060a1a;
+  --sky-cream: #0a0e1f;
+  --forest: #d8e4de;
+}
+
+/* ---------- Shared layer primitives ---------- */
+
+.hero__parallax {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero__img {
+  display: block;
+  position: absolute;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------- 1-2. Sunrise sky, sun, clouds ---------- */
+
+.hero__defs { position: absolute; pointer-events: none; }
+
+.hero__sky {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  --sky-0: #84a8c4; --sky-1: #a3bfd2; --sky-2: #c4d3d8; --sky-3: #e4e0cf;
+  --sky-4: #f3e3bd; --sky-5: #f4d29c; --sky-6: #ecc18a;
+  background: linear-gradient(
+    180deg,
+    var(--sky-0) 0%, var(--sky-1) 24%, var(--sky-2) 40%, var(--sky-3) 54%,
+    var(--sky-4) 66%, var(--sky-5) 80%, var(--sky-6) 100%
+  );
+  /* Day -> night: a plain cross-fade of the gradient stops (no sunset, the sun is behind the camera) */
+  transition:
+    --sky-0 1.8s ease, --sky-1 1.8s ease, --sky-2 1.8s ease, --sky-3 1.8s ease,
+    --sky-4 1.8s ease, --sky-5 1.8s ease, --sky-6 1.8s ease;
+}
+
+:root[data-theme='dark'] .hero__sky {
+  --sky-0: #02030a; --sky-1: #050a1c; --sky-2: #081233; --sky-3: #09153a;
+  --sky-4: #091539; --sky-5: #081233; --sky-6: #050a1c;
+}
+
+/* Night -> day: sunrise. Plays whenever the theme is not dark (page load in light mode, or toggling to light). */
+:root:not([data-theme='dark']) .hero__sky {
+  transition: none;
+  animation: hero-sunrise-sky 5.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes hero-sunrise-sky {
+  0%   { --sky-0: #02030a; --sky-1: #050a1c; --sky-2: #081233; --sky-3: #09153a; --sky-4: #091539; --sky-5: #081233; --sky-6: #050a1c; }
+  35%  { --sky-0: #141f45; --sky-1: #2d3b6b; --sky-2: #6b5f86; --sky-3: #c07a80; --sky-4: #e9946a; --sky-5: #f4a864; --sky-6: #f6b86a; }
+  70%  { --sky-0: #5f86ab; --sky-1: #8eacc4; --sky-2: #cbbab0; --sky-3: #efcba0; --sky-4: #f6d49b; --sky-5: #f5cf94; --sky-6: #efc48a; }
+  100% { --sky-0: #84a8c4; --sky-1: #a3bfd2; --sky-2: #c4d3d8; --sky-3: #e4e0cf; --sky-4: #f3e3bd; --sky-5: #f4d29c; --sky-6: #ecc18a; }
+}
+
+.hero__parallax--sun {
+ 
+  z-index: 2;
+  transition: opacity 1.4s ease;
+}
+
+/* Dark mode: the sun has set behind the camera — it fades away rather
+   than moving, since it was never going to be visible setting in front. */
+:root[data-theme='dark'] .hero__parallax--sun {
+  opacity: 0;
+}
+
+:root:not([data-theme='dark']) .hero__parallax--sun {
+  animation: hero-sunrise 6.5s cubic-bezier(0.25, 0.6, 0.3, 1) both;
+}
+
+@keyframes hero-sunrise {
+  from { transform: translate3d(0, 52%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+.hero__sun {
+  position: absolute;
+  left: calc(var(--u) * 52);
+  top: 38%;
+  width: calc(var(--u) * 11);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fde3b0 0%, #f8cd8c 55%, rgba(246, 201, 135, 0) 72%);
+  box-shadow: 0 0 calc(var(--u) * 9) calc(var(--u) * 2) rgba(250, 214, 150, 0.5);
+  animation: hero-sun-breathe 12s ease-in-out infinite;
+}
+
+/* Warm peach/amber halo around the sun */
+.hero__sunglow {
+  position: absolute;
+  left: calc(var(--u) * 57.5 - var(--u) * 38);
+  top: calc(38% + var(--u) * 5.5 - var(--u) * 30);
+  width: calc(var(--u) * 76);
+  height: calc(var(--u) * 60);
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 213, 150, 0.62) 0%,
+    rgba(255, 204, 140, 0.3) 30%,
+    rgba(255, 214, 165, 0.12) 54%,
+    transparent 72%
+  );
+  animation: hero-sun-breathe 16s ease-in-out -4s infinite;
+}
+
+/* Soft volumetric rays: two blurred conic patterns with different periods, faded radially */
+.hero__rays {
+  position: absolute;
+  left: calc(var(--u) * 57.5 - var(--u) * 45);
+  top: calc(38% + var(--u) * 5.5 - var(--u) * 45);
+  width: calc(var(--u) * 90);
+  height: calc(var(--u) * 90);
+  background:
+    repeating-conic-gradient(from 8deg at 50% 50%, rgba(255, 229, 178, 0) 0deg, rgba(255, 229, 178, 0.36) 4deg, rgba(255, 229, 178, 0) 9deg, rgba(255, 229, 178, 0) 17deg),
+    repeating-conic-gradient(from 31deg at 50% 50%, rgba(255, 238, 205, 0) 0deg, rgba(255, 238, 205, 0.26) 6deg, rgba(255, 238, 205, 0) 14deg, rgba(255, 238, 205, 0) 29deg);
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.95) 6%, transparent 66%);
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.95) 6%, transparent 66%);
+  filter: blur(9px);
+  opacity: 0.55;
+  animation: hero-rays-shift 22s ease-in-out infinite alternate;
+}
+
+.hero__clouds {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hero__clouds--front { z-index: 5; }
+
+/*
+ * Each cloud: sun-lit cream tops, a cool blue-grey underside and a faint peach
+ * rim, then a static turbulence filter for wispy edges. Only transform animates.
+ */
+.hero__cloud {
+  position: absolute;
+  left: 0;
+  filter: url(#hero-cloud-wisp);
+  animation: hero-cloud-drift linear infinite;
+  will-change: transform;
+  background:
+    radial-gradient(ellipse 20% 36% at 24% 52%, rgba(255, 249, 234, 0.98), transparent 72%),
+    radial-gradient(ellipse 26% 52% at 42% 40%, rgba(255, 252, 244, 1), transparent 72%),
+    radial-gradient(ellipse 24% 46% at 62% 46%, rgba(255, 247, 232, 0.97), transparent 72%),
+    radial-gradient(ellipse 20% 34% at 80% 58%, rgba(255, 243, 224, 0.92), transparent 72%),
+    radial-gradient(ellipse 58% 32% at 48% 80%, rgba(126, 148, 176, 0.68), transparent 76%),
+    radial-gradient(ellipse 30% 24% at 78% 74%, rgba(255, 206, 160, 0.5), transparent 75%);
+}
+
+.hero__cloud--far-a { top: 7%;  width: calc(var(--u) * 20); height: calc(var(--u) * 4.4); opacity: 0.6;  animation-duration: 210s; animation-delay: -60s; }
+.hero__cloud--far-b { top: 24%; width: calc(var(--u) * 17); height: calc(var(--u) * 3.6); opacity: 0.55; animation-duration: 250s; animation-delay: -150s; animation-direction: reverse; }
+.hero__cloud--mid-a { top: 12%; width: calc(var(--u) * 29); height: calc(var(--u) * 7.2); opacity: 0.88; animation-duration: 320s; animation-delay: -110s; animation-direction: alternate; }
+.hero__cloud--mid-b { top: 33%; width: calc(var(--u) * 25); height: calc(var(--u) * 6);   opacity: 0.8;  animation-duration: 140s; animation-delay: -35s; animation-direction: reverse; }
+.hero__cloud--near  { top: 3%;  width: calc(var(--u) * 38); height: calc(var(--u) * 9.4); opacity: 0.92; animation-duration: 380s; animation-delay: -190s; animation-direction: alternate; }
+
+/* ---------- Birds (perspective approach from the distance) ---------- */
+
+.hero__birds {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 1.2s ease;
+}
+
+/* Dark mode: no birds fly at night */
+:root[data-theme='dark'] .hero__birds {
+  opacity: 0;
+}
+
+.hero__bird {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(var(--u) * 2.6);
+  color: rgba(37, 56, 47, 0.82);
+  transform-origin: 50% 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: hero-bird-approach var(--duration) linear var(--delay) infinite;
+}
+
+.hero__bird-bob {
+  display: block;
+  animation: hero-bird-wobble var(--wobble) ease-in-out var(--delay) infinite;
+}
+
+.hero__bird-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: currentColor;
+  overflow: visible;
+}
+
+.hero__wing {
+  transform-box: view-box;
+  transform-origin: 20px 12px;
+  animation: hero-wing-flap var(--flap) ease-in-out infinite;
+}
+
+.hero__wing--right { animation-name: hero-wing-flap-right; }
+
+/* ---------- Night sky: veil, stars and fireflies ----------
+   A single translucent veil (multiply-blended) darkens everything beneath
+   it in one pass, so individual layers (mountains, clouds, grass...) never
+   need their own dark-mode colors. Stars and fireflies sit above the veil
+   so they stay bright against it. All three just cross-fade with opacity. */
+
+.hero__night-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(4, 7, 20, 0.42) 0%,
+    rgba(6, 10, 26, 0.55) 45%,
+    rgba(3, 5, 14, 0.82) 100%
+  );
+  mix-blend-mode: multiply;
+  transition: opacity 3.4s ease; /* lifts gradually during the sunrise */
+}
+
+:root[data-theme='dark'] .hero__night-veil {
+  opacity: 1;
+  transition: opacity 1.8s ease;
+}
+
+.hero__clouds { transition: opacity 1.8s ease; }
+
+:root[data-theme='dark'] .hero__clouds { opacity: 0.5; }
+.hero__stars {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* above the sky, below clouds (3/5), mountains (4), tree and foreground: they occlude stars naturally */
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity 3.2s ease; /* fades out as the sunrise brightens the sky */
+}
+
+:root[data-theme='dark'] .hero__stars {
+  opacity: 1;
+  transition: opacity 2.6s ease 0.5s; /* fades in once the sky is already darkening */
+}
+
+/* Very faint diffuse band; the rotation follows the same line the star scatter uses */
+.hero__milkyway {
+  position: absolute;
+  left: -25%;
+  top: 17%;
+  width: 150%;
+  height: 22%;
+  transform: rotate(-12deg);
+  transform: rotate(atan2(-36svh, 100vw));
+  background:
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(176, 196, 255, 0.12), transparent 100%),
+    radial-gradient(ellipse 22% 38% at 30% 55%, rgba(220, 226, 255, 0.08), transparent 100%),
+    radial-gradient(ellipse 26% 34% at 68% 42%, rgba(255, 236, 214, 0.07), transparent 100%);
+}
+
+/* Dust + small stars: one 1px element each, every star is a static box-shadow */
+.hero__stars-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+/* Individually twinkling stars (position never changes, only opacity) */
+.hero__star {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  border-radius: 50%;
+  background: var(--c, #fff);
+  opacity: var(--o, 0.8);
+  box-shadow: 0 0 4px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 calc(var(--s) * 1.6) calc(var(--s) * 0.15) color-mix(in srgb, var(--c) 45%, transparent);
+  animation: hero-star-twinkle 9s ease-in-out infinite;
+  animation-play-state: paused; /* no work while the sky is hidden in light mode */
+}
+
+:root[data-theme='dark'] .hero__star {
+  animation-play-state: running;
+}
+
+.hero__star--halo {
+  box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.4), 0 0 18px 3px rgba(200, 215, 255, 0.15);
+  box-shadow:
+    0 0 calc(var(--s) * 2.2) calc(var(--s) * 0.35) color-mix(in srgb, var(--c) 70%, transparent),
+    0 0 calc(var(--s) * 7) calc(var(--s) * 1.2) color-mix(in srgb, var(--c) 18%, transparent);
+}
+
+
+
+/* Night-time mountain treatment */
+:root[data-theme='dark'] .hero__range--far .hero__range-img {
+  filter: blur(1.9px) saturate(0.58) contrast(1.02) brightness(0.48);
+}
+
+:root[data-theme='dark'] .hero__range--mid .hero__range-img {
+  filter: blur(0.9px) saturate(0.68) contrast(1.04) brightness(0.42);
+}
+
+:root[data-theme='dark'] .hero__range--near .hero__range-img {
+  filter: blur(0.25px) saturate(0.72) contrast(1.06) brightness(0.38);
+}
+
+
+.hero__fireflies {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2s ease 0.5s;
+}
+
+:root[data-theme='dark'] .hero__fireflies {
+  opacity: 1;
+}
+
+.hero__firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d8f27a;
+  box-shadow:
+    0 0 6px 2px rgba(212, 240, 120, 0.9),
+    0 0 14px 5px rgba(180, 230, 90, 0.4);
+  animation: hero-firefly-drift ease-in-out infinite, hero-firefly-flicker ease-in-out infinite;
+}
+
+/* ---------- Falling leaves (image asset, moved by lib/fallingLeaves.ts) ---------- */
+
+.hero__leaves {
+  position: absolute;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+}
+
+.hero__leaf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * var(--size));
+  height: auto;
+  opacity: 0;
+  will-change: transform, opacity;
+  user-select: none;
+}
+
+/* ---------- 3-4. Mountains (3 atmospheric depths), fog, mist, valley ---------- */
+
+/*
+ * The single mountain PNG is stacked three times and cross-faded vertically
+ * (opacities always sum to 1): distant peaks on top, middle ridges, then the
+ * nearer forested slopes. Each depth gets its own blur, contrast, colour haze
+ * and parallax speed. The haze is a tint masked by the PNG's own alpha, so it
+ * follows the silhouette exactly.
+ */
+.hero__parallax--range-far { z-index: 4; }
+.hero__parallax--range-mid { z-index: 4; }
+.hero__parallax--range-near { z-index: 4; }
+
+.hero__range {
+  position: absolute;
+  right: calc(var(--u) * -6);
+  bottom: 16%;
+  width: calc(var(--u) * 102);
+  aspect-ratio: 2172 / 724;
+}
+
+.hero__range-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+.hero__range-tint {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: var(--range-src);
+  mask-image: var(--range-src);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  background: var(--range-haze, transparent);
+}
+
+.hero__range--far {
+  -webkit-mask-image: linear-gradient(180deg, #000 34%, transparent 52%);
+  mask-image: linear-gradient(180deg, #000 34%, transparent 52%);
+  --range-haze: linear-gradient(180deg, rgba(178, 202, 224, 0.55), rgba(214, 218, 214, 0.34));
+}
+
+.hero__range--far .hero__range-img {
+  filter: blur(1.9px) saturate(0.7) contrast(0.84) brightness(1.08);
+}
+
+.hero__range--mid {
+  -webkit-mask-image: linear-gradient(180deg, transparent 34%, #000 52%, #000 62%, transparent 76%);
+  mask-image: linear-gradient(180deg, transparent 34%, #000 52%, #000 62%, transparent 76%);
+  --range-haze: rgba(188, 206, 220, 0.26);
+}
+
+.hero__range--mid .hero__range-img {
+  filter: blur(0.9px) saturate(0.86) contrast(0.92) brightness(1.03);
+}
+
+.hero__range--near {
+  -webkit-mask-image: linear-gradient(180deg, transparent 62%, #000 76%);
+  mask-image: linear-gradient(180deg, transparent 62%, #000 76%);
+  --range-haze: rgba(168, 190, 178, 0.1);
+}
+
+.hero__range--near .hero__range-img {
+  filter: blur(0.25px) saturate(0.95);
+}
+
+/* Fog: layered soft gradients, wisped by turbulence. Position, scale and opacity all change per layer. */
+.hero__fog-bank {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.hero__fog {
+  position: absolute;
+  left: calc(var(--u) * -10);
+  width: calc(var(--u) * 120);
+  opacity: 0;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+  background:
+    radial-gradient(ellipse 17% 52% at 13% 58%, rgba(236, 243, 246, 0.86), transparent 70%),
+    radial-gradient(ellipse 22% 46% at 37% 45%, rgba(241, 246, 247, 0.92), transparent 72%),
+    radial-gradient(ellipse 19% 58% at 60% 55%, rgba(232, 240, 244, 0.86), transparent 70%),
+    radial-gradient(ellipse 24% 48% at 84% 47%, rgba(238, 244, 246, 0.82), transparent 72%),
+    linear-gradient(180deg, transparent, rgba(222, 232, 238, 0.22) 60%, transparent);
+}
+
+.hero__fog--high-a { bottom: calc(16% + var(--u) * 14); height: calc(var(--u) * 16); filter: url(#hero-fog-wisp-1); animation: hero-fog-a 118s ease-in-out -30s infinite; }
+.hero__fog--high-b { bottom: calc(16% + var(--u) * 17); height: calc(var(--u) * 13); filter: url(#hero-fog-wisp-2); animation: hero-fog-b 151s ease-in-out -96s infinite; }
+.hero__fog--mid-a  { bottom: calc(16% + var(--u) * 8);  height: calc(var(--u) * 12); filter: url(#hero-fog-wisp-2); animation: hero-fog-c 97s ease-in-out -52s infinite; }
+.hero__fog--low-a  { bottom: calc(16% + var(--u) * 2);  height: calc(var(--u) * 12); filter: url(#hero-fog-wisp-1); animation: hero-fog-b 129s ease-in-out -14s infinite; }
+.hero__fog--low-b  { bottom: calc(16% + var(--u) * -1); height: calc(var(--u) * 10); filter: url(#hero-fog-wisp-2); animation: hero-fog-a 83s ease-in-out -61s infinite; }
+
+.hero__mist {
+  position: absolute;
+  z-index: 5;
+  left: -20%;
+  bottom: 22%;
+  width: 140%;
+  height: 16%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 251, 240, 0.5), rgba(255, 251, 240, 0) 68%);
+  filter: blur(8px);
+  animation: hero-mist-drift 46s ease-in-out infinite alternate;
+}
+
+.hero__valley {
+  position: absolute;
+  z-index: 5;
+  inset: auto 0 0 0;
+  height: 36%;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(110, 140, 112, 0) 0%,
+    rgba(104, 135, 100, 0.88) 40%,
+    #5b7541 100%
+  );
+}
+
+/* ---------- 5-6. Tree (shifted right; foliage follows the shared wind) ---------- */
+
+.hero__parallax--tree {
+ 
+  z-index: 6;
+}
+
+.hero__tree {
+  position: absolute;
+  left: calc(var(--u) * -6.5);
+  top: calc(var(--u) * -5);
+  width: calc(var(--u) * 62);
+  aspect-ratio: 3 / 2;
+}
+
+.hero__tree-layer {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+/*
+ * One flattened PNG, split by cross-fading horizontal masks that always sum to
+ * 1. The trunk layer never moves; each foliage layer bends about its own pivot
+ * by an amount driven by --wind (direction) and --wind-force (strength).
+ */
+.hero__tree-layer--trunk {
+  will-change: auto;
+  -webkit-mask-image: linear-gradient(90deg, #000 22%, transparent 40%);
+  mask-image: linear-gradient(90deg, #000 22%, transparent 40%);
+}
+
+.hero__tree-layer--limb {
+  -webkit-mask-image: linear-gradient(90deg, transparent 22%, #000 40%, #000 55%, transparent 70%);
+  mask-image: linear-gradient(90deg, transparent 22%, #000 40%, #000 55%, transparent 70%);
+  transform-origin: 22% 26%;
+  --bias: 0.35deg; --amp: 0.22deg; --shift: 0.08%; --skew: 0deg;
+  animation: hero-tree-sway 9s ease-in-out infinite;
+}
+
+.hero__tree-layer--outer {
+  -webkit-mask-image: linear-gradient(90deg, transparent 55%, #000 70%, #000 80%, transparent 90%);
+  mask-image: linear-gradient(90deg, transparent 55%, #000 70%, #000 80%, transparent 90%);
+  transform-origin: 40% 20%;
+  --bias: 0.6deg; --amp: 0.35deg; --shift: 0.18%; --skew: 0.15deg;
+  animation: hero-tree-sway 7.3s ease-in-out -2s infinite;
+}
+
+.hero__tree-layer--tip {
+  -webkit-mask-image: linear-gradient(90deg, transparent 80%, #000 90%);
+  mask-image: linear-gradient(90deg, transparent 80%, #000 90%);
+  transform-origin: 55% 18%;
+  --bias: 0.9deg; --amp: 0.5deg; --shift: 0.32%; --skew: 0.35deg;
+  animation: hero-tree-sway 5.6s ease-in-out -3.4s infinite;
+}
+
+/* ---------- 7. Prayer flags ---------- */
+
+.hero__parallax--garland {
+ 
+  z-index: 7;
+}
+
+.hero__garland {
+  position: absolute;
+  left: calc(var(--u) * 5.5);
+  top: calc(var(--u) * 3.4);
+  width: calc(var(--u) * 16);
+  aspect-ratio: 2172 / 724;
+  transform-origin: 8% 10%;
+  /* Whole-garland lean follows the shared wind; transition smooths the 25 Hz updates */
+  transform: skewX(calc(var(--wind) * 1.6deg));
+  transition: transform 0.25s linear;
+}
+
+/* ---------- Fabric (shared by prayer flags and summit flag) ---------- */
+
+.fabric {
+  position: absolute;
+  inset: 0;
+}
+
+.fabric__slice {
+  /* Slice phase: right wind -> wave travels left to right, left wind -> right to left */
+  --pr: calc(var(--n) - var(--i));
+  --pl: var(--i);
+  --p: var(--pr);
+  position: absolute;
+  inset: 0;
+  background-image: var(--fabric-src);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  /* Each slice is the full artwork, clipped to column --i of --n (with a hairline overlap). */
+  clip-path: inset(
+    0 calc(100% - (var(--i) + 1) * 100% / var(--n) - 0.4%) 0 calc(var(--i) * 100% / var(--n))
+  );
+  will-change: transform;
+}
+
+.hero[data-wind='left'] .fabric--garland .fabric__slice { --p: var(--pl); }
+
+.fabric--garland .fabric__slice {
+  transform-origin: 50% 40%;
+  animation:
+    hero-garland-flutter 3.1s ease-in-out calc(var(--p) * -0.1s) infinite,
+    hero-garland-lift 4.7s ease-in-out calc(var(--p) * -0.17s) infinite;
+}
+
+/* Summit flag phase is measured from the pole, so it needs no direction switch */
+.fabric--flag .fabric__slice {
+  /* Slice phase: right wind -> wave travels left to right, left wind -> right to left */
+  --pr: calc(var(--n) - var(--i));
+  --pl: var(--i);
+  --p: var(--pr);
+  transform-origin: 6% 35%;
+  animation:
+    hero-flag-ripple 2.4s ease-in-out calc(var(--p) * -0.16s) infinite,
+    hero-flag-billow 5.3s ease-in-out calc(var(--p) * -0.22s) infinite;
+}
+
+/* ---------- 8. Backpack (sits above the foreground so its base rests on the rock) ---------- */
+
+.hero__parallax--backpack {
+ 
+  z-index: 12;
+}
+
+.hero__backpack {
+  left: calc(var(--u) * 1.2);
+  bottom: calc(var(--u) * 16);
+  width: calc(var(--u) * 11);
+  height: auto;
+}
+
+/* ---------- 9. Cairn and summit flag ---------- */
+
+.hero__parallax--cairn {
+ 
+  z-index: 9;
+}
+
+.hero__cairn {
+  position: absolute;
+  left: calc(var(--u) * 55);
+  bottom: calc(var(--u) * 8.5);
+  width: calc(var(--u) * 17);
+  aspect-ratio: 3 / 2;
+}
+
+.hero__cairn-stones {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Pole tip sits at ~53% / 1.5% of the cairn image; the flag's pole edge is anchored there. */
+.hero__summit-flag {
+  position: absolute;
+  left: 45.5%;
+  top: 0.5%;
+  width: 55%;
+  aspect-ratio: 2 / 1;
+  /* Ripple strength follows the shared wind force */
+  --flag-amp: calc(0.45 + var(--wind-force) * 1.1);
+  transform-origin: 6% 40%;
+  transform: perspective(700px) rotateY(0deg);
+  transition: transform 2.4s ease-in-out;
+}
+
+/* When the wind reverses, the flag swings round the pole to stream the other way */
+.hero[data-wind='left'] .hero__summit-flag {
+  transform: perspective(700px) rotateY(180deg);
+}
+
+/* ---------- 10. Grass and wildflowers ---------- */
+
+.hero__parallax--grass-a { z-index: 10; }
+.hero__parallax--grass-b { z-index: 10; }
+
+.hero__grass {
+  position: absolute;
+  bottom: calc(var(--u) * 6.5);
+  width: calc(var(--u) * 30);
+  aspect-ratio: 2170 / 720;
+}
+
+.hero__grass--a { left: calc(var(--u) * 28); }
+.hero__grass--b { left: calc(var(--u) * 66); width: calc(var(--u) * 34); }
+
+.hero__grass-layer {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 96%;
+  will-change: transform;
+}
+
+.hero__grass-layer--left {
+  -webkit-mask-image: linear-gradient(90deg, #000 25%, transparent 40%);
+  mask-image: linear-gradient(90deg, #000 25%, transparent 40%);
+  transform-origin: 18% 96%;
+  animation: hero-grass-sway 5.2s ease-in-out infinite;
+  --sway: 2deg;
+}
+
+.hero__grass-layer--middle {
+  -webkit-mask-image: linear-gradient(90deg, transparent 25%, #000 40%, #000 60%, transparent 75%);
+  mask-image: linear-gradient(90deg, transparent 25%, #000 40%, #000 60%, transparent 75%);
+  transform-origin: 50% 96%;
+  animation: hero-grass-sway 4.3s ease-in-out -1.7s infinite;
+  --sway: 1.6deg;
+}
+
+.hero__grass-layer--right {
+  -webkit-mask-image: linear-gradient(90deg, transparent 60%, #000 75%);
+  mask-image: linear-gradient(90deg, transparent 60%, #000 75%);
+  transform-origin: 82% 96%;
+  animation: hero-grass-sway 6.1s ease-in-out -3.1s infinite;
+  --sway: 2.3deg;
+}
+
+.hero__grass--b .hero__grass-layer--left { animation-delay: -2.4s; }
+.hero__grass--b .hero__grass-layer--middle { animation-delay: -0.4s; }
+.hero__grass--b .hero__grass-layer--right { animation-delay: -4.6s; }
+
+/* ---------- 11. Foreground ---------- */
+
+.hero__parallax--foreground {
+ 
+  z-index: 11;
+}
+
+.hero__foreground {
+  left: -2vw;
+  bottom: -2px;
+  width: 104vw;
+  height: calc(var(--u) * 34);
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+/* ---------- 12. Header, content, indicators ---------- */
+
+.hero__content {
+  position: absolute;
+  z-index: 15;
+  left: calc(var(--u) * 15.5);
+  top: 27%;
+  width: calc(var(--u) * 30);
+  min-width: 18rem;
+}
+
+/* Soft cream wash keeps text legible over the sky and mist */
+.hero__content::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -12% -22% -10% -14%;
+  background: radial-gradient(ellipse at 40% 50%, rgba(246, 238, 220, 0.78), rgba(246, 238, 220, 0) 70%);
+  transition: background 1.6s ease;
+}
+
+:root[data-theme='dark'] .hero__content::before {
+  background: radial-gradient(ellipse at 40% 50%, rgba(8, 12, 26, 0.72), rgba(8, 12, 26, 0) 70%);
+}
+
+.hero__content > * {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 0.8, 0.3, 1) backwards;
+}
+.hero__content > :nth-child(2) { animation-delay: 0.12s; }
+.hero__content > :nth-child(3) { animation-delay: 0.24s; }
+.hero__content > :nth-child(4) { animation-delay: 0.36s; }
+.hero__content > :nth-child(5) { animation-delay: 0.48s; }
+
+.hero__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  margin: 0 0 1.1rem;
+  color: #5c6660;
+  font-size: clamp(0.72rem, 0.9vw, 0.95rem);
+  letter-spacing: 0.45em;
+  transition: color 1.6s ease;
+}
+
+:root[data-theme='dark'] .hero__eyebrow {
+  color: #a9b6c9;
+}
+
+.hero__eyebrow::after {
+  content: '';
+  width: clamp(2.5rem, 4vw, 4.5rem);
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.hero__title {
+  margin: 0;
+  color: var(--forest);
+  font-size: clamp(3rem, calc(var(--u) * 6.6), 8rem);
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  transition: color 1.6s ease;
+}
+
+.hero__title span { display: block; }
+
+.hero__role {
+  margin: 1.2rem 0 1.4rem;
+  color: var(--burnt-orange);
+  font-size: clamp(0.78rem, calc(var(--u) * 1.02), 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  transition: color 1.6s ease;
+}
+
+:root[data-theme='dark'] .hero__role {
+  color: #e58a4e;
+}
+
+.hero__description {
+  max-width: 24em;
+  margin: 0 0 2rem;
+  color: #34443b;
+  font-size: clamp(1rem, calc(var(--u) * 1.2), 1.45rem);
+  font-style: italic;
+  line-height: 1.55;
+  transition: color 1.6s ease;
+}
+
+:root[data-theme='dark'] .hero__description {
+  color: #c7d0dd;
+}
+
+.hero__cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.9rem;
+  border-radius: 3px 6px 4px 7px;
+  background: var(--burnt-orange);
+  color: var(--cream);
+  font-size: clamp(0.76rem, 0.95vw, 0.98rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(120, 52, 18, 0.28);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.hero__cta:hover {
+  background: #a3441a;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(120, 52, 18, 0.34);
+}
+
+.hero__cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(120, 52, 18, 0.3);
+}
+
+.hero__cta-arrow { display: inline-block; transition: transform 0.25s ease; }
+.hero__cta:hover .hero__cta-arrow { transform: translateX(5px); }
+
+/* Expedition progress (driven by real scroll position via --progress) */
+
+.hero__expedition {
+  position: absolute;
+  z-index: 20;
+  right: clamp(1rem, 1.9vw, 2.2rem);
+  top: 34%;
+  height: 26%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+}
+
+.hero__expedition-track {
+  position: absolute;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  left: 50%;
+  width: 1.5px;
+  background: rgba(37, 56, 47, 0.35);
+  transform: translateX(-50%);
+}
+
+.hero__expedition-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--burnt-orange);
+  transform: scaleY(var(--progress));
+  transform-origin: top;
+}
+
+.hero__expedition-node {
+  position: relative;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1.5px solid var(--forest);
+  border-radius: 50%;
+  background: var(--cream);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.hero__expedition-node.is-reached {
+  border-color: var(--burnt-orange);
+  background: var(--burnt-orange);
+}
+
+/* ---------- Keyframes (transform / opacity only; wind terms read the shared custom properties) ---------- */
+
+@keyframes hero-cloud-drift {
+  from { transform: translate3d(-42vw, 0, 0); }
+  to { transform: translate3d(112vw, 0, 0); }
+}
+
+@keyframes hero-rays-shift {
+  from { transform: rotate(-2.5deg); opacity: 0.4; }
+  to { transform: rotate(2.5deg); opacity: 0.68; }
+}
+
+@keyframes hero-sun-breathe {
+  0%, 100% { opacity: 0.92; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.035); }
+}
+
+@keyframes hero-mist-drift {
+  from { transform: translate3d(-4%, 0, 0); opacity: 0.4; }
+  to { transform: translate3d(4%, 0, 0); opacity: 0.8; }
+}
+
+/* Fog: horizontal drift + upward rise + width/height change + opacity swell.
+   Each keyframe set runs two passes in opposite directions; the jump between passes happens at opacity 0. */
+@keyframes hero-fog-a {
+  0% { opacity: 0; transform: translate3d(-24%, 7%, 0) scale(0.9, 0.8); }
+  10% { opacity: 0.42; }
+  24% { opacity: 0.88; transform: translate3d(-6%, -2%, 0) scale(1.05, 0.95); }
+  38% { opacity: 0.4; }
+  49% { opacity: 0; transform: translate3d(24%, -12%, 0) scale(1.28, 1.15); }
+  50% { opacity: 0; transform: translate3d(26%, 6%, 0) scale(1.2, 0.85); }
+  62% { opacity: 0.5; }
+  74% { opacity: 0.8; transform: translate3d(8%, -3%, 0) scale(1.1, 1); }
+  88% { opacity: 0.32; }
+  100% { opacity: 0; transform: translate3d(-26%, -13%, 0) scale(0.9, 1.12); }
+}
+
+@keyframes hero-fog-b {
+  0% { opacity: 0; transform: translate3d(26%, 5%, 0) scale(1.15, 0.85); }
+  14% { opacity: 0.55; }
+  30% { opacity: 0.35; transform: translate3d(8%, -1%, 0) scale(1, 1); }
+  44% { opacity: 0.82; transform: translate3d(-8%, -6%, 0) scale(0.92, 1.1); }
+  57% { opacity: 0; transform: translate3d(-27%, -14%, 0) scale(0.85, 1.2); }
+  58% { opacity: 0; transform: translate3d(-24%, 6%, 0) scale(0.9, 0.82); }
+  70% { opacity: 0.6; }
+  82% { opacity: 0.9; transform: translate3d(6%, -4%, 0) scale(1.15, 1); }
+  93% { opacity: 0.3; }
+  100% { opacity: 0; transform: translate3d(27%, -12%, 0) scale(1.3, 1.1); }
+}
+
+@keyframes hero-fog-c {
+  0% { opacity: 0; transform: translate3d(-20%, 4%, 0) scale(1, 0.9); }
+  18% { opacity: 0.7; transform: translate3d(-4%, 0, 0) scale(1.1, 1); }
+  34% { opacity: 0.3; }
+  47% { opacity: 0; transform: translate3d(22%, -10%, 0) scale(1.25, 1.2); }
+  48% { opacity: 0; transform: translate3d(22%, 5%, 0) scale(1.2, 0.9); }
+  66% { opacity: 0.75; transform: translate3d(2%, -2%, 0) scale(1, 1.05); }
+  80% { opacity: 0.4; }
+  100% { opacity: 0; transform: translate3d(-24%, -11%, 0) scale(0.88, 1.15); }
+}
+
+/* Birds: perspective approach. Position and scale grow together (they accelerate),
+   opacity rises as distance and fog fall away. */
+@keyframes hero-bird-approach {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.07); }
+  10% { opacity: 0.2; }
+  35% { opacity: 0.45; transform: translate3d(calc(var(--dx) * 0.1), calc(var(--dy) * 0.07), 0) scale(calc(var(--s1) * 0.16)); }
+  60% { opacity: 0.75; transform: translate3d(calc(var(--dx) * 0.32), calc(var(--dy) * 0.28), 0) scale(calc(var(--s1) * 0.36)); }
+  82% { opacity: 0.9; transform: translate3d(calc(var(--dx) * 0.68), calc(var(--dy) * 0.62), 0) scale(calc(var(--s1) * 0.72)); }
+  95% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0) scale(var(--s1)); }
+}
+
+@keyframes hero-bird-wobble {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-4deg); }
+  30% { transform: translate3d(6%, -12%, 0) rotate(3deg); }
+  65% { transform: translate3d(-5%, 8%, 0) rotate(-2deg); }
+}
+
+@keyframes hero-wing-flap {
+  0%, 100% { transform: rotate(-26deg); }
+  50% { transform: rotate(22deg); }
+}
+
+@keyframes hero-wing-flap-right {
+  0%, 100% { transform: rotate(26deg); }
+  50% { transform: rotate(-22deg); }
+}
+
+@keyframes hero-star-twinkle {
+  0%, 100% { opacity: var(--o); }
+  30% { opacity: calc(var(--o) * 0.55); }
+  38% { opacity: calc(var(--o) * 0.95); }
+  62% { opacity: calc(var(--o) * 0.4); }
+}
+
+@keyframes hero-firefly-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(calc(var(--fx) * 0.5), calc(var(--fy) * -0.6), 0); }
+  50% { transform: translate3d(var(--fx), calc(var(--fy) * 0.2), 0); }
+  75% { transform: translate3d(calc(var(--fx) * 0.3), var(--fy), 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes hero-firefly-flicker {
+  0%, 100% { opacity: 0.15; }
+  40% { opacity: 1; }
+  55% { opacity: 0.3; }
+  80% { opacity: 0.85; }
+}
+
+@keyframes hero-tree-sway {
+  0%, 100% {
+    transform: translate3d(calc(var(--wind) * var(--shift)), 0, 0)
+      rotate(calc(var(--wind) * var(--bias) - var(--wind-force) * var(--amp)))
+      skewX(calc(var(--wind) * var(--skew)));
+  }
+  50% {
+    transform: translate3d(calc(var(--wind) * var(--shift)), 0, 0)
+      rotate(calc(var(--wind) * var(--bias) + var(--wind-force) * var(--amp) * 0.8))
+      skewX(calc(var(--wind) * var(--skew) * -0.5));
+  }
+}
+
+@keyframes hero-garland-flutter {
+  0%, 100% { transform: skewX(calc(var(--wind) * 3deg - var(--wind-force) * 1.9deg)); }
+  35% { transform: skewX(calc(var(--wind) * 3deg + var(--wind-force) * 1.3deg)); }
+  70% { transform: skewX(calc(var(--wind) * 3deg + var(--wind-force) * 2.8deg)); }
+}
+
+@keyframes hero-garland-lift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: calc(var(--wind) * 0.25%) calc(var(--wind-force) * 0.7%); }
+}
+
+@keyframes hero-flag-ripple {
+  0%, 100% { transform: translate3d(0, calc(var(--i) * -0.4% * var(--flag-amp)), 0) skewY(calc(var(--i) * -0.18deg * var(--flag-amp))); }
+  50% { transform: translate3d(calc(var(--i) * -0.08% * var(--flag-amp)), calc(var(--i) * 0.5% * var(--flag-amp)), 0) skewY(calc(var(--i) * 0.22deg * var(--flag-amp))); }
+}
+
+@keyframes hero-flag-billow {
+  0%, 100% { translate: 0 0; }
+  45% { translate: calc(var(--i) * 0.05% * var(--flag-amp)) calc(var(--i) * -0.18% * var(--flag-amp)); }
+  75% { translate: calc(var(--i) * -0.03% * var(--flag-amp)) calc(var(--i) * 0.22% * var(--flag-amp)); }
+}
+
+@keyframes hero-grass-sway {
+  0%, 100% { transform: skewX(calc(var(--wind) * 1.4deg - var(--sway) * (0.45 + var(--wind-force)))); }
+  50% { transform: skewX(calc(var(--wind) * 1.4deg + var(--sway) * (0.45 + var(--wind-force)))); }
+}
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes hero-bob {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.7; }
+  50% { transform: translate3d(0, 5px, 0); opacity: 1; }
+}
+
+/* ---------- Tablet / small laptop tweaks ---------- */
+
+@media (max-width: 1100px) and (min-aspect-ratio: 1/1) {
+  .hero__content { left: calc(var(--u) * 13); width: calc(var(--u) * 36); }
+}
+
+/* ---------- Portrait & phones: recomposed, not scaled ---------- */
+
+@media (max-width: 720px), (max-aspect-ratio: 1/1) {
+  .hero { min-height: max(100svh, 40rem); }
+
+  .hero__sun { left: 52vw; top: 34%; width: 20vw; }
+  .hero__sunglow { left: -8vw; top: calc(34% + 10vw - 45vw); width: 140vw; height: 90vw; }
+  .hero__rays { left: -8vw; top: calc(34% + 10vw - 70vw); width: 140vw; height: 140vw; }
+
+  .hero__cloud--near { width: 80vw; height: 20vw; }
+  .hero__cloud--mid-a { width: 62vw; height: 15vw; }
+  .hero__cloud--mid-b { width: 54vw; height: 13vw; top: 36%; }
+  .hero__cloud--far-b { display: none; }
+
+  .hero__range { right: -10vw; width: 170vw; }
+  .hero__fog { left: -45vw; width: 190vw; }
+  .hero__fog--high-a { bottom: calc(16% + 24vw); height: 27vw; }
+  .hero__fog--high-b { bottom: calc(16% + 30vw); height: 22vw; }
+  .hero__fog--mid-a { bottom: calc(16% + 13vw); height: 20vw; }
+  .hero__fog--low-a { bottom: calc(16% + 3vw); height: 20vw; }
+  .hero__fog--low-b { bottom: calc(16% - 1vw); height: 16vw; }
+  .hero__mist { bottom: 20%; }
+
+  .hero__bird { width: 7vw; }
+  .hero__bird:nth-child(n + 3) { display: none; }
+
+  .hero__tree { left: -31vw; top: -6vw; width: 122vw; }
+  .hero__garland { left: 4vw; top: 9vw; width: 40vw; }
+
+  .hero__backpack { left: 2vw; bottom: 24vw; width: 28vw; }
+
+  .hero__cairn { left: 62vw; bottom: 9vw; width: 30vw; }
+
+  .hero__grass { bottom: 6vw; width: 62vw; }
+  .hero__grass--a { left: 26vw; }
+  .hero__grass--b { left: 50vw; width: 62vw; }
+
+  .hero__foreground { left: -30vw; width: 170vw; height: 57vw; }
+
+  .hero__leaf { width: calc(var(--size) * 2.6vw); }
+  .hero__leaf:nth-child(n + 6) { display: none; }
+
+  .hero__content {
+    left: clamp(1.25rem, 7vw, 4rem);
+    top: 29%;
+    width: min(78vw, 30rem);
+    min-width: 0;
+  }
+
+  .hero__content::before { inset: -8% -14% -6% -12%; }
+  .hero__title { font-size: clamp(2.7rem, 13vw, 6rem); }
+  .hero__role { font-size: clamp(0.72rem, 2.9vw, 1rem); letter-spacing: 0.26em; margin: 0.9rem 0 1rem; }
+  .hero__description { font-size: clamp(0.98rem, 4vw, 1.3rem); margin-bottom: 1.5rem; }
+  .hero__cta { padding: 0.9rem 1.4rem; font-size: 0.75rem; }
+
+  .hero__expedition { display: none; }
+}
+
+/* ---------- Reduced motion: a complete, still scene ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero *,
+  .hero *::before,
+  .hero *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .hero__cloud--near { transform: translate3d(8vw, 0, 0); }
+  .hero__cloud--mid-a { transform: translate3d(48vw, 0, 0); }
+  .hero__cloud--mid-b { transform: translate3d(22vw, 0, 0); }
+  .hero__cloud--far-a { transform: translate3d(66vw, 0, 0); }
+  .hero__cloud--far-b { transform: translate3d(34vw, 0, 0); }
+
+  /* Still, partial fog keeps the depth without any motion */
+  .hero__fog--high-a { opacity: 0.22; }
+  .hero__fog--mid-a { opacity: 0.34; }
+  .hero__fog--low-a { opacity: 0.4; }
+
+  .hero__bird,
+  .hero__leaf { display: none; }
+
+  /* Night sky stays, but settles: stars dimly lit, fireflies hidden */
+  .hero__star { opacity: 0.55; }
+  .hero__firefly { display: none; }
+}
+
+@property --sky-0 { syntax: '<color>'; inherits: false; initial-value: #84a8c4; }
+@property --sky-1 { syntax: '<color>'; inherits: false; initial-value: #a3bfd2; }
+@property --sky-2 { syntax: '<color>'; inherits: false; initial-value: #c4d3d8; }
+@property --sky-3 { syntax: '<color>'; inherits: false; initial-value: #e4e0cf; }
+@property --sky-4 { syntax: '<color>'; inherits: false; initial-value: #f3e3bd; }
+@property --sky-5 { syntax: '<color>'; inherits: false; initial-value: #f4d29c; }
+@property --sky-6 { syntax: '<color>'; inherits: false; initial-value: #ecc18a; }

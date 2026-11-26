@@ -1,5 +1,21 @@
 {
     "name": "@yatin-portfolio/web",
     "version": "1.0.0",
-    "private": true
+    "private": true,
+    "dependencies": {
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1"
+    },
+    "devDependencies": {
+        "@types/react": "^19.3.2",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.8"
+    },
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview"
+    }
 }
