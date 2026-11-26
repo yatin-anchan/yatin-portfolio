@@ -3,10 +3,15 @@ import type { CSSProperties, MouseEvent, RefObject } from 'react';
 import { createLeafController } from '../lib/fallingLeaves';
 import { createWindSystem } from '../lib/windSystem';
 import './css/HeroSection.css';
+import dayAmbience from '../assets/audio/mountain-day-ambience.mp3'
+import nightAmbience from '../assets/audio/mountain-night-ambience.mp3';
+import windAmbience from '../assets/audio/freesound_community-lonely-winter-breeze-36867.mp3';
+import flagAmbience from '../assets/audio/freesound_community-cloth-flapping-on-a-clothesline-gently-6148.mp3';
 
 import treeBranch from '../assets/tree-branch.png';
 import cairnWithBanner from '../assets/cairn-with-banner.png';
 import backpack from '../assets/backpack.png';
+import rock from '../assets/rockface.png';
 import foreground from '../assets/foreground.png';
 import mountains from '../assets/mountains.png';
 import summitFlag from '../assets/summit-flag.png';
@@ -272,6 +277,291 @@ function useWindEnvironment(rootRef: RefObject<HTMLElement | null>) {
   }, [rootRef]);
 }
 
+
+const AMBIENT_VOLUME = 1.0;
+const WIND_VOLUME = 0.38;
+const FLAG_VOLUME = 0.32;
+const CROSSFADE_MS = 3000;
+
+type AmbientTheme = 'light' | 'dark';
+
+const readTheme = (): AmbientTheme =>
+  document.documentElement.getAttribute('data-theme') === 'dark'
+    ? 'dark'
+    : 'light';
+
+function useAmbientAudio() {
+  useEffect(() => {
+    type Track = {
+      audio: HTMLAudioElement;
+      source: MediaElementAudioSourceNode;
+      gain: GainNode;
+      panner: StereoPannerNode;
+      level: number;
+      loopHandler: () => void;
+    };
+
+    type AudioTracks = Record<AmbientTheme, Track> & {
+      wind: Track;
+      flag: Track;
+    };
+
+    let context: AudioContext | null = null;
+    let tracks: AudioTracks | null = null;
+    let theme = readTheme();
+    let unlocked = false;
+    let raf = 0;
+    let lastTime = 0;
+    let listening = false;
+
+    const gestureEvents = [
+      'pointerdown',
+      'keydown',
+      'touchend',
+    ] as const;
+
+    const createAudioGraph = () => {
+      if (context) return;
+
+      context = new AudioContext();
+
+      const createTrack = (src: string, initialGain: number): Track => {
+        const audio = new Audio(src);
+        const LOOP_DURATION_SECONDS = 30;
+
+audio.loop = false;
+audio.preload = 'auto';
+audio.volume = 1;
+
+const loopHandler = () => {
+  const duration = audio.duration;
+
+  if (!Number.isFinite(duration) || duration <= 0) return;
+
+  const loopEnd = Math.min(LOOP_DURATION_SECONDS, duration);
+
+  if (audio.currentTime >= loopEnd - 0.15) {
+    audio.currentTime = 0;
+    void audio.play().catch(() => {
+      unlocked = false;
+    });
+  }
+};
+
+audio.addEventListener('timeupdate', loopHandler);
+
+        const source = context!.createMediaElementSource(audio);
+        const panner = context!.createStereoPanner();
+        const gain = context!.createGain();
+
+        panner.pan.value = 0;
+        gain.gain.value = initialGain;
+
+        source.connect(panner);
+        panner.connect(gain);
+        gain.connect(context!.destination);
+
+        return {
+  audio,
+  source,
+  gain,
+  panner,
+  level: 0,
+  loopHandler,
+};
+      };
+
+      tracks = {
+        light: createTrack(dayAmbience, 0),
+        dark: createTrack(nightAmbience, 0),
+
+        // These two tracks remain at constant volume in both themes.
+        wind: createTrack(windAmbience, WIND_VOLUME),
+        flag: createTrack(flagAmbience, FLAG_VOLUME),
+      };
+    };
+
+const playActiveTrack = async () => {
+  if (!tracks || !context) return;
+
+  try {
+    // Request playback immediately during the user's interaction.
+    const playback = [
+      tracks[theme].audio.play(),
+      tracks.wind.audio.play(),
+      tracks.flag.audio.play(),
+    ];
+
+    await context.resume();
+    await Promise.all(playback);
+
+    unlocked = true;
+    kick();
+    console.info(`[Hero Audio] Playing ${theme} ambience`);
+  } catch (error) {
+    unlocked = false;
+    console.error('[Hero Audio] Playback failed:', error);
+  }
+};
+
+    const stopLoop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      lastTime = 0;
+    };
+
+    const tick = (now: number) => {
+      raf = 0;
+
+      if (!tracks || !context || document.hidden) return;
+
+      const elapsed = lastTime
+        ? Math.min(now - lastTime, 100)
+        : 16;
+
+      lastTime = now;
+
+      const step = elapsed / CROSSFADE_MS;
+      let settled = true;
+
+      for (const key of ['light', 'dark'] as const) {
+        const track = tracks[key];
+        const target = key === theme ? 1 : 0;
+
+        if (track.level < target) {
+          track.level = Math.min(target, track.level + step);
+        } else if (track.level > target) {
+          track.level = Math.max(target, track.level - step);
+        }
+
+        if (track.level !== target) settled = false;
+
+        // Equal-power day/night crossfade.
+        const volume =
+          Math.sin((track.level * Math.PI) / 2) *
+          AMBIENT_VOLUME;
+
+        track.gain.gain.setTargetAtTime(
+          volume,
+          context.currentTime,
+          0.08,
+        );
+
+        if (track.level > 0 && track.audio.paused) {
+          void track.audio.play().catch(() => {
+            unlocked = false;
+          });
+        }
+
+        if (track.level === 0 && key !== theme) {
+          track.audio.pause();
+        }
+      }
+
+      if (settled) {
+        lastTime = 0;
+      } else {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    const kick = () => {
+      if (!unlocked || document.hidden || raf) return;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const onGesture = () => {
+      if (unlocked) return;
+
+      createAudioGraph();
+      void playActiveTrack();
+    };
+
+    const addGestureListeners = () => {
+      if (listening) return;
+      listening = true;
+
+      gestureEvents.forEach((event) =>
+        window.addEventListener(event, onGesture, {
+          passive: true,
+        }),
+      );
+    };
+
+    const removeGestureListeners = () => {
+      if (!listening) return;
+      listening = false;
+
+      gestureEvents.forEach((event) =>
+        window.removeEventListener(event, onGesture),
+      );
+    };
+
+    // Only day/night ambience responds to the theme toggle.
+    const observer = new MutationObserver(() => {
+      const next = readTheme();
+
+      if (next === theme) return;
+
+      theme = next;
+
+      if (unlocked && tracks) {
+        void tracks[theme].audio.play().catch(() => {
+          unlocked = false;
+        });
+
+        kick();
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        stopLoop();
+
+        if (tracks) {
+          Object.values(tracks).forEach((track) => {
+            track.audio.pause();
+          });
+        }
+      } else if (unlocked) {
+        void playActiveTrack();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    addGestureListeners();
+
+    return () => {
+      removeGestureListeners();
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
+      stopLoop();
+
+      if (tracks) {
+        Object.values(tracks).forEach((track) => {
+          track.audio.pause();
+track.audio.removeEventListener('timeupdate', track.loopHandler);
+track.source.disconnect();
+track.panner.disconnect();
+track.gain.disconnect();
+track.audio.removeAttribute('src');
+track.audio.load();
+        });
+      }
+
+      if (context && context.state !== 'closed') {
+        void context.close();
+      }
+    };
+  }, []);
+}
+
+
 /** Smooth-scrolls to an in-page anchor; does nothing if that section is not mounted yet. */
 function goToAnchor(event: MouseEvent<HTMLAnchorElement>, href: string) {
   if (!href.startsWith('#')) return;
@@ -399,6 +689,7 @@ function HeroSection({ projectsHref = '#projects' }: HeroSectionProps) {
 
   useScrollProgress(rootRef, setStage);
   useWindEnvironment(rootRef);
+  useAmbientAudio();
 
   return (
     <section id="home" className="hero" ref={rootRef} aria-label="Introduction">
@@ -507,6 +798,16 @@ function HeroSection({ projectsHref = '#projects' }: HeroSectionProps) {
           <Fabric src={prayerFlags} count={GARLAND_STRIPS} variant="garland" />
         </div>
       </div>
+
+      {/* 8. Rock beside the backpack */}
+<div className="hero__parallax hero__parallax--rock" aria-hidden="true">
+  <img
+    className="hero__img hero__rock"
+    src={rock}
+    alt=""
+    decoding="async"
+  />
+</div>
 
       {/* 8. Backpack */}
       <div className="hero__parallax hero__parallax--backpack" aria-hidden="true">

@@ -666,6 +666,18 @@
     hero-flag-billow 5.3s ease-in-out calc(var(--p) * -0.22s) infinite;
 }
 
+/* Rock beside the backpack */
+.hero__parallax--rock {
+  z-index: 11;
+}
+
+.hero__rock {
+  left: calc(var(--u) * 7.2);
+  bottom: calc(var(--u) * 13.8);
+  width: calc(var(--u) * 20);
+  height: auto;
+}
+
 /* ---------- 8. Backpack (sits above the foreground so its base rests on the rock) ---------- */
 
 .hero__parallax--backpack {
